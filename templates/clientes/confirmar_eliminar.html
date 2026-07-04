@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Eliminar cliente · Comercial Shalom{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white"><i class="bi bi-exclamation-triangle"></i> Confirmar eliminación</div>
+            <div class="card-body">
+                <p>¿Seguro que querés eliminar al cliente <strong>{{ objeto.nombre }}</strong>?</p>
+                <p class="text-muted small">No se podrá eliminar si tiene ventas o apartados asociados.</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Sí, eliminar</button>
+                    <a href="{% url 'clientes:detalle' objeto.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
