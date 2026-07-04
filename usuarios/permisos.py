@@ -14,7 +14,16 @@ from functools import wraps
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 
-from .models import Usuario
+
+def _tiene_acceso(usuario, roles_permitidos, permitir_admin):
+    """Decide si `usuario` puede acceder según su rol.
+
+    El admin (rol='admin' o superusuario de Django, vía `es_admin`) siempre
+    pasa cuando `permitir_admin` es True.
+    """
+    if permitir_admin and usuario.es_admin:
+        return True
+    return usuario.rol in roles_permitidos
 
 
 def rol_requerido(*roles, permitir_admin=True):
@@ -26,14 +35,12 @@ def rol_requerido(*roles, permitir_admin=True):
     """
 
     roles_permitidos = set(roles)
-    if permitir_admin:
-        roles_permitidos.add(Usuario.Rol.ADMIN)
 
     def decorador(vista):
         @wraps(vista)
         @login_required
         def _envoltura(request, *args, **kwargs):
-            if request.user.rol not in roles_permitidos:
+            if not _tiene_acceso(request.user, roles_permitidos, permitir_admin):
                 raise PermissionDenied(
                     'No tenés permiso para acceder a esta sección.'
                 )
@@ -62,11 +69,9 @@ class RolRequeridoMixin:
 
             return redirect_to_login(request.get_full_path())
 
-        permitidos = set(self.roles_permitidos)
-        if self.permitir_admin:
-            permitidos.add(Usuario.Rol.ADMIN)
-
-        if request.user.rol not in permitidos:
+        if not _tiene_acceso(
+            request.user, set(self.roles_permitidos), self.permitir_admin
+        ):
             raise PermissionDenied(
                 'No tenés permiso para acceder a esta sección.'
             )

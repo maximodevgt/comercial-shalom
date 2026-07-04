@@ -77,3 +77,10 @@ class PermisosPorRolTest(TestCase):
     def test_cajero_es_rechazado(self):
         with self.assertRaises(PermissionDenied):
             self._pedir(self.cajero)
+
+    def test_superusuario_cuenta_como_admin(self):
+        # Aunque su rol sea 'cajero', un superusuario debe pasar como admin.
+        superusuario = Usuario.objects.create_superuser(
+            username='root', password='x', rol=Usuario.Rol.CAJERO)
+        self.assertTrue(superusuario.es_admin)
+        self.assertEqual(self._pedir(superusuario).status_code, 200)

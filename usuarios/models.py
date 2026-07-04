@@ -33,7 +33,9 @@ class Usuario(AbstractUser):
     # Helpers de rol para usar en vistas y templates.
     @property
     def es_admin(self):
-        return self.rol == self.Rol.ADMIN
+        # Un superusuario de Django cuenta siempre como admin, sin importar
+        # el valor del campo `rol` (evita inconsistencias con createsuperuser).
+        return self.rol == self.Rol.ADMIN or self.is_superuser
 
     @property
     def es_cajero(self):
