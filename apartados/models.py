@@ -1,0 +1,86 @@
+from decimal import Decimal
+
+from django.conf import settings
+from django.db import models
+
+
+class Apartado(models.Model):
+    """Apartado (layaway): el cliente separa un producto y lo paga en abonos.
+    Al crearse descuenta 1 unidad de stock; al liquidarse genera una Venta."""
+
+    class Estado(models.TextChoices):
+        ACTIVO = 'activo', 'Activo'
+        LIQUIDADO = 'liquidado', 'Liquidado'
+        CANCELADO = 'cancelado', 'Cancelado'
+
+    cliente = models.ForeignKey(
+        'clientes.Cliente', on_delete=models.PROTECT,
+        null=True, blank=True, related_name='apartados')
+    nombre_cliente_libre = models.CharField(max_length=150, blank=True)
+    telefono = models.CharField(max_length=30, blank=True)
+    direccion = models.CharField(max_length=255, blank=True)
+
+    producto = models.ForeignKey('productos.Producto', on_delete=models.PROTECT)
+    precio_original = models.DecimalField(max_digits=10, decimal_places=2)
+    precio_total = models.DecimalField(max_digits=10, decimal_places=2)
+
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='apartados')
+    estado = models.CharField(max_length=12, choices=Estado.choices, default=Estado.ACTIVO)
+    venta = models.ForeignKey(
+        'ventas.Venta', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='apartado_origen')
+
+    creado = models.DateTimeField(auto_now_add=True)
+    actualizado = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'apartado'
+        verbose_name_plural = 'apartados'
+        ordering = ('-creado',)
+
+    def __str__(self):
+        return f'Apartado #{self.pk}'
+
+    @property
+    def nombre_cliente(self):
+        if self.cliente:
+            return self.cliente.nombre
+        return self.nombre_cliente_libre or 'Sin nombre'
+
+    @property
+    def total_abonado(self):
+        total = self.abonos.aggregate(s=models.Sum('monto'))['s'] or Decimal('0.00')
+        return total.quantize(Decimal('0.01'))
+
+    @property
+    def pendiente(self):
+        return (self.precio_total - self.total_abonado).quantize(Decimal('0.01'))
+
+    @property
+    def descuento(self):
+        return (self.precio_original - self.precio_total).quantize(Decimal('0.01'))
+
+
+class Abono(models.Model):
+    """Pago parcial de un apartado."""
+
+    class Metodo(models.TextChoices):
+        EFECTIVO = 'efectivo', 'Efectivo'
+        TARJETA = 'tarjeta', 'Tarjeta'
+        SALDO = 'saldo', 'Saldo a favor'
+
+    apartado = models.ForeignKey(Apartado, on_delete=models.CASCADE, related_name='abonos')
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    metodo = models.CharField(max_length=10, choices=Metodo.choices, default=Metodo.EFECTIVO)
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='abonos')
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'abono'
+        verbose_name_plural = 'abonos'
+        ordering = ('creado',)
+
+    def __str__(self):
+        return f'Abono Q {self.monto} ({self.get_metodo_display()})'

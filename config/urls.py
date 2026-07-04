@@ -12,6 +12,7 @@ urlpatterns = [
     path('productos/', include('productos.urls')),
     path('clientes/', include('clientes.urls')),
     path('ventas/', include('ventas.urls')),
+    path('apartados/', include('apartados.urls')),
     path('', InicioView.as_view(), name='inicio'),
 ]
 

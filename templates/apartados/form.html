@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block titulo %}Nuevo apartado · Comercial Shalom{% endblock %}
+
+{% block contenido %}
+{{ productos_data|json_script:"productos-data" }}
+{{ clientes_saldo|json_script:"clientes-saldo" }}
+
+<h1 class="h3 mb-3"><i class="bi bi-bookmark-star"></i> Nuevo apartado</h1>
+<form method="post">
+    {% csrf_token %}
+    <div class="row g-3">
+        <div class="col-md-7">
+            <div class="card"><div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Producto <span class="text-danger">*</span></label>
+                    <select name="producto" id="producto" class="form-select" required>
+                        <option value="">Elegí un producto...</option>
+                        {% for p in productos_data %}<option value="{{ p.id }}">{{ p.nombre_completo }} — Q {{ p.precio }} (stock {{ p.stock }})</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Precio del apartado <span class="text-danger">*</span></label>
+                    <input type="number" step="0.01" min="0" name="precio_total" id="precio_total" class="form-control" required>
+                    <div class="form-text">Podés bajarlo respecto al precio de lista (descuento). No puede superarlo.</div>
+                </div>
+                <hr>
+                <div class="mb-3">
+                    <label class="form-label">Cliente registrado</label>
+                    <select name="cliente" id="cliente" class="form-select">
+                        <option value="">Sin cliente (datos libres)</option>
+                        {% for c in clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div id="datos-libres" class="row g-2 mb-3">
+                    <div class="col-md-5"><input name="nombre_cliente_libre" class="form-control" placeholder="Nombre"></div>
+                    <div class="col-md-3"><input name="telefono" class="form-control" placeholder="Teléfono"></div>
+                    <div class="col-md-4"><input name="direccion" class="form-control" placeholder="Dirección"></div>
+                </div>
+                <hr>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Abono inicial (opcional)</label>
+                        <input type="number" step="0.01" min="0" name="abono_inicial" value="0" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Método del abono</label>
+                        <select name="metodo_abono" class="form-select">
+                            <option value="efectivo">Efectivo</option>
+                            <option value="tarjeta">Tarjeta</option>
+                            <option value="saldo">Saldo a favor</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-check-lg"></i> Crear apartado</button>
+                <a href="{% url 'apartados:lista' %}" class="btn btn-outline-secondary mt-3">Cancelar</a>
+            </div></div>
+        </div>
+        <div class="col-md-5">
+            <div class="card" id="tarjeta-producto" style="display:none">
+                <img id="foto-producto" class="card-img-top thumb-contain" style="height:220px">
+                <div class="card-body">
+                    <h5 id="nombre-producto"></h5>
+                    <p class="mb-0">Precio de lista: <strong id="precio-lista"></strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const PRODS = {}; JSON.parse(document.getElementById('productos-data').textContent).forEach(p => PRODS[p.id] = p);
+const sel = document.getElementById('producto');
+sel.addEventListener('change', () => {
+    const p = PRODS[sel.value];
+    const card = document.getElementById('tarjeta-producto');
+    if (!p) { card.style.display = 'none'; return; }
+    card.style.display = '';
+    document.getElementById('nombre-producto').textContent = p.nombre_completo;
+    document.getElementById('precio-lista').textContent = 'Q ' + Number(p.precio).toFixed(2);
+    const foto = document.getElementById('foto-producto');
+    if (p.foto) { foto.src = p.foto; foto.style.display = ''; } else { foto.style.display = 'none'; }
+    document.getElementById('precio_total').value = Number(p.precio).toFixed(2);
+    document.getElementById('precio_total').max = p.precio;
+});
+document.getElementById('cliente').addEventListener('change', e => {
+    document.getElementById('datos-libres').style.display = e.target.value ? 'none' : '';
+});
+</script>
+{% endblock %}
