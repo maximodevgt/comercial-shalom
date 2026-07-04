@@ -8,42 +8,45 @@ Respondé SIEMPRE en español latinoamericano. Todos los mensajes, explicaciones
 
 ## Project state
 
-El scaffold de Django ya está creado. Layout actual:
+Sistema POS **completo y funcional** (fases 1–9 implementadas). Python 3.14, Django 6.0, MariaDB 11.8 en `127.0.0.1:3306` (base `comercial_shalom`). Frontend con Bootstrap 5 (CDN) y Chart.js (CDN). Suite de tests verde.
 
-- `config/` — paquete del proyecto Django (`settings.py`, `urls.py`, `wsgi.py`, `asgi.py`).
-- `manage.py` — punto de entrada de Django (en la raíz del repo).
-- `requirements.txt` — dependencias pineadas (Django 6.0, `mysqlclient`, `django-environ`).
-- `templates/` — templates a nivel proyecto (`base.html`, `inicio.html`, `usuarios/`).
-- `.venv/` — entorno virtual (ignorado por git).
-- `.env` / `.env.example` — configuración y secretos (ver sección más abajo).
+### Apps y modelos
 
-Apps de dominio creadas: `usuarios`, `productos`, `ventas`, `clientes`, `reportes` (registradas en `INSTALLED_APPS`). Por ahora solo `usuarios` tiene modelos; las demás son andamiaje vacío.
+- **`usuarios`** — `Usuario(AbstractUser + rol)` (roles `admin`/`cajero`/`supervisor`), `RegistroActividad` (bitácora). `AUTH_USER_MODEL = 'usuarios.Usuario'`. Permisos en `usuarios/permisos.py` (`rol_requerido`, `RolRequeridoMixin`; `is_superuser` cuenta como admin). Backend de login por username o correo (`usuarios/backends.py`). Signal que loguea inicios de sesión.
+- **`productos`** — `Categoria`, `Producto` (precio Decimal, stock, foto `ImageField` validada, properties `nombre_completo`/`estado_stock`). Validador de foto en `productos/validators.py`.
+- **`clientes`** — `Cliente` (con `saldo_favor` Decimal; el saldo solo lo mueven ventas/anulaciones/apartados).
+- **`ventas`** — `Venta`, `DetalleVenta`. Lógica en `ventas/servicios.py`: `crear_venta()` y `anular_venta()`, todo atómico con `select_for_update()` y recálculo de totales en el backend.
+- **`apartados`** — `Apartado`, `Abono`. Lógica en `apartados/servicios.py`: crear/abonar/liquidar/cancelar (atómico, con restitución de saldo y restauración de stock).
+- **`reportes`** — sin modelos. `consultas.py` (`resumen_dia`, `datos_dashboard`), `pdf.py` (xhtml2pdf), vistas de cierre diario, reporte por fecha y todos los PDFs.
 
-**Sprint 1 — autenticación con roles (implementado):**
+### Layout relevante
 
-- Modelo de usuario personalizado `usuarios.Usuario` (`AbstractUser` + campo `rol`). `AUTH_USER_MODEL = 'usuarios.Usuario'`.
-- Roles: `admin`, `cajero`, `supervisor` (ver `Usuario.Rol`). Helpers `es_admin` / `es_cajero` / `es_supervisor`.
-- Login/logout con `LoginView`/`LogoutView` y templates en español (`templates/usuarios/login.html`). Rutas bajo `cuentas/` (namespace `usuarios`).
-- Control de acceso por rol en `usuarios/permisos.py`: decorador `rol_requerido(*roles)` para vistas de función y `RolRequeridoMixin` para CBV. El rol `admin` siempre tiene acceso salvo `permitir_admin=False`.
-- **Importante:** el modelo de usuario custom exige que las migraciones se apliquen desde una base limpia. Si alguna vez hay que volver a cambiar `AUTH_USER_MODEL`, se recrea la base (`DROP DATABASE` + `CREATE DATABASE ... utf8mb4`).
+- `config/` — proyecto Django. `templates/` — templates a nivel proyecto (incluye `reportes/pdf/` para los PDFs).
+- `.venv/` (ignorado), `.env` / `.env.example` (configuración y secretos, ver más abajo).
+- `media/` — fotos de producto subidas (servidas en DEBUG).
 
-Python de referencia: 3.14. Base de datos: MariaDB 11.8 en `127.0.0.1:3306`, base `comercial_shalom`.
+### Datos de prueba
+
+`python manage.py seed_demo` — comando idempotente que crea categorías, productos (con stock bajo y uno agotado), clientes (uno con saldo) y usuarios `cajero`/`supervisor`. Las contraseñas se imprimen en el output del comando (no están documentadas en el repo).
+
+### Nota sobre el modelo de usuario custom
+
+Exige aplicar las migraciones desde una base limpia. Si alguna vez hay que volver a cambiar `AUTH_USER_MODEL`, recrear la base (`DROP DATABASE` + `CREATE DATABASE ... utf8mb4`).
 
 ## Reglas de oro del proyecto
 
-Reglas no negociables para todo el código que se agregue:
+Reglas no negociables para TODO el código (con dónde se cumplen hoy):
 
-1. **Dinero = `DecimalField`, nunca `FloatField`.** Todos los importes (precios, totales, subtotales, montos de cierre) se modelan con `models.DecimalField(max_digits=..., decimal_places=2)` y se operan con `decimal.Decimal`. Prohibido `float` para dinero — introduce errores de redondeo.
-2. **Transacciones de venta atómicas con bloqueo de filas.** Toda operación que registre una venta (crear la venta, descontar inventario, generar líneas, actualizar el cierre diario) va dentro de `transaction.atomic()`, y las filas de stock/producto que se modifican se leen con `select_for_update()` para evitar condiciones de carrera y sobreventa. Ejemplo:
-
-   ```python
-   from django.db import transaction
-
-   with transaction.atomic():
-       producto = Producto.objects.select_for_update().get(pk=producto_id)
-       # validar stock, descontar, crear líneas, actualizar cierre...
-   ```
-3. **Secretos fuera del código** (ya cubierto en la sección de configuración): nada de credenciales en `settings.py`; todo vía `.env`.
+1. **Dinero = `DecimalField(max_digits=10, decimal_places=2)`, nunca `float`.** ✅ Todos los modelos con importes (`Producto.precio`, `Cliente.saldo_favor`, `Venta.*`, `DetalleVenta.*`, `Apartado.*`, `Abono.monto`).
+2. **Stock/saldo dentro de `transaction.atomic()` con `select_for_update()`** sobre las filas afectadas (producto, cliente). ✅ `ventas/servicios.py`, `apartados/servicios.py`.
+3. **Totales recalculados en el backend**, validando contra la base (precio_unitario ≤ precio BD, cantidad ≤ stock, saldo ≤ min(saldo, subtotal)). Nunca se confía en el frontend. ✅ `ventas/servicios.crear_venta()`.
+4. **Texto de usuario escapado en JS con `esc()`**; nunca `|safe` sobre input de usuario. ✅ `templates/ventas/pos.html` y demás JS que inserta en el DOM.
+5. **Secretos solo en `.env`** (ver sección de configuración). ✅
+6. **Vistas protegidas por rol** con `usuarios/permisos.py`: cajero solo lo suyo, supervisor cierre/reportes, admin todo; `is_superuser` = admin. ✅
+7. **Historiales paginados de 50** y totales con agregados sobre el queryset filtrado completo (no la página). ✅ ventas, apartados, usuarios, logs, reportes.
+8. **`RegistroActividad` en acciones sensibles**: anulaciones, cambios de precio/stock, eliminaciones, descuentos, saldo, apartados, sesión, usuarios. ✅ `usuarios.registrar_actividad()`.
+9. **Templates en español, Bootstrap 5 (CDN)**, consistentes con `base.html`. ✅
+10. **Fotos de producto**: `ImageField` (Pillow), validación de tipo (jpg/jpeg/png/webp, no svg) y tamaño ≤ 5MB; `MEDIA_ROOT`/`MEDIA_URL` servidos en DEBUG. ✅ `productos/validators.py`, `config/settings.py`, `config/urls.py`.
 
 ## Intended scope (from README.md)
 
@@ -75,6 +78,7 @@ python manage.py runserver               # levantar el servidor de desarrollo
 python manage.py migrate                 # aplicar migraciones a la base
 python manage.py makemigrations          # generar migraciones tras cambiar modelos
 python manage.py createsuperuser         # crear usuario admin
+python manage.py seed_demo               # poblar datos de demostración (idempotente)
 python manage.py startapp <app>          # crear una nueva app de dominio
 
 python manage.py test                    # correr todos los tests
