@@ -8,7 +8,9 @@
     </h1>
     <div class="d-flex gap-2">
         <a href="{% url 'ventas:historial' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
-        {% block acciones_detalle %}{% endblock %}
+        {% if user.es_admin and not venta.esta_anulada %}
+        <a href="{% url 'ventas:anular' venta.pk %}" class="btn btn-danger"><i class="bi bi-x-octagon"></i> Anular</a>
+        {% endif %}
     </div>
 </div>
 

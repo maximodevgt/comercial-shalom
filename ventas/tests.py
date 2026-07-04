@@ -10,7 +10,7 @@ from clientes.models import Cliente
 from productos.models import Categoria, Producto
 
 from .models import Venta
-from .servicios import ErrorVenta, crear_venta
+from .servicios import ErrorAnulacion, ErrorVenta, anular_venta, crear_venta
 
 Usuario = get_user_model()
 
@@ -104,6 +104,70 @@ class VentaVistasTest(TestCase):
         sup = Usuario.objects.create_user(username='s', password='x', rol=Usuario.Rol.SUPERVISOR)
         self.client.force_login(sup)
         self.assertEqual(self.client.get(reverse('ventas:pos')).status_code, 403)
+
+
+class AnulacionTest(TestCase):
+    def setUp(self):
+        self.admin = Usuario.objects.create_user(username='admin', password='x', rol=Usuario.Rol.ADMIN)
+        self.cajero = Usuario.objects.create_user(username='caja', password='x', rol=Usuario.Rol.CAJERO)
+        self.cat = Categoria.objects.create(nombre='G')
+        self.p = Producto.objects.create(categoria=self.cat, nombre='P', precio=Decimal('100'), stock=10)
+
+    def test_anular_con_saldo_restaura_stock_y_restituye_saldo(self):
+        cliente = Cliente.objects.create(nombre='C', saldo_favor=Decimal('300.00'))
+        venta = crear_venta(self.cajero, cliente_id=cliente.id, aplicar_saldo=True,
+                            lineas=[{'producto_id': self.p.id, 'cantidad': 2, 'precio_unitario': '100.00'}])
+        self.p.refresh_from_db(); cliente.refresh_from_db()
+        self.assertEqual(self.p.stock, 8)
+        self.assertEqual(cliente.saldo_favor, Decimal('100.00'))  # 300 - 200
+
+        anular_venta(self.admin, venta.id, 'Cliente se arrepintió')
+        self.p.refresh_from_db(); cliente.refresh_from_db(); venta.refresh_from_db()
+        self.assertEqual(self.p.stock, 10)  # stock restaurado
+        self.assertEqual(cliente.saldo_favor, Decimal('300.00'))  # saldo restituido
+        self.assertEqual(venta.estado, Venta.Estado.ANULADA)
+        self.assertEqual(venta.motivo_anulacion, 'Cliente se arrepintió')
+
+    def test_anular_sin_cliente_no_falla(self):
+        venta = crear_venta(self.cajero, lineas=[
+            {'producto_id': self.p.id, 'cantidad': 1, 'precio_unitario': '100.00'}])
+        anular_venta(self.admin, venta.id, 'Error de digitación')
+        self.p.refresh_from_db()
+        self.assertEqual(self.p.stock, 10)
+
+    def test_motivo_obligatorio(self):
+        venta = crear_venta(self.cajero, lineas=[
+            {'producto_id': self.p.id, 'cantidad': 1, 'precio_unitario': '100.00'}])
+        with self.assertRaises(ErrorAnulacion):
+            anular_venta(self.admin, venta.id, '   ')
+
+    def test_no_se_puede_anular_dos_veces(self):
+        venta = crear_venta(self.cajero, lineas=[
+            {'producto_id': self.p.id, 'cantidad': 1, 'precio_unitario': '100.00'}])
+        anular_venta(self.admin, venta.id, 'motivo')
+        with self.assertRaises(ErrorAnulacion):
+            anular_venta(self.admin, venta.id, 'otra vez')
+
+    def test_anular_no_siendo_admin_devuelve_403(self):
+        venta = crear_venta(self.cajero, lineas=[
+            {'producto_id': self.p.id, 'cantidad': 1, 'precio_unitario': '100.00'}])
+        self.client.force_login(self.cajero)
+        r = self.client.post(reverse('ventas:anular', args=[venta.id]), {'motivo': 'x'})
+        self.assertEqual(r.status_code, 403)
+        venta.refresh_from_db()
+        self.assertEqual(venta.estado, Venta.Estado.COMPLETADA)
+
+    def test_venta_anulada_no_cuenta_en_totales(self):
+        v1 = crear_venta(self.cajero, lineas=[
+            {'producto_id': self.p.id, 'cantidad': 1, 'precio_unitario': '100.00'}])
+        v2 = crear_venta(self.cajero, lineas=[
+            {'producto_id': self.p.id, 'cantidad': 1, 'precio_unitario': '100.00'}])
+        anular_venta(self.admin, v2.id, 'anulada')
+        self.client.force_login(self.admin)
+        r = self.client.get(reverse('ventas:historial'))
+        self.assertEqual(r.context['total_vendido'], Decimal('100.00'))
+        self.assertEqual(r.context['num_completadas'], 1)
+        self.assertEqual(r.context['num_anuladas'], 1)
 
 
 class VentaConcurrenciaTest(TransactionTestCase):

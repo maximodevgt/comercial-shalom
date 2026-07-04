@@ -64,7 +64,9 @@
                 <td class="small">{{ v.creado|date:'d/m/Y H:i' }}</td>
                 <td class="text-end">
                     <a href="{% url 'ventas:detalle' v.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a>
-                    {% block acciones_venta %}{% endblock %}
+                    {% if user.es_admin and not v.esta_anulada %}
+                    <a href="{% url 'ventas:anular' v.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-x-octagon"></i></a>
+                    {% endif %}
                 </td>
             </tr>
             {% empty %}

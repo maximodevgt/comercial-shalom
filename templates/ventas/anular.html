@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block titulo %}Anular venta #{{ venta.pk }} · Comercial Shalom{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white"><i class="bi bi-exclamation-octagon"></i> Anular venta #{{ venta.pk }}</div>
+            <div class="card-body">
+                <p>Vas a anular la venta <strong>#{{ venta.pk }}</strong> por un total de <strong>Q {{ venta.total }}</strong>.</p>
+                <ul class="small text-muted">
+                    <li>Se restaurará el stock de los productos.</li>
+                    {% if venta.saldo_aplicado > 0 and venta.cliente %}<li>Se restituirá Q {{ venta.saldo_aplicado }} al saldo de {{ venta.cliente.nombre }}.</li>{% endif %}
+                </ul>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Motivo de la anulación <span class="text-danger">*</span></label>
+                        <textarea name="motivo" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-x-octagon"></i> Anular venta</button>
+                    <a href="{% url 'ventas:detalle' venta.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

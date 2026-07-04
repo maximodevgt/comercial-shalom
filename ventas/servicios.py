@@ -22,6 +22,60 @@ class ErrorVenta(Exception):
     """Error de validación al crear una venta (mensaje apto para el usuario)."""
 
 
+class ErrorAnulacion(Exception):
+    """Error al anular una venta (mensaje apto para el usuario)."""
+
+
+@transaction.atomic
+def anular_venta(usuario, venta_id, motivo):
+    """Anula una venta de forma atómica (regla de oro #2).
+
+    Restaura el stock de los productos y, si se aplicó saldo del cliente, lo
+    RESTITUYE (el bug de dinero clásico: acá nace resuelto). Marca la venta
+    como anulada con su motivo y deja registro en la bitácora.
+    """
+    motivo = (motivo or '').strip()
+    if not motivo:
+        raise ErrorAnulacion('El motivo de la anulación es obligatorio.')
+
+    venta = (
+        Venta.objects.select_for_update()
+        .select_related('cliente')
+        .filter(id=venta_id)
+        .first()
+    )
+    if venta is None:
+        raise ErrorAnulacion('La venta no existe.')
+    if venta.estado == Venta.Estado.ANULADA:
+        raise ErrorAnulacion('La venta ya está anulada.')
+
+    # Restaurar stock con lock sobre cada producto.
+    for detalle in venta.detalles.select_related('producto'):
+        producto = Producto.objects.select_for_update().get(pk=detalle.producto_id)
+        producto.stock += detalle.cantidad
+        producto.save(update_fields=['stock'])
+
+    # Restituir el saldo aplicado, con lock sobre el cliente.
+    saldo_restituido = Decimal('0.00')
+    if venta.saldo_aplicado and venta.saldo_aplicado > 0 and venta.cliente_id:
+        cliente = Cliente.objects.select_for_update().get(pk=venta.cliente_id)
+        cliente.saldo_favor = (cliente.saldo_favor + venta.saldo_aplicado).quantize(CENTAVO)
+        cliente.save(update_fields=['saldo_favor'])
+        saldo_restituido = venta.saldo_aplicado
+
+    venta.estado = Venta.Estado.ANULADA
+    venta.motivo_anulacion = motivo
+    venta.save(update_fields=['estado', 'motivo_anulacion', 'actualizado'])
+
+    registrar_actividad(
+        usuario, RegistroActividad.Tipo.ANULACION,
+        f'Anuló la venta #{venta.pk} (Q {venta.total})',
+        venta_id=venta.pk, total=venta.total, motivo=motivo,
+        saldo_restituido=saldo_restituido)
+
+    return venta
+
+
 def _a_decimal(valor, campo):
     try:
         return Decimal(str(valor)).quantize(CENTAVO)

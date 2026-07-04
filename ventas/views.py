@@ -2,12 +2,13 @@ import json
 from datetime import datetime
 from decimal import Decimal
 
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count, DecimalField, Q, Sum
+from django.db.models import DecimalField, Sum
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView, TemplateView
@@ -18,7 +19,7 @@ from usuarios.models import Usuario
 from usuarios.permisos import RolRequeridoMixin, rol_requerido
 
 from .models import Venta
-from .servicios import ErrorVenta, crear_venta
+from .servicios import ErrorAnulacion, ErrorVenta, anular_venta, crear_venta
 
 
 class PuedeVenderMixin(RolRequeridoMixin):
@@ -180,3 +181,17 @@ class VentaDetailView(LoginRequiredMixin, DetailView):
         if u.es_cajero and not u.es_admin and venta.usuario_id != u.id:
             raise PermissionDenied('No podés ver ventas de otros cajeros.')
         return venta
+
+
+@rol_requerido()  # solo admin (permitir_admin=True por defecto)
+def anular_venta_view(request, pk):
+    """Anula una venta. Requiere motivo obligatorio. Solo admin."""
+    venta = get_object_or_404(Venta, pk=pk)
+    if request.method == 'POST':
+        try:
+            anular_venta(request.user, pk, request.POST.get('motivo', ''))
+            messages.success(request, f'Venta #{pk} anulada correctamente.')
+        except ErrorAnulacion as e:
+            messages.error(request, str(e))
+        return redirect('ventas:detalle', pk=pk)
+    return render(request, 'ventas/anular.html', {'venta': venta})
