@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block titulo %}{% if es_creacion %}Nuevo usuario{% else %}Editar usuario{% endif %} · Comercial Shalom{% endblock %}
+{% block titulo %}{% if es_creacion %}Nuevo usuario{% else %}Editar usuario{% endif %}{% endblock %}
 
 {% block contenido %}
 <div class="row justify-content-center">
@@ -53,13 +53,13 @@
                         <label class="form-label">{{ form.password.label }}</label>
                         <div class="input-group">
                             {{ form.password }}
-                            <button type="button" class="btn btn-outline-secondary" id="togglePass"><i class="bi bi-eye" id="eyeIcon"></i></button>
+                            <button type="button" class="btn btn-outline-secondary" id="togglePass"><i class="fa-solid fa-eye" id="eyeIcon"></i></button>
                         </div>
                         <div class="form-text">{{ form.password.help_text }}</div>
                         {% for e in form.password.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
                     </div>
 
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Guardar</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Guardar</button>
                     <a href="{% url 'usuarios:lista' %}" class="btn btn-outline-secondary">Cancelar</a>
                 </form>
             </div>
@@ -74,8 +74,8 @@ document.getElementById('togglePass').addEventListener('click', () => {
     // El input de contraseña es el que precede al botón dentro del input-group.
     const inp = document.querySelector('input[name="password"]');
     const icon = document.getElementById('eyeIcon');
-    if (inp.type === 'password') { inp.type = 'text'; icon.className = 'bi bi-eye-slash'; }
-    else { inp.type = 'password'; icon.className = 'bi bi-eye'; }
+    if (inp.type === 'password') { inp.type = 'text'; icon.className = 'fa-solid fa-eye-slash'; }
+    else { inp.type = 'password'; icon.className = 'fa-solid fa-eye'; }
 });
 </script>
 {% endblock %}

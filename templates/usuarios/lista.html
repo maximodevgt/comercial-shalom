@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
-{% block titulo %}Usuarios · Comercial Shalom{% endblock %}
+{% block titulo %}Usuarios{% endblock %}
 
 {% block contenido %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0"><i class="bi bi-person-gear"></i> Usuarios</h1>
-    <a href="{% url 'usuarios:crear' %}" class="btn btn-primary"><i class="bi bi-person-plus"></i> Nuevo usuario</a>
+    <h1 class="h3 mb-0"><i class="fa-solid fa-user-shield"></i> Usuarios</h1>
+    <a href="{% url 'usuarios:crear' %}" class="btn btn-primary"><i class="fa-solid fa-user-plus"></i> Nuevo usuario</a>
 </div>
 
 <div class="card">
@@ -22,12 +22,12 @@
                 <td><span class="badge bg-info text-dark">{{ u.get_rol_display }}</span>{% if u.is_superuser %} <span class="badge bg-dark">Superusuario</span>{% endif %}</td>
                 <td>{% if u.is_active %}<span class="badge bg-success">Activo</span>{% else %}<span class="badge bg-secondary">Inactivo</span>{% endif %}</td>
                 <td class="text-end">
-                    <a href="{% url 'usuarios:editar' u.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                    <a href="{% url 'usuarios:editar' u.pk %}" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
                     {% if u.pk != user.pk %}
                     <form method="post" action="{% url 'usuarios:toggle_activo' u.pk %}" class="d-inline">
                         {% csrf_token %}
                         <button class="btn btn-sm {% if u.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
-                            {% if u.is_active %}<i class="bi bi-pause-circle"></i> Desactivar{% else %}<i class="bi bi-play-circle"></i> Activar{% endif %}
+                            {% if u.is_active %}<i class="fa-solid fa-circle-pause"></i> Desactivar{% else %}<i class="fa-solid fa-circle-play"></i> Activar{% endif %}
                         </button>
                     </form>
                     {% endif %}

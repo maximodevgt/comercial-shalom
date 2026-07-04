@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
-{% block titulo %}Categorías · Comercial Shalom{% endblock %}
+{% block titulo %}Categorías{% endblock %}
 
 {% block contenido %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0"><i class="bi bi-tags"></i> Categorías</h1>
+    <h1 class="h3 mb-0"><i class="fa-solid fa-tags"></i> Categorías</h1>
     {% if user.es_admin %}
-    <a href="{% url 'productos:categoria_crear' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nueva categoría</a>
+    <a href="{% url 'productos:categoria_crear' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nueva categoría</a>
     {% endif %}
 </div>
 
@@ -22,8 +22,8 @@
                 <td>{{ c.productos.count }}</td>
                 {% if user.es_admin %}
                 <td class="text-end">
-                    <a href="{% url 'productos:categoria_editar' c.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
-                    <a href="{% url 'productos:categoria_eliminar' c.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+                    <a href="{% url 'productos:categoria_editar' c.pk %}" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
+                    <a href="{% url 'productos:categoria_eliminar' c.pk %}" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></a>
                 </td>
                 {% endif %}
             </tr>

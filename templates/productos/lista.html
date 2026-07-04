@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
-{% block titulo %}Productos · Comercial Shalom{% endblock %}
+{% block titulo %}Productos{% endblock %}
 
 {% block contenido %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0"><i class="bi bi-box-seam"></i> Productos</h1>
+    <h1 class="h3 mb-0"><i class="fa-solid fa-box"></i> Productos</h1>
     {% if user.es_admin %}
-    <a href="{% url 'productos:crear' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nuevo producto</a>
+    <a href="{% url 'productos:crear' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nuevo producto</a>
     {% endif %}
 </div>
 
@@ -24,7 +24,7 @@
         </select>
     </div>
     <div class="col-md-2 d-grid">
-        <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-search"></i> Buscar</button>
+        <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
     </div>
 </form>
 
@@ -36,7 +36,7 @@
             {% if p.foto %}
             <img src="{{ p.foto.url }}" class="card-img-top thumb-contain" style="height:160px" alt="{{ p.nombre_completo }}">
             {% else %}
-            <div class="placeholder-foto card-img-top" style="height:160px"><i class="bi bi-image fs-1"></i></div>
+            <div class="placeholder-foto card-img-top" style="height:160px"><i class="fa-solid fa-image fs-1"></i></div>
             {% endif %}
             <div class="card-body">
                 <h6 class="card-title mb-1">{{ p.nombre }}</h6>
@@ -51,8 +51,8 @@
             </div>
             {% if user.es_admin %}
             <div class="card-footer bg-white d-flex gap-2">
-                <a href="{% url 'productos:editar' p.pk %}" class="btn btn-sm btn-outline-primary flex-fill"><i class="bi bi-pencil"></i> Editar</a>
-                <a href="{% url 'productos:eliminar' p.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+                <a href="{% url 'productos:editar' p.pk %}" class="btn btn-sm btn-outline-primary flex-fill"><i class="fa-solid fa-pen"></i> Editar</a>
+                <a href="{% url 'productos:eliminar' p.pk %}" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></a>
             </div>
             {% endif %}
         </div>

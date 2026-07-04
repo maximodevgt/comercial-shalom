@@ -8,7 +8,7 @@ Respondé SIEMPRE en español latinoamericano. Todos los mensajes, explicaciones
 
 ## Project state
 
-Sistema POS **completo y funcional** (fases 1–9 implementadas). Python 3.14, Django 6.0, MariaDB 11.8 en `127.0.0.1:3306` (base `comercial_shalom`). Frontend con Bootstrap 5 (CDN) y Chart.js (CDN). Suite de tests verde.
+Sistema POS **completo y funcional** (fases 1–10 implementadas). Python 3.14, Django 6.0, MariaDB 11.8 en `127.0.0.1:3306` (base `comercial_shalom`). Frontend con Bootstrap 5, Font Awesome 6 y Chart.js (todo por CDN). Identidad visual definida con variables CSS en `templates/base.html` (`:root`, color primario azul profundo). Íconos solo Font Awesome (sin emojis). Suite de tests verde.
 
 ### Apps y modelos
 

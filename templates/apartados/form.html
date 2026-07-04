@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
-{% block titulo %}Nuevo apartado · Comercial Shalom{% endblock %}
+{% block titulo %}Nuevo apartado{% endblock %}
 
 {% block contenido %}
 {{ productos_data|json_script:"productos-data" }}
 {{ clientes_saldo|json_script:"clientes-saldo" }}
 
-<h1 class="h3 mb-3"><i class="bi bi-bookmark-star"></i> Nuevo apartado</h1>
+<h1 class="h3 mb-3"><i class="fa-solid fa-bookmark"></i> Nuevo apartado</h1>
 <form method="post">
     {% csrf_token %}
     <div class="row g-3">
@@ -51,7 +51,7 @@
                         </select>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-check-lg"></i> Crear apartado</button>
+                <button type="submit" class="btn btn-primary mt-3"><i class="fa-solid fa-check"></i> Crear apartado</button>
                 <a href="{% url 'apartados:lista' %}" class="btn btn-outline-secondary mt-3">Cancelar</a>
             </div></div>
         </div>

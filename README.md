@@ -20,7 +20,7 @@ Punto de venta (POS) web para **Comercial Shalom**, desarrollado con **Python + 
 - Python 3.14, Django 6.0
 - MariaDB 11.8 (driver `mysqlclient`)
 - `django-environ` (configuración vía `.env`), Pillow (fotos), xhtml2pdf (PDFs)
-- Bootstrap 5 y Chart.js por CDN
+- Bootstrap 5, Font Awesome 6 y Chart.js por CDN
 
 ## Cómo levantarlo
 

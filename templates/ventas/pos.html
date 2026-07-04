@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block titulo %}Nueva venta · Comercial Shalom{% endblock %}
+{% block titulo %}Nueva venta{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -40,7 +40,7 @@
     <!-- Columna derecha: ticket -->
     <div class="col-lg-5">
         <div class="ticket card shadow-sm">
-            <div class="card-header bg-dark text-white"><i class="bi bi-receipt"></i> Ticket</div>
+            <div class="card-header bg-dark text-white"><i class="fa-solid fa-receipt"></i> Ticket</div>
             <div class="card-body">
                 <div class="mb-2">
                     <label class="form-label small mb-1">Cliente registrado</label>
@@ -83,7 +83,7 @@
                     <span class="fs-4 fw-bold" id="total-grande">Q 0.00</span>
                 </div>
                 <div id="error-venta" class="alert alert-danger py-1 mt-2 d-none"></div>
-                <button id="btn-registrar" class="btn btn-success w-100 mt-2"><i class="bi bi-check-lg"></i> Registrar venta</button>
+                <button id="btn-registrar" class="btn btn-success w-100 mt-2"><i class="fa-solid fa-check"></i> Registrar venta</button>
             </div>
         </div>
     </div>
@@ -120,7 +120,7 @@ function pintarGrid() {
         card.className = 'card card-producto' + (agotado ? ' agotado' : '');
         const foto = p.foto
             ? `<img src="${esc(p.foto)}" class="foto" alt="">`
-            : `<div class="foto placeholder-foto d-flex align-items-center justify-content-center"><i class="bi bi-image fs-3"></i></div>`;
+            : `<div class="foto placeholder-foto d-flex align-items-center justify-content-center"><i class="fa-solid fa-image fs-3"></i></div>`;
         card.innerHTML = foto +
             `<div class="card-body p-2">
                 <div class="small fw-semibold text-truncate">${esc(p.nombre)}</div>
@@ -170,7 +170,7 @@ function pintarTicket() {
                     <input type="number" min="0" max="${p.precio}" step="0.01" value="${l.descuento || 0}" class="form-control inp-desc" data-id="${id}" data-f="desc">
                 </div>
              </td>
-             <td class="text-end">${q(sub)}<br><button class="btn btn-sm btn-link text-danger p-0" data-id="${id}" data-f="quitar"><i class="bi bi-x-circle"></i></button></td>`;
+             <td class="text-end">${q(sub)}<br><button class="btn btn-sm btn-link text-danger p-0" data-id="${id}" data-f="quitar"><i class="fa-solid fa-circle-xmark"></i></button></td>`;
         cont.appendChild(tr);
     });
     document.getElementById('pie-cantidad').textContent = `Total ${unidades} productos`;

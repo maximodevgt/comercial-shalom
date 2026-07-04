@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
 
-{% block titulo %}{{ cliente.nombre }} · Comercial Shalom{% endblock %}
+{% block titulo %}{{ cliente.nombre }}{% endblock %}
 
 {% block contenido %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0"><i class="bi bi-person-circle"></i> {{ cliente.nombre }}</h1>
+    <h1 class="h3 mb-0"><i class="fa-solid fa-circle-user"></i> {{ cliente.nombre }}</h1>
     <div class="d-flex gap-2">
-        <a href="{% url 'clientes:editar' cliente.pk %}" class="btn btn-outline-primary"><i class="bi bi-pencil"></i> Editar</a>
+        <a href="{% url 'clientes:editar' cliente.pk %}" class="btn btn-outline-primary"><i class="fa-solid fa-pen"></i> Editar</a>
         {% if user.es_admin %}
-        <a href="{% url 'clientes:eliminar' cliente.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i> Eliminar</a>
+        <a href="{% url 'clientes:eliminar' cliente.pk %}" class="btn btn-outline-danger"><i class="fa-solid fa-trash"></i> Eliminar</a>
         {% endif %}
     </div>
 </div>
@@ -18,8 +18,8 @@
         <div class="card">
             <div class="card-body">
                 <h6 class="text-muted">Datos</h6>
-                <p class="mb-1"><i class="bi bi-telephone"></i> {{ cliente.telefono|default:'Sin teléfono' }}</p>
-                <p class="mb-3"><i class="bi bi-geo-alt"></i> {{ cliente.direccion|default:'Sin dirección' }}</p>
+                <p class="mb-1"><i class="fa-solid fa-phone"></i> {{ cliente.telefono|default:'Sin teléfono' }}</p>
+                <p class="mb-3"><i class="fa-solid fa-location-dot"></i> {{ cliente.direccion|default:'Sin dirección' }}</p>
                 <div class="p-3 bg-light rounded text-center">
                     <div class="text-muted small">Saldo a favor</div>
                     <div class="fs-3 fw-bold {% if cliente.saldo_favor > 0 %}text-success{% endif %}">Q {{ cliente.saldo_favor }}</div>
@@ -29,7 +29,7 @@
     </div>
     <div class="col-md-8">
         <div class="card mb-3">
-            <div class="card-header"><i class="bi bi-receipt"></i> Historial de ventas</div>
+            <div class="card-header"><i class="fa-solid fa-receipt"></i> Historial de ventas</div>
             <div class="card-body">
                 {% if ventas and ventas.exists %}
                 <ul class="list-group list-group-flush">
@@ -46,7 +46,7 @@
             </div>
         </div>
         <div class="card">
-            <div class="card-header"><i class="bi bi-bookmark-star"></i> Apartados</div>
+            <div class="card-header"><i class="fa-solid fa-bookmark"></i> Apartados</div>
             <div class="card-body">
                 {% if apartados and apartados.exists %}
                 <ul class="list-group list-group-flush">

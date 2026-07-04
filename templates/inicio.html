@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block titulo %}Inicio · Comercial Shalom{% endblock %}
+{% block titulo %}Inicio{% endblock %}
 
 {% block contenido %}
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -8,11 +8,24 @@
 </div>
 
 <div class="row g-3 mb-4">
-    <div class="col-md-4"><div class="card text-bg-success"><div class="card-body"><div class="small">Total vendido hoy</div><div class="fs-3 fw-bold">Q {{ total_hoy }}</div></div></div></div>
-    <div class="col-md-4"><div class="card text-bg-primary"><div class="card-body"><div class="small">Ventas de hoy</div><div class="fs-3 fw-bold">{{ num_ventas_hoy }}</div></div></div></div>
     <div class="col-md-4">
-        <div class="card text-bg-warning" role="button" data-bs-toggle="modal" data-bs-target="#modalStock">
-            <div class="card-body"><div class="small">Stock bajo</div><div class="fs-3 fw-bold">{{ num_stock_bajo }} <i class="bi bi-box-arrow-up-right fs-6"></i></div></div>
+        <div class="card metrica m-total"><div class="card-body d-flex align-items-center justify-content-between">
+            <div><div class="small text-white-50">Total vendido hoy</div><div class="valor">Q {{ total_hoy }}</div></div>
+            <i class="fa-solid fa-sack-dollar icono"></i>
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card metrica m-ventas"><div class="card-body d-flex align-items-center justify-content-between">
+            <div><div class="small text-white-50">Ventas de hoy</div><div class="valor">{{ num_ventas_hoy }}</div></div>
+            <i class="fa-solid fa-receipt icono"></i>
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card metrica m-stock" role="button" data-bs-toggle="modal" data-bs-target="#modalStock">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div><div class="small text-white-50">Stock bajo</div><div class="valor">{{ num_stock_bajo }} <i class="fa-solid fa-up-right-from-square fs-6"></i></div></div>
+                <i class="fa-solid fa-triangle-exclamation icono"></i>
+            </div>
         </div>
     </div>
 </div>
@@ -29,7 +42,7 @@
 {% endif %}
 
 <div class="card">
-    <div class="card-header"><i class="bi bi-clock-history"></i> Últimas ventas de hoy</div>
+    <div class="card-header"><i class="fa-solid fa-clock-rotate-left"></i> Últimas ventas de hoy</div>
     <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
         <thead class="table-light"><tr><th>#</th><th>Cliente</th><th>Productos</th><th class="text-end">Total</th><th>Hora</th></tr></thead>
@@ -67,12 +80,12 @@
         <tbody>
           {% for p in stock_bajo %}
           <tr>
-            <td style="width:44px">{% if p.foto %}<img src="{{ p.foto.url }}" class="mini">{% else %}<i class="bi bi-image text-muted"></i>{% endif %}</td>
+            <td style="width:44px">{% if p.foto %}<img src="{{ p.foto.url }}" class="mini">{% else %}<i class="fa-solid fa-image text-muted"></i>{% endif %}</td>
             <td>{{ p.nombre_completo }}</td>
             <td class="text-end">{% if p.stock == 0 %}<span class="badge bg-secondary">Agotado</span>{% else %}<span class="badge bg-warning text-dark">{{ p.stock }}</span>{% endif %}</td>
           </tr>
           {% empty %}
-          <tr><td class="text-muted text-center py-3">No hay productos con stock bajo. 🎉</td></tr>
+          <tr><td class="text-muted text-center py-3"><i class="fa-solid fa-circle-check text-success me-1"></i> No hay productos con stock bajo.</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -88,16 +101,16 @@
 const dSemana = JSON.parse(document.getElementById('data-semana').textContent);
 const dTop = JSON.parse(document.getElementById('data-top').textContent);
 const dCajero = JSON.parse(document.getElementById('data-cajero').textContent);
-const COLORS = ['#0d6efd','#198754','#ffc107','#dc3545','#6f42c1','#20c997','#fd7e14'];
+const COLORS = ['#1e40af','#16a34a','#f59e0b','#dc2626','#0891b2','#7c3aed','#db2777'];
 
 new Chart(document.getElementById('chartSemana'), {
     type: 'bar',
-    data: { labels: dSemana.labels, datasets: [{ label: 'Q vendidos', data: dSemana.valores, backgroundColor: '#0d6efd' }] },
+    data: { labels: dSemana.labels, datasets: [{ label: 'Q vendidos', data: dSemana.valores, backgroundColor: '#1e40af', borderRadius: 4 }] },
     options: { plugins: { legend: { display: false } } }
 });
 new Chart(document.getElementById('chartTop'), {
     type: 'bar',
-    data: { labels: dTop.labels, datasets: [{ label: 'Unidades', data: dTop.valores, backgroundColor: '#198754' }] },
+    data: { labels: dTop.labels, datasets: [{ label: 'Unidades', data: dTop.valores, backgroundColor: '#16a34a', borderRadius: 4 }] },
     options: { indexAxis: 'y', plugins: { legend: { display: false } } }
 });
 new Chart(document.getElementById('chartCajero'), {

@@ -1,36 +1,77 @@
 {% extends 'base.html' %}
 
-{% block titulo %}Iniciar sesión · Comercial Shalom{% endblock %}
+{% block titulo %}Iniciar sesión{% endblock %}
+
+{% block extra_css %}
+<style>
+    body { background: linear-gradient(135deg, #172554 0%, #1e40af 55%, #2563eb 100%); }
+    main { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .login-card { width: 100%; max-width: 400px; border-radius: 1rem; box-shadow: 0 1.5rem 3rem rgba(0,0,0,.35); }
+    .login-logo { width: 66px; height: 66px; border-radius: 1rem; background: linear-gradient(135deg, #1e40af, #3b82f6);
+        color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 1.9rem;
+        box-shadow: 0 .5rem 1rem rgba(30,64,175,.4); }
+    .campo { position: relative; margin-bottom: 1rem; }
+    .campo > .ico { position: absolute; left: .95rem; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+    .campo input { width: 100%; padding: .7rem .9rem .7rem 2.5rem; border: 1px solid #cbd5e1;
+        border-radius: .65rem; font-size: 1rem; }
+    .campo.con-toggle input { padding-right: 2.8rem; }
+    .campo input:focus { outline: none; border-color: var(--primario); box-shadow: 0 0 0 .2rem rgba(30,64,175,.18); }
+    .toggle-pass { position: absolute; right: .6rem; top: 50%; transform: translateY(-50%);
+        background: none; border: none; color: #94a3b8; cursor: pointer; padding: .25rem .4rem; }
+    .btn-ingresar { background: var(--primario); border: none; }
+    .btn-ingresar:hover { background: var(--primario-oscuro); }
+</style>
+{% endblock %}
 
 {% block contenido %}
-<div style="max-width: 380px; margin: 3rem auto; background:#fff; padding:2rem;
-            border-radius:10px; box-shadow:0 1px 4px rgba(0,0,0,.08)">
-    <h1 style="margin-top:0; font-size:1.4rem">Iniciar sesión</h1>
+<div class="card login-card">
+    <div class="card-body p-4 p-sm-5">
+        <div class="text-center mb-4">
+            <div class="login-logo mb-3"><i class="fa-solid fa-store"></i></div>
+            <h1 class="h4 fw-bold mb-0">Comercial Shalom</h1>
+            <p class="text-muted small mb-0">Sistema de punto de venta</p>
+        </div>
 
-    {% if form.errors %}
-    <ul class="mensajes">
-        <li class="error">Usuario o contraseña incorrectos. Volvé a intentarlo.</li>
-    </ul>
-    {% endif %}
+        {% if form.errors %}
+        <div class="alert alert-danger d-flex align-items-center py-2" role="alert">
+            <i class="fa-solid fa-circle-exclamation me-2"></i>
+            <div class="small">Usuario o contraseña incorrectos. Volvé a intentarlo.</div>
+        </div>
+        {% endif %}
 
-    <form method="post" action="{% url 'usuarios:login' %}">
-        {% csrf_token %}
-        <p>
-            <label for="{{ form.username.id_for_label }}">Usuario</label><br>
-            {{ form.username }}
-        </p>
-        <p>
-            <label for="{{ form.password.id_for_label }}">Contraseña</label><br>
-            {{ form.password }}
-        </p>
-        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-        <button type="submit" class="btn" style="width:100%">Ingresar</button>
-    </form>
+        <form method="post" action="{% url 'usuarios:login' %}">
+            {% csrf_token %}
+            <label class="form-label small fw-semibold">Usuario o correo</label>
+            <div class="campo">
+                <span class="ico"><i class="fa-solid fa-user"></i></span>
+                {{ form.username }}
+            </div>
+
+            <label class="form-label small fw-semibold">Contraseña</label>
+            <div class="campo con-toggle">
+                <span class="ico"><i class="fa-solid fa-lock"></i></span>
+                {{ form.password }}
+                <button type="button" class="toggle-pass" id="toggleLoginPass" tabindex="-1">
+                    <i class="fa-solid fa-eye" id="loginEyeIcon"></i>
+                </button>
+            </div>
+
+            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+            <button type="submit" class="btn btn-ingresar text-white w-100 mt-2 py-2">
+                <i class="fa-solid fa-right-to-bracket me-1"></i> Ingresar
+            </button>
+        </form>
+    </div>
 </div>
+{% endblock %}
 
-<style>
-    form p input { width: 100%; padding: .5rem; border: 1px solid #cbd5e1;
-        border-radius: 6px; font-size: 1rem; box-sizing: border-box; }
-    form p label { font-weight: 600; font-size: .9rem; }
-</style>
+{% block extra_js %}
+<script>
+document.getElementById('toggleLoginPass').addEventListener('click', function () {
+    var inp = document.getElementById('id_password');
+    var icon = document.getElementById('loginEyeIcon');
+    if (inp.type === 'password') { inp.type = 'text'; icon.className = 'fa-solid fa-eye-slash'; }
+    else { inp.type = 'password'; icon.className = 'fa-solid fa-eye'; }
+});
+</script>
 {% endblock %}

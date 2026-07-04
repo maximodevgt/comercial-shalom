@@ -1,18 +1,18 @@
 {% extends 'base.html' %}
-{% block titulo %}Apartado #{{ apartado.pk }} · Comercial Shalom{% endblock %}
+{% block titulo %}Apartado #{{ apartado.pk }}{% endblock %}
 
 {% block contenido %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0"><i class="bi bi-bookmark-star"></i> Apartado #{{ apartado.pk }}
+    <h1 class="h3 mb-0"><i class="fa-solid fa-bookmark"></i> Apartado #{{ apartado.pk }}
         {% if apartado.estado == 'activo' %}<span class="badge bg-primary">Activo</span>
         {% elif apartado.estado == 'liquidado' %}<span class="badge bg-success">Liquidado</span>
         {% else %}<span class="badge bg-secondary">Cancelado</span>{% endif %}
     </h1>
     <div class="d-flex gap-2">
         {% if apartado.estado == 'liquidado' %}
-        <a href="{% url 'reportes:ticket_liquidacion_pdf' apartado.pk %}" class="btn btn-outline-dark" target="_blank"><i class="bi bi-file-earmark-pdf"></i> Ticket liquidación</a>
+        <a href="{% url 'reportes:ticket_liquidacion_pdf' apartado.pk %}" class="btn btn-outline-dark" target="_blank"><i class="fa-solid fa-file-pdf"></i> Ticket liquidación</a>
         {% endif %}
-        <a href="{% url 'apartados:lista' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
+        <a href="{% url 'apartados:lista' %}" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left"></i> Volver</a>
     </div>
 </div>
 
@@ -38,14 +38,14 @@
 
     <div class="col-md-8">
         <div class="card mb-3">
-            <div class="card-header"><i class="bi bi-cash-coin"></i> Abonos</div>
+            <div class="card-header"><i class="fa-solid fa-coins"></i> Abonos</div>
             <div class="card-body">
                 <table class="table table-sm mb-0">
                     <thead><tr><th>Fecha</th><th>Método</th><th>Cajero</th><th class="text-end">Monto</th><th></th></tr></thead>
                     <tbody>
                         {% for ab in apartado.abonos.all %}
                         <tr><td>{{ ab.creado|date:'d/m/Y H:i' }}</td><td>{{ ab.get_metodo_display }}</td><td>{{ ab.usuario.username }}</td><td class="text-end">Q {{ ab.monto }}</td>
-                            <td class="text-end"><a href="{% url 'reportes:comprobante_abono_pdf' ab.pk %}" class="btn btn-sm btn-outline-dark" target="_blank" title="Comprobante"><i class="bi bi-file-earmark-pdf"></i></a></td></tr>
+                            <td class="text-end"><a href="{% url 'reportes:comprobante_abono_pdf' ab.pk %}" class="btn btn-sm btn-outline-dark" target="_blank" title="Comprobante"><i class="fa-solid fa-file-pdf"></i></a></td></tr>
                         {% empty %}
                         <tr><td colspan="5" class="text-muted text-center py-2">Sin abonos aún.</td></tr>
                         {% endfor %}
@@ -58,7 +58,7 @@
         <div class="row g-3">
             <div class="col-md-6">
                 <div class="card"><div class="card-body">
-                    <h6><i class="bi bi-plus-circle"></i> Registrar abono</h6>
+                    <h6><i class="fa-solid fa-circle-plus"></i> Registrar abono</h6>
                     <form method="post" action="{% url 'apartados:abonar' apartado.pk %}">
                         {% csrf_token %}
                         <div class="mb-2"><input type="number" step="0.01" min="0" name="monto" class="form-control" placeholder="Monto" required></div>
@@ -74,18 +74,18 @@
             <div class="col-md-6">
                 <div class="card"><div class="card-body">
                     {% if apartado.pendiente == 0 %}
-                    <h6 class="text-success"><i class="bi bi-check-circle"></i> Liquidar</h6>
+                    <h6 class="text-success"><i class="fa-solid fa-circle-check"></i> Liquidar</h6>
                     <p class="small text-muted">El apartado está totalmente pagado. Al liquidar se genera la venta.</p>
                     <form method="post" action="{% url 'apartados:liquidar' apartado.pk %}">
                         {% csrf_token %}
-                        <button class="btn btn-success w-100"><i class="bi bi-bag-check"></i> Liquidar y generar venta</button>
+                        <button class="btn btn-success w-100"><i class="fa-solid fa-bag-shopping"></i> Liquidar y generar venta</button>
                     </form>
                     {% else %}
-                    <h6 class="text-muted"><i class="bi bi-check-circle"></i> Liquidar</h6>
+                    <h6 class="text-muted"><i class="fa-solid fa-circle-check"></i> Liquidar</h6>
                     <p class="small text-muted">Falta cubrir Q {{ apartado.pendiente }} para poder liquidar.</p>
                     {% endif %}
                     <hr>
-                    <button class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#modalCancelar"><i class="bi bi-x-circle"></i> Cancelar apartado</button>
+                    <button class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#modalCancelar"><i class="fa-solid fa-circle-xmark"></i> Cancelar apartado</button>
                 </div></div>
             </div>
         </div>

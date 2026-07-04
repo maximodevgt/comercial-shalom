@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
-{% block titulo %}Bitácora · Comercial Shalom{% endblock %}
+{% block titulo %}Bitácora{% endblock %}
 
 {% block contenido %}
-<h1 class="h3 mb-3"><i class="bi bi-list-check"></i> Bitácora de actividad</h1>
+<h1 class="h3 mb-3"><i class="fa-solid fa-list-check"></i> Bitácora de actividad</h1>
 
 <form method="get" class="row g-2 mb-3">
     <div class="col-md-3">
@@ -17,7 +17,7 @@
             {% for u in usuarios %}<option value="{{ u.id }}" {% if usuario_sel == u.id|stringformat:'s' %}selected{% endif %}>{{ u.username }}</option>{% endfor %}
         </select>
     </div>
-    <div class="col-md-2"><button class="btn btn-sm btn-primary"><i class="bi bi-funnel"></i> Filtrar</button></div>
+    <div class="col-md-2"><button class="btn btn-sm btn-primary"><i class="fa-solid fa-filter"></i> Filtrar</button></div>
 </form>
 
 <div class="card">
