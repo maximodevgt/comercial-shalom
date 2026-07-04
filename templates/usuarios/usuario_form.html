@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block titulo %}{% if es_creacion %}Nuevo usuario{% else %}Editar usuario{% endif %} · Comercial Shalom{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+        <div class="card">
+            <div class="card-header"><h1 class="h5 mb-0">{% if es_creacion %}Nuevo usuario{% else %}Editar usuario: {{ object.username }}{% endif %}</h1></div>
+            <div class="card-body">
+                {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    {% if es_creacion %}
+                    <div class="mb-3">
+                        <label class="form-label">Usuario (para iniciar sesión)</label>
+                        {{ form.username }}
+                        {% for e in form.username.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="mb-3">
+                        <label class="form-label">Usuario</label>
+                        <input type="text" class="form-control" value="{{ object.username }}" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Correo (no editable)</label>
+                        <input type="text" class="form-control" value="{{ object.email }}" disabled>
+                    </div>
+                    {% endif %}
+
+                    <div class="row g-2 mb-3">
+                        <div class="col"><label class="form-label">Nombre</label>{{ form.first_name }}</div>
+                        <div class="col"><label class="form-label">Apellido</label>{{ form.last_name }}</div>
+                    </div>
+
+                    {% if es_creacion %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.correo_usuario.label }}</label>
+                        <div class="input-group">
+                            {{ form.correo_usuario }}
+                            <span class="input-group-text">{{ dominio }}</span>
+                        </div>
+                        {% for e in form.correo_usuario.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Rol</label>
+                        {{ form.rol }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.password.label }}</label>
+                        <div class="input-group">
+                            {{ form.password }}
+                            <button type="button" class="btn btn-outline-secondary" id="togglePass"><i class="bi bi-eye" id="eyeIcon"></i></button>
+                        </div>
+                        <div class="form-text">{{ form.password.help_text }}</div>
+                        {% for e in form.password.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Guardar</button>
+                    <a href="{% url 'usuarios:lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('togglePass').addEventListener('click', () => {
+    // El input de contraseña es el que precede al botón dentro del input-group.
+    const inp = document.querySelector('input[name="password"]');
+    const icon = document.getElementById('eyeIcon');
+    if (inp.type === 'password') { inp.type = 'text'; icon.className = 'bi bi-eye-slash'; }
+    else { inp.type = 'password'; icon.className = 'bi bi-eye'; }
+});
+</script>
+{% endblock %}

@@ -1,8 +1,11 @@
+from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
+from .models import RegistroActividad
 from .permisos import rol_requerido
 
 Usuario = get_user_model()
@@ -74,7 +77,7 @@ class PermisosPorRolTest(TestCase):
     def test_admin_siempre_accede(self):
         self.assertEqual(self._pedir(self.admin).status_code, 200)
 
-    def test_cajero_es_rechazado(self):
+    def test_cajero_es_rechazado_permisos(self):
         with self.assertRaises(PermissionDenied):
             self._pedir(self.cajero)
 
@@ -84,3 +87,67 @@ class PermisosPorRolTest(TestCase):
             username='root', password='x', rol=Usuario.Rol.CAJERO)
         self.assertTrue(superusuario.es_admin)
         self.assertEqual(self._pedir(superusuario).status_code, 200)
+
+
+class GestionUsuariosTest(TestCase):
+    def setUp(self):
+        self.admin = Usuario.objects.create_user(
+            username='admin', password='x', rol=Usuario.Rol.ADMIN)
+
+    def test_crear_usuario_cajero_puede_loguearse(self):
+        self.client.force_login(self.admin)
+        r = self.client.post(reverse('usuarios:crear'), {
+            'username': 'nuevocajero',
+            'first_name': 'Nuevo',
+            'last_name': 'Cajero',
+            'correo_usuario': 'nuevo',
+            'rol': Usuario.Rol.CAJERO,
+            'password': 'Cajero2026x',
+        })
+        self.assertRedirects(r, reverse('usuarios:lista'))
+        nuevo = Usuario.objects.get(username='nuevocajero')
+        self.assertEqual(nuevo.email, 'nuevo@comercialshalom.com')
+        self.assertEqual(nuevo.rol, Usuario.Rol.CAJERO)
+        # Puede iniciar sesión con su username.
+        self.client.logout()
+        self.assertTrue(self.client.login(username='nuevocajero', password='Cajero2026x'))
+
+    def test_login_con_correo_funciona(self):
+        Usuario.objects.create_user(
+            username='concorreo', email='concorreo@comercialshalom.com',
+            password='Correo2026x', rol=Usuario.Rol.CAJERO)
+        # Autentica usando el correo como identificador (backend custom).
+        ok = self.client.login(username='concorreo@comercialshalom.com', password='Correo2026x')
+        self.assertTrue(ok)
+
+    def test_desactivar_usuario(self):
+        cajero = Usuario.objects.create_user(username='c', password='x', rol=Usuario.Rol.CAJERO)
+        self.client.force_login(self.admin)
+        r = self.client.post(reverse('usuarios:toggle_activo', args=[cajero.pk]))
+        self.assertRedirects(r, reverse('usuarios:lista'))
+        cajero.refresh_from_db()
+        self.assertFalse(cajero.is_active)
+
+    def test_no_puede_desactivarse_a_si_mismo(self):
+        self.client.force_login(self.admin)
+        self.client.post(reverse('usuarios:toggle_activo', args=[self.admin.pk]))
+        self.admin.refresh_from_db()
+        self.assertTrue(self.admin.is_active)
+
+    def test_log_de_anulacion_aparece_con_badge(self):
+        from productos.models import Categoria, Producto
+        from ventas.servicios import anular_venta, crear_venta
+        cajero = Usuario.objects.create_user(username='caja', password='x', rol=Usuario.Rol.CAJERO)
+        cat = Categoria.objects.create(nombre='G')
+        p = Producto.objects.create(categoria=cat, nombre='P', precio=Decimal('10'), stock=5)
+        venta = crear_venta(cajero, lineas=[{'producto_id': p.id, 'cantidad': 1, 'precio_unitario': '10.00'}])
+        anular_venta(self.admin, venta.id, 'motivo de prueba')
+        self.client.force_login(self.admin)
+        r = self.client.get(reverse('usuarios:logs'))
+        self.assertContains(r, 'Anulación')
+        self.assertTrue(RegistroActividad.objects.filter(tipo='anulacion').exists())
+
+    def test_logs_solo_admin(self):
+        cajero = Usuario.objects.create_user(username='c', password='x', rol=Usuario.Rol.CAJERO)
+        self.client.force_login(cajero)
+        self.assertEqual(self.client.get(reverse('usuarios:logs')).status_code, 403)

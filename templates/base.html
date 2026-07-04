@@ -45,6 +45,13 @@
                 {% endif %}
                 {% if user.es_admin %}
                 <li class="nav-item"><a class="nav-link" href="{% url 'productos:categorias' %}"><i class="bi bi-tags"></i> Categorías</a></li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"><i class="bi bi-gear"></i> Administración</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'usuarios:lista' %}"><i class="bi bi-person-gear"></i> Usuarios</a></li>
+                        <li><a class="dropdown-item" href="{% url 'usuarios:logs' %}"><i class="bi bi-list-check"></i> Bitácora</a></li>
+                    </ul>
+                </li>
                 {% endif %}
                 {% endblock %}
             </ul>

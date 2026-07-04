@@ -1,7 +1,14 @@
+from django.contrib import messages
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
-from django.views.generic import TemplateView
+from django.views.decorators.http import require_POST
+from django.views.generic import CreateView, ListView, TemplateView, UpdateView
+
+from .forms import DOMINIO_CORREO, UsuarioCrearForm, UsuarioEditarForm
+from .models import RegistroActividad, Usuario, registrar_actividad
+from .permisos import RolRequeridoMixin, rol_requerido
 
 
 class LoginView(auth_views.LoginView):
@@ -30,4 +37,104 @@ class InicioView(LoginRequiredMixin, TemplateView):
         u = self.request.user
         usuario = u if (u.es_cajero and not u.es_admin) else None
         ctx.update(datos_dashboard(usuario=usuario))
+        return ctx
+
+
+class SoloAdminMixin(RolRequeridoMixin):
+    roles_permitidos = ()  # solo admin
+
+
+class UsuarioListView(SoloAdminMixin, ListView):
+    model = Usuario
+    template_name = 'usuarios/lista.html'
+    context_object_name = 'usuarios'
+    paginate_by = 50
+    ordering = ('username',)
+
+
+class UsuarioCreateView(SoloAdminMixin, CreateView):
+    model = Usuario
+    form_class = UsuarioCrearForm
+    template_name = 'usuarios/usuario_form.html'
+    success_url = reverse_lazy('usuarios:lista')
+
+    def form_valid(self, form):
+        respuesta = super().form_valid(form)
+        registrar_actividad(
+            self.request.user, RegistroActividad.Tipo.USUARIO,
+            f'Creó el usuario «{self.object.username}» ({self.object.get_rol_display()})',
+            usuario_creado=self.object.username)
+        messages.success(self.request, 'Usuario creado correctamente.')
+        return respuesta
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['dominio'] = DOMINIO_CORREO
+        ctx['es_creacion'] = True
+        return ctx
+
+
+class UsuarioUpdateView(SoloAdminMixin, UpdateView):
+    model = Usuario
+    form_class = UsuarioEditarForm
+    template_name = 'usuarios/usuario_form.html'
+    success_url = reverse_lazy('usuarios:lista')
+
+    def form_valid(self, form):
+        respuesta = super().form_valid(form)
+        registrar_actividad(
+            self.request.user, RegistroActividad.Tipo.USUARIO,
+            f'Editó el usuario «{self.object.username}»',
+            usuario_editado=self.object.username)
+        messages.success(self.request, 'Usuario actualizado.')
+        return respuesta
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['dominio'] = DOMINIO_CORREO
+        ctx['es_creacion'] = False
+        return ctx
+
+
+@rol_requerido()  # solo admin
+@require_POST
+def toggle_activo(request, pk):
+    """Activa o desactiva un usuario (en vez de eliminarlo)."""
+    usuario = get_object_or_404(Usuario, pk=pk)
+    if usuario.pk == request.user.pk:
+        messages.error(request, 'No podés desactivar tu propia cuenta.')
+        return redirect('usuarios:lista')
+    usuario.is_active = not usuario.is_active
+    usuario.save(update_fields=['is_active'])
+    estado = 'activó' if usuario.is_active else 'desactivó'
+    registrar_actividad(
+        request.user, RegistroActividad.Tipo.USUARIO,
+        f'{estado.capitalize()} al usuario «{usuario.username}»',
+        usuario_afectado=usuario.username, activo=usuario.is_active)
+    messages.success(request, f'Usuario {estado}.')
+    return redirect('usuarios:lista')
+
+
+class RegistroActividadListView(SoloAdminMixin, ListView):
+    model = RegistroActividad
+    template_name = 'usuarios/logs.html'
+    context_object_name = 'logs'
+    paginate_by = 50
+
+    def get_queryset(self):
+        qs = RegistroActividad.objects.select_related('usuario')
+        tipo = self.request.GET.get('tipo', '').strip()
+        usuario = self.request.GET.get('usuario', '').strip()
+        if tipo:
+            qs = qs.filter(tipo=tipo)
+        if usuario:
+            qs = qs.filter(usuario_id=usuario)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['tipos'] = RegistroActividad.Tipo.choices
+        ctx['usuarios'] = Usuario.objects.all()
+        ctx['tipo_sel'] = self.request.GET.get('tipo', '')
+        ctx['usuario_sel'] = self.request.GET.get('usuario', '')
         return ctx
