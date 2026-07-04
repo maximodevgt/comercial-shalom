@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import Usuario
+from .models import RegistroActividad, Usuario
 
 
 @admin.register(Usuario)
@@ -18,3 +18,11 @@ class UsuarioAdmin(UserAdmin):
     add_fieldsets = UserAdmin.add_fieldsets + (
         ('Rol en el sistema', {'fields': ('rol',)}),
     )
+
+
+@admin.register(RegistroActividad)
+class RegistroActividadAdmin(admin.ModelAdmin):
+    list_display = ('creado', 'tipo', 'usuario', 'descripcion')
+    list_filter = ('tipo',)
+    search_fields = ('descripcion',)
+    readonly_fields = ('usuario', 'tipo', 'descripcion', 'datos', 'creado')

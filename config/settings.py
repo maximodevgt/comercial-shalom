@@ -147,3 +147,21 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Archivos subidos por usuarios (fotos de producto, etc.).
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Tipo de clave primaria por defecto.
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Backends de autenticación: permite login por username o por correo.
+AUTHENTICATION_BACKENDS = [
+    'usuarios.backends.UsernameOrEmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# Mapea el nivel ERROR de messages a la clase 'danger' de Bootstrap.
+from django.contrib.messages import constants as messages_constants  # noqa: E402
+
+MESSAGE_TAGS = {messages_constants.ERROR: 'danger'}
