@@ -13,12 +13,37 @@ El scaffold de Django ya está creado. Layout actual:
 - `config/` — paquete del proyecto Django (`settings.py`, `urls.py`, `wsgi.py`, `asgi.py`).
 - `manage.py` — punto de entrada de Django (en la raíz del repo).
 - `requirements.txt` — dependencias pineadas (Django 6.0, `mysqlclient`, `django-environ`).
+- `templates/` — templates a nivel proyecto (`base.html`, `inicio.html`, `usuarios/`).
 - `.venv/` — entorno virtual (ignorado por git).
 - `.env` / `.env.example` — configuración y secretos (ver sección más abajo).
 
-Todavía **no hay apps de dominio** creadas (`productos`, `inventario`, `ventas`, `usuarios`, `reportes`). El siguiente paso natural es crearlas con `python manage.py startapp <app>` y registrarlas en `INSTALLED_APPS`.
+Apps de dominio creadas: `usuarios`, `productos`, `ventas`, `clientes`, `reportes` (registradas en `INSTALLED_APPS`). Por ahora solo `usuarios` tiene modelos; las demás son andamiaje vacío.
+
+**Sprint 1 — autenticación con roles (implementado):**
+
+- Modelo de usuario personalizado `usuarios.Usuario` (`AbstractUser` + campo `rol`). `AUTH_USER_MODEL = 'usuarios.Usuario'`.
+- Roles: `admin`, `cajero`, `supervisor` (ver `Usuario.Rol`). Helpers `es_admin` / `es_cajero` / `es_supervisor`.
+- Login/logout con `LoginView`/`LogoutView` y templates en español (`templates/usuarios/login.html`). Rutas bajo `cuentas/` (namespace `usuarios`).
+- Control de acceso por rol en `usuarios/permisos.py`: decorador `rol_requerido(*roles)` para vistas de función y `RolRequeridoMixin` para CBV. El rol `admin` siempre tiene acceso salvo `permitir_admin=False`.
+- **Importante:** el modelo de usuario custom exige que las migraciones se apliquen desde una base limpia. Si alguna vez hay que volver a cambiar `AUTH_USER_MODEL`, se recrea la base (`DROP DATABASE` + `CREATE DATABASE ... utf8mb4`).
 
 Python de referencia: 3.14. Base de datos: MariaDB 11.8 en `127.0.0.1:3306`, base `comercial_shalom`.
+
+## Reglas de oro del proyecto
+
+Reglas no negociables para todo el código que se agregue:
+
+1. **Dinero = `DecimalField`, nunca `FloatField`.** Todos los importes (precios, totales, subtotales, montos de cierre) se modelan con `models.DecimalField(max_digits=..., decimal_places=2)` y se operan con `decimal.Decimal`. Prohibido `float` para dinero — introduce errores de redondeo.
+2. **Transacciones de venta atómicas con bloqueo de filas.** Toda operación que registre una venta (crear la venta, descontar inventario, generar líneas, actualizar el cierre diario) va dentro de `transaction.atomic()`, y las filas de stock/producto que se modifican se leen con `select_for_update()` para evitar condiciones de carrera y sobreventa. Ejemplo:
+
+   ```python
+   from django.db import transaction
+
+   with transaction.atomic():
+       producto = Producto.objects.select_for_update().get(pk=producto_id)
+       # validar stock, descontar, crear líneas, actualizar cierre...
+   ```
+3. **Secretos fuera del código** (ya cubierto en la sección de configuración): nada de credenciales en `settings.py`; todo vía `.env`.
 
 ## Intended scope (from README.md)
 

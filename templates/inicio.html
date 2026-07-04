@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Inicio · Comercial Shalom{% endblock %}
+
+{% block contenido %}
+<h1>Bienvenido/a, {{ user.get_full_name|default:user.username }}</h1>
+<p>Rol: <strong>{{ user.get_rol_display }}</strong></p>
+
+<div style="background:#fff; padding:1.5rem; border-radius:10px; margin-top:1rem;
+            box-shadow:0 1px 4px rgba(0,0,0,.08)">
+    <p>Este es el panel de inicio del sistema POS. Las secciones disponibles se
+    irán habilitando según tu rol:</p>
+    <ul>
+        {% if user.es_admin %}
+        <li>Administración completa (usuarios, productos, ventas, reportes).</li>
+        {% endif %}
+        {% if user.es_supervisor or user.es_admin %}
+        <li>Supervisión: cierres diarios y reportes.</li>
+        {% endif %}
+        {% if user.es_cajero or user.es_admin %}
+        <li>Caja: registrar ventas y consultar productos.</li>
+        {% endif %}
+    </ul>
+</div>
+{% endblock %}

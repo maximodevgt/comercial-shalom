@@ -48,7 +48,21 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Apps de dominio del POS
+    'usuarios',
+    'productos',
+    'ventas',
+    'clientes',
+    'reportes',
 ]
+
+# Modelo de usuario personalizado (roles: admin, cajero, supervisor).
+AUTH_USER_MODEL = 'usuarios.Usuario'
+
+# Rutas de autenticación.
+LOGIN_URL = 'usuarios:login'
+LOGIN_REDIRECT_URL = 'inicio'
+LOGOUT_REDIRECT_URL = 'usuarios:login'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -65,7 +79,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

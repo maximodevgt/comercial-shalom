@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block titulo %}Comercial Shalom · POS{% endblock %}</title>
+    <style>
+        :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+        body { margin: 0; background: #f4f5f7; color: #1f2933; }
+        header.barra { background: #1e293b; color: #fff; padding: .75rem 1.25rem;
+            display: flex; align-items: center; justify-content: space-between; }
+        header.barra a { color: #cbd5e1; text-decoration: none; }
+        .contenido { max-width: 960px; margin: 2rem auto; padding: 0 1.25rem; }
+        .mensajes { list-style: none; padding: 0; margin: 0 0 1rem; }
+        .mensajes li { padding: .6rem 1rem; border-radius: 6px; margin-bottom: .5rem; }
+        .mensajes .error { background: #fee2e2; color: #991b1b; }
+        .mensajes .success { background: #dcfce7; color: #166534; }
+        .btn { display: inline-block; background: #2563eb; color: #fff; border: none;
+            padding: .55rem 1.1rem; border-radius: 6px; cursor: pointer; font-size: 1rem; }
+        .btn:hover { background: #1d4ed8; }
+    </style>
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <header class="barra">
+        <strong>Comercial Shalom · POS</strong>
+        <span>
+            {{ user }} —
+            <form action="{% url 'usuarios:logout' %}" method="post" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="btn" style="background:#475569;padding:.3rem .8rem">Cerrar sesión</button>
+            </form>
+        </span>
+    </header>
+    {% endif %}
+
+    <main class="contenido">
+        {% if messages %}
+        <ul class="mensajes">
+            {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% block contenido %}{% endblock %}
+    </main>
+</body>
+</html>
