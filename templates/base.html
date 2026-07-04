@@ -39,6 +39,10 @@
                 <li class="nav-item"><a class="nav-link" href="{% url 'apartados:lista' %}"><i class="bi bi-bookmark-star"></i> Apartados</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'productos:lista' %}"><i class="bi bi-box-seam"></i> Productos</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'clientes:lista' %}"><i class="bi bi-people"></i> Clientes</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'reportes:cierre' %}"><i class="bi bi-cash-stack"></i> Cierre</a></li>
+                {% if user.es_admin or user.es_supervisor %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'reportes:reporte' %}"><i class="bi bi-calendar3"></i> Reportes</a></li>
+                {% endif %}
                 {% if user.es_admin %}
                 <li class="nav-item"><a class="nav-link" href="{% url 'productos:categorias' %}"><i class="bi bi-tags"></i> Categorías</a></li>
                 {% endif %}

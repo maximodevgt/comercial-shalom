@@ -8,7 +8,12 @@
         {% elif apartado.estado == 'liquidado' %}<span class="badge bg-success">Liquidado</span>
         {% else %}<span class="badge bg-secondary">Cancelado</span>{% endif %}
     </h1>
-    <a href="{% url 'apartados:lista' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
+    <div class="d-flex gap-2">
+        {% if apartado.estado == 'liquidado' %}
+        <a href="{% url 'reportes:ticket_liquidacion_pdf' apartado.pk %}" class="btn btn-outline-dark" target="_blank"><i class="bi bi-file-earmark-pdf"></i> Ticket liquidación</a>
+        {% endif %}
+        <a href="{% url 'apartados:lista' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
+    </div>
 </div>
 
 <div class="row g-3">
@@ -36,12 +41,13 @@
             <div class="card-header"><i class="bi bi-cash-coin"></i> Abonos</div>
             <div class="card-body">
                 <table class="table table-sm mb-0">
-                    <thead><tr><th>Fecha</th><th>Método</th><th>Cajero</th><th class="text-end">Monto</th></tr></thead>
+                    <thead><tr><th>Fecha</th><th>Método</th><th>Cajero</th><th class="text-end">Monto</th><th></th></tr></thead>
                     <tbody>
                         {% for ab in apartado.abonos.all %}
-                        <tr><td>{{ ab.creado|date:'d/m/Y H:i' }}</td><td>{{ ab.get_metodo_display }}</td><td>{{ ab.usuario.username }}</td><td class="text-end">Q {{ ab.monto }}</td></tr>
+                        <tr><td>{{ ab.creado|date:'d/m/Y H:i' }}</td><td>{{ ab.get_metodo_display }}</td><td>{{ ab.usuario.username }}</td><td class="text-end">Q {{ ab.monto }}</td>
+                            <td class="text-end"><a href="{% url 'reportes:comprobante_abono_pdf' ab.pk %}" class="btn btn-sm btn-outline-dark" target="_blank" title="Comprobante"><i class="bi bi-file-earmark-pdf"></i></a></td></tr>
                         {% empty %}
-                        <tr><td colspan="4" class="text-muted text-center py-2">Sin abonos aún.</td></tr>
+                        <tr><td colspan="5" class="text-muted text-center py-2">Sin abonos aún.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>

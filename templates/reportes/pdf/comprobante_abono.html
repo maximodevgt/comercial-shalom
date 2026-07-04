@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+    @page { size: 80mm 297mm; margin: 6mm; }
+    body { font-family: Helvetica, sans-serif; font-size: 10px; }
+    h1 { font-size: 14px; text-align: center; margin: 0; }
+    .center { text-align: center; } .muted { color: #555; }
+    table { width: 100%; border-collapse: collapse; }
+    td { padding: 2px 0; } .r { text-align: right; }
+    .line { border-top: 1px dashed #000; margin: 6px 0; }
+    .tot { font-size: 12px; font-weight: bold; }
+</style></head>
+<body>
+    <h1>{{ negocio.nombre }}</h1>
+    <p class="center muted">Comprobante de abono</p>
+    <div class="line"></div>
+    <p>
+        Apartado #{{ apartado.pk }}<br>
+        Producto: {{ apartado.producto.nombre_completo }}<br>
+        Cliente: {{ apartado.nombre_cliente }}<br>
+        Fecha: {{ abono.creado|date:'d/m/Y H:i' }}<br>
+        Cajero: {{ abono.usuario.username }}
+    </p>
+    <div class="line"></div>
+    <table>
+        <tr class="tot"><td>Abono ({{ abono.get_metodo_display }})</td><td class="r">Q {{ abono.monto }}</td></tr>
+        <tr><td>Precio total</td><td class="r">Q {{ apartado.precio_total }}</td></tr>
+        <tr><td>Total abonado</td><td class="r">Q {{ apartado.total_abonado }}</td></tr>
+        <tr class="tot"><td>Pendiente</td><td class="r">Q {{ apartado.pendiente }}</td></tr>
+    </table>
+    <div class="line"></div>
+    <p class="center muted">Conserve este comprobante.</p>
+</body></html>

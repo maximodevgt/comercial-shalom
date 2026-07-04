@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+    @page { size: 80mm 297mm; margin: 6mm; }
+    body { font-family: Helvetica, sans-serif; font-size: 10px; color: #000; }
+    h1 { font-size: 14px; text-align: center; margin: 0; }
+    .center { text-align: center; }
+    .muted { color: #555; }
+    table { width: 100%; border-collapse: collapse; }
+    td { padding: 2px 0; vertical-align: top; }
+    .r { text-align: right; }
+    .line { border-top: 1px dashed #000; margin: 6px 0; }
+    .tot { font-size: 12px; font-weight: bold; }
+</style></head>
+<body>
+    <h1>{{ negocio.nombre }}</h1>
+    <p class="center muted">{{ negocio.direccion }}</p>
+    <div class="line"></div>
+    <p>
+        <strong>Ticket de venta #{{ venta.pk }}</strong><br>
+        Fecha: {{ venta.creado|date:'d/m/Y H:i' }}<br>
+        Cajero: {{ venta.usuario.get_full_name|default:venta.usuario.username }}<br>
+        Cliente: {{ venta.nombre_cliente }}
+        {% if venta.estado == 'anulada' %}<br><strong>*** ANULADA ***</strong>{% endif %}
+    </p>
+    <div class="line"></div>
+    <table>
+        {% for d in venta.detalles.all %}
+        <tr>
+            <td colspan="2">{{ d.producto.nombre_completo }}</td>
+        </tr>
+        <tr>
+            <td class="muted">{{ d.cantidad }} x Q {{ d.precio_unitario }}{% if d.descuento > 0 %} (desc.){% endif %}</td>
+            <td class="r">Q {{ d.subtotal }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <div class="line"></div>
+    <table>
+        <tr><td>Subtotal</td><td class="r">Q {{ venta.subtotal }}</td></tr>
+        {% if venta.descuento_total > 0 %}<tr><td>Descuento</td><td class="r">- Q {{ venta.descuento_total }}</td></tr>{% endif %}
+        {% if venta.saldo_aplicado > 0 %}<tr><td>Saldo aplicado</td><td class="r">- Q {{ venta.saldo_aplicado }}</td></tr>{% endif %}
+        <tr class="tot"><td>TOTAL</td><td class="r">Q {{ venta.total }}</td></tr>
+        <tr><td>Método</td><td class="r">{{ venta.get_metodo_pago_display }}</td></tr>
+    </table>
+    <div class="line"></div>
+    <p class="center muted">¡Gracias por su compra!</p>
+</body></html>

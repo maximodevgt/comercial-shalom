@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+    @page { size: A4; margin: 15mm; }
+    body { font-family: Helvetica, sans-serif; font-size: 11px; color: #000; }
+    h1 { font-size: 18px; margin: 0; }
+    .muted { color: #555; }
+    .tarjetas td { border: 1px solid #ccc; padding: 8px; text-align: center; width: 33%; }
+    .tarjetas .num { font-size: 16px; font-weight: bold; }
+    table.det { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    table.det th { background: #eee; text-align: left; padding: 4px; border-bottom: 1px solid #999; }
+    table.det td { padding: 4px; border-bottom: 1px solid #ddd; vertical-align: top; }
+    .r { text-align: right; }
+</style></head>
+<body>
+    <h1>{{ negocio.nombre }}</h1>
+    <p class="muted">{{ titulo }} — {{ fecha|date:'d/m/Y' }}</p>
+    <table class="tarjetas" style="width:100%; border-collapse:collapse;">
+        <tr>
+            <td>Total vendido<div class="num">Q {{ total_vendido }}</div></td>
+            <td>Ventas<div class="num">{{ num_ventas }}</div></td>
+            <td>Productos vendidos<div class="num">{{ productos_vendidos }}</div></td>
+        </tr>
+    </table>
+    <p class="muted" style="margin-top:6px">Solo ventas completadas (las anuladas no cuentan).</p>
+
+    <table class="det">
+        <thead><tr><th>#</th><th>Cliente</th><th>Cajero</th><th>Productos</th><th class="r">Total</th><th>Hora</th></tr></thead>
+        <tbody>
+            {% for v in ventas %}
+            <tr>
+                <td>{{ v.pk }}</td>
+                <td>{{ v.nombre_cliente }}</td>
+                <td>{{ v.usuario.username }}</td>
+                <td>
+                    {% for d in v.detalles.all %}{{ d.producto.nombre_completo }} (x{{ d.cantidad }}){% if not forloop.last %}<br>{% endif %}{% endfor %}
+                </td>
+                <td class="r">Q {{ v.total }}</td>
+                <td>{{ v.creado|date:'H:i' }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6">Sin ventas completadas.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body></html>

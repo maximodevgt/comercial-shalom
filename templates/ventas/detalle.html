@@ -8,6 +8,7 @@
     </h1>
     <div class="d-flex gap-2">
         <a href="{% url 'ventas:historial' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
+        <a href="{% url 'reportes:ticket_venta_pdf' venta.pk %}" class="btn btn-outline-dark" target="_blank"><i class="bi bi-file-earmark-pdf"></i> Ticket PDF</a>
         {% if user.es_admin and not venta.esta_anulada %}
         <a href="{% url 'ventas:anular' venta.pk %}" class="btn btn-danger"><i class="bi bi-x-octagon"></i> Anular</a>
         {% endif %}
