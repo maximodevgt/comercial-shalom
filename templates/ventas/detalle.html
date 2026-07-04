@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block titulo %}Venta #{{ venta.pk }} · Comercial Shalom{% endblock %}
+
+{% block contenido %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0"><i class="bi bi-receipt"></i> Venta #{{ venta.pk }}
+        {% if venta.esta_anulada %}<span class="badge bg-danger align-middle">Anulada</span>{% else %}<span class="badge bg-success align-middle">Completada</span>{% endif %}
+    </h1>
+    <div class="d-flex gap-2">
+        <a href="{% url 'ventas:historial' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
+        {% block acciones_detalle %}{% endblock %}
+    </div>
+</div>
+
+{% if venta.esta_anulada %}
+<div class="alert alert-danger"><strong>Venta anulada.</strong> Motivo: {{ venta.motivo_anulacion }}</div>
+{% endif %}
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card"><div class="card-body">
+            <h6 class="text-muted">Datos</h6>
+            <p class="mb-1"><strong>Cliente:</strong> {{ venta.nombre_cliente }}</p>
+            {% if venta.telefono %}<p class="mb-1"><strong>Teléfono:</strong> {{ venta.telefono }}</p>{% endif %}
+            <p class="mb-1"><strong>Cajero:</strong> {{ venta.usuario.get_full_name|default:venta.usuario.username }}</p>
+            <p class="mb-1"><strong>Método:</strong> {{ venta.get_metodo_pago_display }}</p>
+            {% if venta.metodo_pago == 'tarjeta' %}<p class="mb-1"><strong>Monto POS:</strong> Q {{ venta.monto_tarjeta }}</p>{% endif %}
+            <p class="mb-0"><strong>Fecha:</strong> {{ venta.creado|date:'d/m/Y H:i' }}</p>
+        </div></div>
+    </div>
+    <div class="col-md-8">
+        <div class="card"><div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="table-light"><tr><th></th><th>Producto</th><th class="text-center">Cant.</th><th class="text-end">P. unit.</th><th class="text-end">Subtotal</th></tr></thead>
+                <tbody>
+                    {% for d in venta.detalles.all %}
+                    <tr>
+                        <td>{% if d.producto.foto %}<img src="{{ d.producto.foto.url }}" class="mini">{% endif %}</td>
+                        <td>{{ d.producto.nombre_completo }}</td>
+                        <td class="text-center">{{ d.cantidad }}</td>
+                        <td class="text-end">{% if d.descuento > 0 %}<span class="precio-tachado">Q {{ d.precio_original }}</span> {% endif %}Q {{ d.precio_unitario }}</td>
+                        <td class="text-end">Q {{ d.subtotal }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr><td colspan="4" class="text-end">Subtotal</td><td class="text-end">Q {{ venta.subtotal }}</td></tr>
+                    {% if venta.descuento_total > 0 %}<tr><td colspan="4" class="text-end text-success">Descuento</td><td class="text-end text-success">− Q {{ venta.descuento_total }}</td></tr>{% endif %}
+                    {% if venta.saldo_aplicado > 0 %}<tr><td colspan="4" class="text-end text-info">Saldo aplicado</td><td class="text-end text-info">− Q {{ venta.saldo_aplicado }}</td></tr>{% endif %}
+                    <tr class="fw-bold fs-5"><td colspan="4" class="text-end">Total</td><td class="text-end">Q {{ venta.total }}</td></tr>
+                </tfoot>
+            </table>
+        </div></div>
+    </div>
+</div>
+{% endblock %}

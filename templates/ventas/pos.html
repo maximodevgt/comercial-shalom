@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% block titulo %}Nueva venta · Comercial Shalom{% endblock %}
+
+{% block extra_css %}
+<style>
+    .grid-productos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .75rem; }
+    .card-producto .foto { height: 110px; width: 100%; object-fit: contain; background: #fff; border-bottom: 1px solid #eee; }
+    .ticket { position: sticky; top: 1rem; }
+    .ticket-lineas td { vertical-align: middle; }
+    .precio-tachado { text-decoration: line-through; color: #adb5bd; font-size: .8rem; }
+    .flash { animation: flash .5s ease; }
+    @keyframes flash { from { background: #d1e7dd; } to { background: transparent; } }
+    .inp-desc { max-width: 90px; text-align: right; }
+    .inp-cant { max-width: 64px; text-align: center; }
+    .mini { width: 34px; height: 34px; object-fit: cover; border-radius: 4px; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+{{ productos_data|json_script:"productos-data" }}
+{{ clientes_saldo|json_script:"clientes-saldo" }}
+
+<div class="row g-3">
+    <!-- Columna izquierda: catálogo -->
+    <div class="col-lg-7">
+        <div class="row g-2 mb-3">
+            <div class="col-md-5">
+                <select id="filtro-categoria" class="form-select">
+                    <option value="">Todas las categorías</option>
+                    {% for c in categorias %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-md-7">
+                <input id="filtro-texto" type="text" class="form-control" placeholder="Buscar producto...">
+            </div>
+        </div>
+        <div id="grid" class="grid-productos"></div>
+    </div>
+
+    <!-- Columna derecha: ticket -->
+    <div class="col-lg-5">
+        <div class="ticket card shadow-sm">
+            <div class="card-header bg-dark text-white"><i class="bi bi-receipt"></i> Ticket</div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <label class="form-label small mb-1">Cliente registrado</label>
+                    <select id="cliente" class="form-select form-select-sm">
+                        <option value="">Consumidor Final</option>
+                        {% for c in clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+                    </select>
+                    <div id="saldo-box" class="form-check mt-1 d-none">
+                        <input class="form-check-input" type="checkbox" id="aplicar-saldo">
+                        <label class="form-check-label small" for="aplicar-saldo">Aplicar saldo disponible: <span id="saldo-monto">Q 0.00</span></label>
+                    </div>
+                </div>
+                <div class="row g-1 mb-2" id="datos-libres">
+                    <div class="col-7"><input id="nombre-libre" class="form-control form-control-sm" placeholder="Nombre (opcional)"></div>
+                    <div class="col-5"><input id="telefono" class="form-control form-control-sm" placeholder="Teléfono"></div>
+                </div>
+
+                <table class="table table-sm ticket-lineas">
+                    <tbody id="lineas"></tbody>
+                    <tfoot>
+                        <tr class="fw-bold"><td colspan="2" id="pie-cantidad">Total 0 productos</td><td class="text-end" id="pie-subtotal">Q 0.00</td></tr>
+                    </tfoot>
+                </table>
+
+                <div class="mb-2">
+                    <label class="form-label small mb-1">Método de pago</label>
+                    <select id="metodo-pago" class="form-select form-select-sm">
+                        <option value="efectivo">Efectivo</option>
+                        <option value="tarjeta">Tarjeta</option>
+                    </select>
+                </div>
+                <div id="tarjeta-box" class="mb-2 d-none">
+                    <div class="small text-muted">Referencia para el POS: <strong id="ref-pos">Q 0.00</strong></div>
+                    <input id="monto-tarjeta" class="form-control form-control-sm" placeholder="Monto que indica el POS">
+                    <div class="form-text">Escribí el monto que indica el POS.</div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center border-top pt-2">
+                    <span class="fs-5">Total</span>
+                    <span class="fs-4 fw-bold" id="total-grande">Q 0.00</span>
+                </div>
+                <div id="error-venta" class="alert alert-danger py-1 mt-2 d-none"></div>
+                <button id="btn-registrar" class="btn btn-success w-100 mt-2"><i class="bi bi-check-lg"></i> Registrar venta</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = "{{ csrf_token }}";
+const PRODUCTOS = JSON.parse(document.getElementById('productos-data').textContent);
+const SALDOS = JSON.parse(document.getElementById('clientes-saldo').textContent);
+const MAPA = {}; PRODUCTOS.forEach(p => MAPA[p.id] = p);
+const ticket = {}; // id -> {cantidad, descuento}
+
+// Escapa texto de usuario antes de insertarlo en el DOM (regla de oro #4).
+function esc(s) {
+    return String(s).replace(/[&<>"']/g, c => (
+        {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function q(n) { return 'Q ' + Number(n).toFixed(2); }
+
+// ---- Grid ----
+function pintarGrid() {
+    const cat = document.getElementById('filtro-categoria').value;
+    const txt = document.getElementById('filtro-texto').value.toLowerCase();
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    PRODUCTOS.forEach(p => {
+        if (cat && String(p.categoria_id) !== cat) return;
+        const hay = (p.nombre + ' ' + p.modelo + ' ' + p.color).toLowerCase();
+        if (txt && !hay.includes(txt)) return;
+        const agotado = p.stock <= 0;
+        const card = document.createElement('div');
+        card.className = 'card card-producto' + (agotado ? ' agotado' : '');
+        const foto = p.foto
+            ? `<img src="${esc(p.foto)}" class="foto" alt="">`
+            : `<div class="foto placeholder-foto d-flex align-items-center justify-content-center"><i class="bi bi-image fs-3"></i></div>`;
+        card.innerHTML = foto +
+            `<div class="card-body p-2">
+                <div class="small fw-semibold text-truncate">${esc(p.nombre)}</div>
+                <div class="text-muted" style="font-size:.75rem">${esc(p.modelo)}${p.modelo && p.color ? ' · ' : ''}${esc(p.color)}</div>
+                <div class="fw-bold">${q(p.precio)}</div>
+                <span class="badge ${agotado ? 'bg-secondary' : (p.stock <= 2 ? 'bg-warning text-dark' : 'bg-light text-dark border')}">${agotado ? 'Agotado' : 'Stock: ' + p.stock}</span>
+            </div>`;
+        if (!agotado) card.addEventListener('click', () => agregar(p.id, card));
+        grid.appendChild(card);
+    });
+}
+
+function agregar(id, card) {
+    const p = MAPA[id];
+    const cur = ticket[id] || {cantidad: 0, descuento: 0};
+    if (cur.cantidad + 1 > p.stock) return;
+    cur.cantidad += 1;
+    ticket[id] = cur;
+    if (card) { card.classList.add('flash'); setTimeout(() => card.classList.remove('flash'), 500); }
+    pintarTicket();
+}
+
+function pintarTicket() {
+    const cont = document.getElementById('lineas');
+    cont.innerHTML = '';
+    let unidades = 0, subtotal = 0;
+    Object.keys(ticket).forEach(id => {
+        const p = MAPA[id]; const l = ticket[id];
+        const precioEfectivo = Math.max(0, Number(p.precio) - Number(l.descuento || 0));
+        const sub = precioEfectivo * l.cantidad;
+        unidades += l.cantidad; subtotal += sub;
+        const tr = document.createElement('tr');
+        const foto = p.foto ? `<img src="${esc(p.foto)}" class="mini">` : '';
+        tr.innerHTML =
+            `<td style="width:44px">${foto}</td>
+             <td>
+                <div class="small fw-semibold">${esc(p.nombre)}</div>
+                <div class="text-muted" style="font-size:.72rem">${esc(p.modelo)} ${esc(p.color)}</div>
+                <div class="d-flex align-items-center gap-1 mt-1">
+                    <input type="number" min="1" max="${p.stock}" value="${l.cantidad}" class="form-control form-control-sm inp-cant" data-id="${id}" data-f="cant">
+                    <span>×</span>
+                    ${Number(l.descuento) > 0 ? `<span class="precio-tachado">${q(p.precio)}</span>` : ''}
+                    <span class="small">${q(precioEfectivo)}</span>
+                </div>
+                <div class="input-group input-group-sm mt-1">
+                    <span class="input-group-text">Desc.</span>
+                    <input type="number" min="0" max="${p.precio}" step="0.01" value="${l.descuento || 0}" class="form-control inp-desc" data-id="${id}" data-f="desc">
+                </div>
+             </td>
+             <td class="text-end">${q(sub)}<br><button class="btn btn-sm btn-link text-danger p-0" data-id="${id}" data-f="quitar"><i class="bi bi-x-circle"></i></button></td>`;
+        cont.appendChild(tr);
+    });
+    document.getElementById('pie-cantidad').textContent = `Total ${unidades} productos`;
+    document.getElementById('pie-subtotal').textContent = q(subtotal);
+
+    // Saldo aplicado (client-side, referencial; el backend recalcula).
+    let saldoAplicado = 0;
+    const cli = document.getElementById('cliente').value;
+    if (cli && document.getElementById('aplicar-saldo').checked) {
+        saldoAplicado = Math.min(Number(SALDOS[cli] || 0), subtotal);
+    }
+    const total = Math.max(0, subtotal - saldoAplicado);
+    document.getElementById('total-grande').textContent = q(total);
+    document.getElementById('ref-pos').textContent = q(total);
+}
+
+// Delegación de eventos en el ticket.
+document.getElementById('lineas').addEventListener('input', e => {
+    const id = e.target.dataset.id, f = e.target.dataset.f;
+    if (!id) return;
+    if (f === 'cant') {
+        let v = parseInt(e.target.value) || 1;
+        v = Math.max(1, Math.min(v, MAPA[id].stock));
+        ticket[id].cantidad = v; e.target.value = v; pintarTicket();
+    } else if (f === 'desc') {
+        let v = parseFloat(e.target.value) || 0;
+        v = Math.max(0, Math.min(v, Number(MAPA[id].precio)));
+        ticket[id].descuento = v; pintarTicket();
+    }
+});
+document.getElementById('lineas').addEventListener('click', e => {
+    const btn = e.target.closest('[data-f="quitar"]');
+    if (btn) { delete ticket[btn.dataset.id]; pintarTicket(); }
+});
+
+// Cliente / saldo
+document.getElementById('cliente').addEventListener('change', e => {
+    const box = document.getElementById('saldo-box');
+    const libres = document.getElementById('datos-libres');
+    const saldo = Number(SALDOS[e.target.value] || 0);
+    if (e.target.value && saldo > 0) {
+        box.classList.remove('d-none');
+        document.getElementById('saldo-monto').textContent = q(saldo);
+    } else { box.classList.add('d-none'); document.getElementById('aplicar-saldo').checked = false; }
+    libres.classList.toggle('d-none', !!e.target.value);
+    pintarTicket();
+});
+document.getElementById('aplicar-saldo').addEventListener('change', pintarTicket);
+
+// Método de pago
+document.getElementById('metodo-pago').addEventListener('change', e => {
+    document.getElementById('tarjeta-box').classList.toggle('d-none', e.target.value !== 'tarjeta');
+});
+
+// Filtros
+document.getElementById('filtro-categoria').addEventListener('change', pintarGrid);
+document.getElementById('filtro-texto').addEventListener('input', pintarGrid);
+
+// Registrar
+document.getElementById('btn-registrar').addEventListener('click', async () => {
+    const err = document.getElementById('error-venta');
+    err.classList.add('d-none');
+    const lineas = Object.keys(ticket).map(id => ({
+        producto_id: Number(id),
+        cantidad: ticket[id].cantidad,
+        precio_unitario: (Math.max(0, Number(MAPA[id].precio) - Number(ticket[id].descuento || 0))).toFixed(2),
+    }));
+    if (!lineas.length) { err.textContent = 'Agregá al menos un producto.'; err.classList.remove('d-none'); return; }
+    const payload = {
+        cliente_id: document.getElementById('cliente').value || null,
+        nombre_cliente_libre: document.getElementById('nombre-libre').value,
+        telefono: document.getElementById('telefono').value,
+        metodo_pago: document.getElementById('metodo-pago').value,
+        monto_tarjeta: document.getElementById('monto-tarjeta').value || null,
+        aplicar_saldo: document.getElementById('aplicar-saldo').checked,
+        lineas,
+    };
+    const btn = document.getElementById('btn-registrar');
+    btn.disabled = true;
+    try {
+        const r = await fetch("{% url 'ventas:registrar' %}", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
+            body: JSON.stringify(payload),
+        });
+        const data = await r.json();
+        if (data.ok) { window.location = '/ventas/' + data.venta_id + '/'; }
+        else { err.textContent = data.error || 'No se pudo registrar la venta.'; err.classList.remove('d-none'); btn.disabled = false; }
+    } catch (_) { err.textContent = 'Error de conexión.'; err.classList.remove('d-none'); btn.disabled = false; }
+});
+
+pintarGrid();
+pintarTicket();
+</script>
+{% endblock %}

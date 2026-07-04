@@ -32,6 +32,10 @@
         <div class="collapse navbar-collapse" id="nav">
             <ul class="navbar-nav me-auto">
                 {% block nav_links %}
+                {% if user.es_admin or user.es_cajero %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'ventas:pos' %}"><i class="bi bi-cart-plus"></i> Nueva venta</a></li>
+                {% endif %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'ventas:historial' %}"><i class="bi bi-receipt"></i> Ventas</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'productos:lista' %}"><i class="bi bi-box-seam"></i> Productos</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'clientes:lista' %}"><i class="bi bi-people"></i> Clientes</a></li>
                 {% if user.es_admin %}
