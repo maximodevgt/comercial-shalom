@@ -1,25 +1,109 @@
 {% extends 'base.html' %}
-
 {% block titulo %}Inicio · Comercial Shalom{% endblock %}
 
 {% block contenido %}
-<h1>Bienvenido/a, {{ user.get_full_name|default:user.username }}</h1>
-<p>Rol: <strong>{{ user.get_rol_display }}</strong></p>
-
-<div style="background:#fff; padding:1.5rem; border-radius:10px; margin-top:1rem;
-            box-shadow:0 1px 4px rgba(0,0,0,.08)">
-    <p>Este es el panel de inicio del sistema POS. Las secciones disponibles se
-    irán habilitando según tu rol:</p>
-    <ul>
-        {% if user.es_admin %}
-        <li>Administración completa (usuarios, productos, ventas, reportes).</li>
-        {% endif %}
-        {% if user.es_supervisor or user.es_admin %}
-        <li>Supervisión: cierres diarios y reportes.</li>
-        {% endif %}
-        {% if user.es_cajero or user.es_admin %}
-        <li>Caja: registrar ventas y consultar productos.</li>
-        {% endif %}
-    </ul>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Hola, {{ user.get_full_name|default:user.username }} <span class="badge bg-secondary">{{ user.get_rol_display }}</span></h1>
+    <span class="text-muted">{% now 'l d/m/Y' %}</span>
 </div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card text-bg-success"><div class="card-body"><div class="small">Total vendido hoy</div><div class="fs-3 fw-bold">Q {{ total_hoy }}</div></div></div></div>
+    <div class="col-md-4"><div class="card text-bg-primary"><div class="card-body"><div class="small">Ventas de hoy</div><div class="fs-3 fw-bold">{{ num_ventas_hoy }}</div></div></div></div>
+    <div class="col-md-4">
+        <div class="card text-bg-warning" role="button" data-bs-toggle="modal" data-bs-target="#modalStock">
+            <div class="card-body"><div class="small">Stock bajo</div><div class="fs-3 fw-bold">{{ num_stock_bajo }} <i class="bi bi-box-arrow-up-right fs-6"></i></div></div>
+        </div>
+    </div>
+</div>
+
+{% if not reducido %}
+{{ chart_semana|json_script:"data-semana" }}
+{{ chart_top|json_script:"data-top" }}
+{{ chart_cajero|json_script:"data-cajero" }}
+<div class="row g-3 mb-4">
+    <div class="col-lg-6"><div class="card"><div class="card-header">Ventas de la semana</div><div class="card-body"><canvas id="chartSemana" height="140"></canvas></div></div></div>
+    <div class="col-lg-6"><div class="card"><div class="card-header">Top 5 productos</div><div class="card-body"><canvas id="chartTop" height="140"></canvas></div></div></div>
+    <div class="col-lg-6"><div class="card"><div class="card-header">Ventas por cajero</div><div class="card-body"><canvas id="chartCajero" height="140"></canvas></div></div></div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header"><i class="bi bi-clock-history"></i> Últimas ventas de hoy</div>
+    <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-light"><tr><th>#</th><th>Cliente</th><th>Productos</th><th class="text-end">Total</th><th>Hora</th></tr></thead>
+        <tbody>
+            {% for v in ultimas_ventas %}
+            <tr>
+                <td>{{ v.pk }}</td>
+                <td>{{ v.nombre_cliente }}</td>
+                <td style="min-width:220px">
+                    {% for d in v.detalles.all %}
+                    <div class="d-flex align-items-center gap-2 {% if not forloop.first %}border-top pt-1 mt-1{% endif %}">
+                        {% if d.producto.foto %}<img src="{{ d.producto.foto.url }}" class="mini">{% endif %}
+                        <span class="small">{{ d.producto.nombre_completo }} <span class="text-muted">×{{ d.cantidad }}</span></span>
+                    </div>
+                    {% endfor %}
+                </td>
+                <td class="text-end fw-bold">Q {{ v.total }}</td>
+                <td class="small">{{ v.creado|date:'H:i' }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-4">Aún no hay ventas hoy.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<!-- Modal stock bajo -->
+<div class="modal fade" id="modalStock" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title">Productos con stock bajo</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <table class="table table-sm align-middle">
+        <tbody>
+          {% for p in stock_bajo %}
+          <tr>
+            <td style="width:44px">{% if p.foto %}<img src="{{ p.foto.url }}" class="mini">{% else %}<i class="bi bi-image text-muted"></i>{% endif %}</td>
+            <td>{{ p.nombre_completo }}</td>
+            <td class="text-end">{% if p.stock == 0 %}<span class="badge bg-secondary">Agotado</span>{% else %}<span class="badge bg-warning text-dark">{{ p.stock }}</span>{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr><td class="text-muted text-center py-3">No hay productos con stock bajo. 🎉</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if not reducido %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+const dSemana = JSON.parse(document.getElementById('data-semana').textContent);
+const dTop = JSON.parse(document.getElementById('data-top').textContent);
+const dCajero = JSON.parse(document.getElementById('data-cajero').textContent);
+const COLORS = ['#0d6efd','#198754','#ffc107','#dc3545','#6f42c1','#20c997','#fd7e14'];
+
+new Chart(document.getElementById('chartSemana'), {
+    type: 'bar',
+    data: { labels: dSemana.labels, datasets: [{ label: 'Q vendidos', data: dSemana.valores, backgroundColor: '#0d6efd' }] },
+    options: { plugins: { legend: { display: false } } }
+});
+new Chart(document.getElementById('chartTop'), {
+    type: 'bar',
+    data: { labels: dTop.labels, datasets: [{ label: 'Unidades', data: dTop.valores, backgroundColor: '#198754' }] },
+    options: { indexAxis: 'y', plugins: { legend: { display: false } } }
+});
+new Chart(document.getElementById('chartCajero'), {
+    type: 'doughnut',
+    data: { labels: dCajero.labels, datasets: [{ data: dCajero.valores, backgroundColor: COLORS }] }
+});
+</script>
+{% endif %}
 {% endblock %}

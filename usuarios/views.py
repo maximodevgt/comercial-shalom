@@ -18,6 +18,16 @@ class LogoutView(auth_views.LogoutView):
 
 
 class InicioView(LoginRequiredMixin, TemplateView):
-    """Panel de inicio tras el login. El contenido se ajusta según el rol."""
+    """Dashboard de inicio. Admin/supervisor ven la versión completa con
+    gráficas; el cajero ve una versión reducida con sus números del día."""
 
     template_name = 'inicio.html'
+
+    def get_context_data(self, **kwargs):
+        from reportes.consultas import datos_dashboard
+
+        ctx = super().get_context_data(**kwargs)
+        u = self.request.user
+        usuario = u if (u.es_cajero and not u.es_admin) else None
+        ctx.update(datos_dashboard(usuario=usuario))
+        return ctx
