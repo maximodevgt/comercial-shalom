@@ -35,7 +35,7 @@
                     {% if venta.metodo_pago == 'tarjeta' %}<span class="badge text-bg-info">Tarjeta</span>
                     {% else %}<span class="badge text-bg-success">Efectivo</span>{% endif %}</p>
                 {% if venta.metodo_pago == 'tarjeta' %}<p class="mb-1"><strong>Monto POS:</strong> Q {{ venta.monto_tarjeta }}</p>{% endif %}
-                <p class="mb-0"><strong>Fecha:</strong> {{ venta.creado|date:'d/m/Y H:i' }}</p>
+                <p class="mb-0"><strong>Fecha:</strong> {{ venta.creado|date:'d/m/Y h:i A' }}</p>
             </div>
         </div>
     </div>

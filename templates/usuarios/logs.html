@@ -64,7 +64,7 @@
                     {% else %}<span class="badge text-bg-secondary">{{ log.get_tipo_display }}</span>{% endif %}
                     <span class="small ms-1">{{ log.descripcion }}</span>
                 </td>
-                <td class="small text-muted text-nowrap">{{ log.creado|date:'d/m/Y H:i' }}</td>
+                <td class="small text-muted text-nowrap">{{ log.creado|date:'d/m/Y h:i A' }}</td>
             </tr>
             {% empty %}
             <tr><td colspan="4" class="text-center text-muted py-4">No hay registros.</td></tr>

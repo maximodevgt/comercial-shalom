@@ -91,7 +91,7 @@
                     {% endfor %}
                 </td>
                 <td class="text-end fw-bold">Q {{ v.total }}</td>
-                <td class="small">{{ v.creado|date:'H:i' }}</td>
+                <td class="small">{{ v.creado|date:'h:i A' }}</td>
             </tr>
             {% empty %}
             <tr><td colspan="5" class="text-center text-muted py-4">Aún no hay ventas hoy.</td></tr>

@@ -65,7 +65,7 @@
                 </td>
                 <td class="small text-muted">
                     <div>{{ a.creado|date:'d/m/Y' }}</div>
-                    <div>{{ a.creado|date:'H:i' }}</div>
+                    <div>{{ a.creado|date:'h:i A' }}</div>
                 </td>
                 <td class="text-end">
                     <a href="{% url 'apartados:detalle' a.pk %}" class="btn btn-sm btn-info" title="Ver">

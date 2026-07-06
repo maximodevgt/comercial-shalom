@@ -31,7 +31,7 @@
                 {% if apartado.telefono %}<p class="mb-1"><strong>Teléfono:</strong> {{ apartado.telefono }}</p>{% endif %}
                 <p class="mb-1"><strong>Cajero:</strong>
                     <span class="badge text-bg-primary">{{ apartado.usuario.get_full_name|default:apartado.usuario.username }}</span></p>
-                <p class="mb-1"><strong>Fecha:</strong> {{ apartado.creado|date:'d/m/Y H:i' }}</p>
+                <p class="mb-1"><strong>Fecha:</strong> {{ apartado.creado|date:'d/m/Y h:i A' }}</p>
                 {% if apartado.descuento > 0 %}
                 <p class="mb-1 texto-exito"><strong>Descuento:</strong> Q {{ apartado.descuento }}</p>{% endif %}
                 {% if apartado.venta %}
@@ -55,7 +55,7 @@
                     <tbody>
                         {% for ab in apartado.abonos.all %}
                         <tr>
-                            <td class="small">{{ ab.creado|date:'d/m/Y H:i' }}</td>
+                            <td class="small">{{ ab.creado|date:'d/m/Y h:i A' }}</td>
                             <td>
                                 {% if ab.metodo == 'tarjeta' %}<span class="badge text-bg-info">Tarjeta</span>
                                 {% elif ab.metodo == 'saldo' %}<span class="badge text-bg-secondary">Saldo a favor</span>
