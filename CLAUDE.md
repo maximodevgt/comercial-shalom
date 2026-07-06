@@ -8,16 +8,17 @@ Respondé SIEMPRE en español latinoamericano. Todos los mensajes, explicaciones
 
 ## Project state
 
-Sistema POS **completo y funcional** (fases 1–10 implementadas). Python 3.14, Django 6.0, PostgreSQL 15 en `127.0.0.1:5432` (base `comercial_shalom`). Frontend con Bootstrap 5, Font Awesome 6 y Chart.js (todo por CDN). Identidad visual definida con variables CSS en `templates/base.html` (`:root`, color primario azul profundo). Íconos solo Font Awesome (sin emojis). Suite de tests verde.
+Sistema POS **completo y funcional** (fases 1–10 implementadas, v1.1-beta). Python 3.14, Django 6.0, PostgreSQL 15 en `127.0.0.1:5432` (base `comercial_shalom`). Frontend con Bootstrap 5, Font Awesome 6 y Chart.js (todo por CDN). Identidad visual definida con variables CSS en `templates/base.html` (`:root`, azul profundo + verde del logo): **navegación en sidebar vertical izquierdo fijo** (240px, off-canvas con hamburguesa bajo 992px) y **modo claro/oscuro** con toggle persistido en `localStorage` (`data-theme` + `data-bs-theme` en `<html>`). Íconos solo Font Awesome (sin emojis). Suite de tests verde.
 
 ### Apps y modelos
 
 - **`usuarios`** — `Usuario(AbstractUser + rol)` (roles `admin`/`cajero`/`supervisor`), `RegistroActividad` (bitácora). `AUTH_USER_MODEL = 'usuarios.Usuario'`. Permisos en `usuarios/permisos.py` (`rol_requerido`, `RolRequeridoMixin`; `is_superuser` cuenta como admin). Backend de login por username o correo (`usuarios/backends.py`). Signal que loguea inicios de sesión.
-- **`productos`** — `Categoria`, `Producto` (precio Decimal, stock, foto `ImageField` validada, properties `nombre_completo`/`estado_stock`). Validador de foto en `productos/validators.py`.
+- **`productos`** — `Categoria`, `Producto` (precio Decimal, stock, foto `ImageField` validada, properties `nombre_completo`/`estado_stock`, FK opcional `proveedor` con `on_delete=PROTECT` y `related_name='productos'`). Validador de foto en `productos/validators.py`.
 - **`clientes`** — `Cliente` (con `saldo_favor` Decimal; el saldo solo lo mueven ventas/anulaciones/apartados).
 - **`ventas`** — `Venta`, `DetalleVenta`. Lógica en `ventas/servicios.py`: `crear_venta()` y `anular_venta()`, todo atómico con `select_for_update()` y recálculo de totales en el backend.
-- **`apartados`** — `Apartado`, `Abono`. Lógica en `apartados/servicios.py`: crear/abonar/liquidar/cancelar (atómico, con restitución de saldo y restauración de stock).
+- **`apartados`** — `Apartado`, `Abono`. Lógica en `apartados/servicios.py`: crear/abonar/liquidar/cancelar (atómico, con restitución de saldo y restauración de stock). **Cancelar es solo admin** (redirige dinero abonado); los abonos en efectivo/tarjeta que exceden el pendiente se **rechazan** (solo el método saldo se capea).
 - **`reportes`** — sin modelos. `consultas.py` (`resumen_dia`, `datos_dashboard`), `pdf.py` (xhtml2pdf), vistas de cierre diario, reporte por fecha y todos los PDFs.
+- **`proveedores`** — `Proveedor` (contacto, empresa, teléfono requerido, email/dirección/notas). CRUD completo **solo admin**; eliminación protegida si tiene productos (`ProtectedError`). Los productos se vinculan vía `Producto.proveedor`; la bitácora usa el tipo `PRODUCTO` existente.
 
 ### Layout relevante
 
@@ -38,27 +39,15 @@ Exige aplicar las migraciones desde una base limpia. Si alguna vez hay que volve
 Reglas no negociables para TODO el código (con dónde se cumplen hoy):
 
 1. **Dinero = `DecimalField(max_digits=10, decimal_places=2)`, nunca `float`.** ✅ Todos los modelos con importes (`Producto.precio`, `Cliente.saldo_favor`, `Venta.*`, `DetalleVenta.*`, `Apartado.*`, `Abono.monto`).
-2. **Stock/saldo dentro de `transaction.atomic()` con `select_for_update()`** sobre las filas afectadas (producto, cliente). ✅ `ventas/servicios.py`, `apartados/servicios.py`.
+2. **Stock/saldo dentro de `transaction.atomic()` con `select_for_update()`** sobre las filas afectadas (producto, cliente). ✅ `ventas/servicios.py`, `apartados/servicios.py`. Ojo: si el queryset combina `select_for_update()` con `select_related()` sobre una FK nullable, usar `select_for_update(of=('self',))` — PostgreSQL no permite `FOR UPDATE` en el lado nullable de un outer join; la fila relacionada se bloquea aparte con su propio `select_for_update()`.
 3. **Totales recalculados en el backend**, validando contra la base (precio_unitario ≤ precio BD, cantidad ≤ stock, saldo ≤ min(saldo, subtotal)). Nunca se confía en el frontend. ✅ `ventas/servicios.crear_venta()`.
 4. **Texto de usuario escapado en JS con `esc()`**; nunca `|safe` sobre input de usuario. ✅ `templates/ventas/pos.html` y demás JS que inserta en el DOM.
 5. **Secretos solo en `.env`** (ver sección de configuración). ✅
-6. **Vistas protegidas por rol** con `usuarios/permisos.py`: cajero solo lo suyo, supervisor cierre/reportes, admin todo; `is_superuser` = admin. ✅
+6. **Vistas protegidas por rol** con `usuarios/permisos.py`: cajero solo lo suyo (vender, apartar, abonar, liquidar, sus historiales), supervisor cierre/reportes (sin POS ni crear clientes), admin todo; `is_superuser` = admin. **Solo admin**: anular ventas, **cancelar apartados**, productos/categorías/proveedores (CRUD), usuarios y bitácora. El sidebar muestra cada link solo si el rol puede acceder. ✅
 7. **Historiales paginados de 50** y totales con agregados sobre el queryset filtrado completo (no la página). ✅ ventas, apartados, usuarios, logs, reportes.
 8. **`RegistroActividad` en acciones sensibles**: anulaciones, cambios de precio/stock, eliminaciones, descuentos, saldo, apartados, sesión, usuarios. ✅ `usuarios.registrar_actividad()`.
 9. **Templates en español, Bootstrap 5 (CDN)**, consistentes con `base.html`. ✅
 10. **Fotos de producto**: `ImageField` (Pillow), validación de tipo (jpg/jpeg/png/webp, no svg) y tamaño ≤ 5MB; `MEDIA_ROOT`/`MEDIA_URL` servidos en DEBUG. ✅ `productos/validators.py`, `config/settings.py`, `config/urls.py`.
-
-## Intended scope (from README.md)
-
-A web-based POS ("Sistema web POS") built with **Python + Django** for:
-
-- Products (`productos`), categories (`categorías`), and inventory (`inventario`)
-- Sales (`ventas`)
-- Users (`usuarios`)
-- Daily closings (`cierres diarios`)
-- Administrative reports (`reportes`)
-
-The codebase and UI are in **Spanish** — follow that convention for model names, field names, routes, and comments.
 
 ## Comandos del proyecto
 
@@ -87,9 +76,11 @@ python manage.py test <app>.<TestCase>.<test_method>  # correr un test puntual
 
 > Si no querés activar el venv, podés invocar los binarios directo: `./.venv/bin/python manage.py <comando>`.
 
-## Architecture guidance
+## Guía de arquitectura
 
-The domains above map naturally to separate Django apps (e.g. `productos`, `inventario`, `ventas`, `usuarios`, `reportes`). Keep POS transaction logic (a sale that decrements inventory, records line items, and rolls up into a daily closing) as the core flow — this is the part that spans multiple apps and warrants the most care around atomicity and consistency.
+El flujo transaccional del POS es el núcleo del sistema y cruza varias apps: una venta descuenta stock (`productos`), aplica saldo (`clientes`), registra líneas (`ventas`) y alimenta el cierre diario (`reportes`); los apartados hacen lo propio con abonos y liquidación. Toda esa lógica vive en `ventas/servicios.py` y `apartados/servicios.py` — **las vistas no tocan stock ni saldos directamente**, solo llaman a los servicios. Es la parte que más cuidado exige en atomicidad y consistencia (reglas de oro #2 y #3).
+
+Cada app expone sus rutas bajo su propio prefijo desde `config/urls.py` (`usuarios` va en `/cuentas/`; la raíz `/` es el dashboard, `InicioView`). Los tests viven en `tests.py` de cada app.
 
 ## Configuración y secretos (convención del proyecto)
 
@@ -99,6 +90,7 @@ The domains above map naturally to separate Django apps (e.g. `productos`, `inve
 - El archivo `.env` **debe estar excluido en `.gitignore`** y nunca commitearse.
 - Mantener un `.env.example` versionado como plantilla, con las claves esperadas pero **sin valores reales** (usar placeholders).
 - `settings.py` lee los valores con `env(...)`, p. ej. `DATABASES` toma `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` desde el entorno.
+- `TIME_ZONE=America/Guatemala` (en `.env`): los cortes de día del cierre/dashboard/reportes usan `timezone.localdate()`; con UTC el día cortaba 6 horas corrido.
 
 ### Base de datos
 
