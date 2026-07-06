@@ -38,18 +38,18 @@
     </table>
 
     <table class="zona-tot"><tr>
-        <td style="width: 55%; vertical-align: top;">
-            <div class="bloque-titulo">Confirmación</div>
+        <td class="col-pago">
+            <div class="bloque-titulo mt0">Confirmación</div>
             <div class="dato">El apartado fue <strong class="azul">liquidado en su totalidad</strong>{% if apartado.venta %}
                 y generó la venta <strong>No. {{ apartado.venta.pk }}</strong>{% endif %}.</div>
         </td>
-        <td style="width: 45%; vertical-align: top;">
+        <td class="col-tot">
             <table class="tot">
                 {% if apartado.descuento > 0 %}
-                <tr><td>Precio de lista</td><td class="r">Q {{ apartado.precio_original }}</td></tr>
-                <tr><td class="rojo">Descuento</td><td class="r rojo">-Q {{ apartado.descuento }}</td></tr>
+                <tr><td>Precio de lista</td><td class="tot-val">Q&nbsp;{{ apartado.precio_original }}</td></tr>
+                <tr><td class="rojo">Descuento</td><td class="tot-val rojo">-Q&nbsp;{{ apartado.descuento }}</td></tr>
                 {% endif %}
-                <tr class="total"><td>TOTAL PAGADO</td><td class="r">Q {{ apartado.precio_total }}</td></tr>
+                <tr class="total"><td>TOTAL PAGADO</td><td class="tot-val">Q&nbsp;{{ apartado.precio_total }}</td></tr>
             </table>
         </td>
     </tr></table>

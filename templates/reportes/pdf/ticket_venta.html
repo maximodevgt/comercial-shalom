@@ -43,25 +43,25 @@
     </table>
 
     <table class="zona-tot"><tr>
-        <td style="width: 55%;">
-            <div class="bloque-titulo">Forma de pago</div>
+        <td class="col-pago">
+            <div class="bloque-titulo mt0">Forma de pago</div>
             <div class="dato"><strong>Método:</strong> {{ venta.get_metodo_pago_display }}</div>
             {% if venta.metodo_pago == 'tarjeta' and venta.monto_tarjeta %}
-            <div class="dato muted">Monto indicado por la terminal: Q {{ venta.monto_tarjeta }}</div>
+            <div class="dato muted">Monto indicado por la terminal: Q&nbsp;{{ venta.monto_tarjeta }}</div>
             {% endif %}
         </td>
-        <td style="width: 45%; vertical-align: top;">
+        <td class="col-tot">
             <table class="tot">
                 {% if venta.descuento_total > 0 or venta.saldo_aplicado > 0 %}
-                <tr><td>Subtotal</td><td class="r">Q {{ venta.subtotal }}</td></tr>
+                <tr><td>Subtotal</td><td class="tot-val">Q&nbsp;{{ venta.subtotal }}</td></tr>
                 {% endif %}
                 {% if venta.descuento_total > 0 %}
-                <tr><td class="rojo">Descuento</td><td class="r rojo">-Q {{ venta.descuento_total }}</td></tr>
+                <tr><td class="rojo">Descuento</td><td class="tot-val rojo">-Q&nbsp;{{ venta.descuento_total }}</td></tr>
                 {% endif %}
                 {% if venta.saldo_aplicado > 0 %}
-                <tr><td class="azul">Saldo aplicado</td><td class="r azul">-Q {{ venta.saldo_aplicado }}</td></tr>
+                <tr><td class="azul">Saldo aplicado</td><td class="tot-val azul">-Q&nbsp;{{ venta.saldo_aplicado }}</td></tr>
                 {% endif %}
-                <tr class="total"><td>TOTAL</td><td class="r">Q {{ venta.total }}</td></tr>
+                <tr class="total"><td>TOTAL</td><td class="tot-val">Q&nbsp;{{ venta.total }}</td></tr>
             </table>
         </td>
     </tr></table>

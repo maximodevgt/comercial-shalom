@@ -36,10 +36,22 @@ tipo_doc, meta_doc, cuerpo y pie. Sin dirección (solo "Guatemala").
     .azul { color: #1e40af; } .rojo { color: #b91c1c; }
     .negrita { font-weight: bold; }
 
-    /* Totales (alineados a la derecha vía tabla contenedora) */
-    table.zona-tot { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    /* Zona inferior en dos columnas: pago a la izquierda, totales a la
+       derecha. Ambas celdas ancladas ARRIBA para que arranquen parejas. */
+    table.zona-tot { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    table.zona-tot td.col-pago { width: 52%; vertical-align: top; padding-right: 16px; }
+    table.zona-tot td.col-tot { width: 48%; vertical-align: top; }
+    /* El primer título de cada columna no arrastra margen superior y, dentro
+       de la zona de totales, va SIN línea propia: la única línea divisoria de
+       esa zona es la del TOTAL, para que nada quede casi-alineado. */
+    .bloque-titulo.mt0 { margin-top: 0; border-bottom: 0; padding-bottom: 0; }
+
+    /* Cuadrícula de totales: etiquetas a la izquierda y montos en una
+       columna de ancho FIJO alineada a la derecha; la línea del TOTAL
+       abarca exactamente el ancho del bloque (border de sus dos celdas). */
     table.tot { width: 100%; border-collapse: collapse; }
     table.tot td { padding: 4px 6px; border-bottom: 1px solid #e3e9f4; }
+    table.tot td.tot-val { width: 100px; text-align: right; }
     /* TOTAL sin fondo relleno: negrita grande con línea divisoria de la marca. */
     table.tot tr.total td { border-top: 2px solid #1e40af; border-bottom: 0;
         color: #172554; font-weight: bold; font-size: 13px; padding-top: 6px; }

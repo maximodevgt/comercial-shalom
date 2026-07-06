@@ -32,12 +32,15 @@
     </table>
 
     <table class="zona-tot"><tr>
-        <td style="width: 55%;"></td>
-        <td style="width: 45%; vertical-align: top;">
+        <td class="col-pago">
+            <div class="bloque-titulo mt0">Forma de pago</div>
+            <div class="dato"><strong>Método:</strong> {{ abono.get_metodo_display }}</div>
+        </td>
+        <td class="col-tot">
             <table class="tot">
-                <tr><td>Precio del apartado</td><td class="r">Q {{ apartado.precio_total }}</td></tr>
-                <tr><td class="azul">Total abonado</td><td class="r azul">Q {{ apartado.total_abonado }}</td></tr>
-                <tr class="total"><td>SALDO PENDIENTE</td><td class="r">Q {{ apartado.pendiente }}</td></tr>
+                <tr><td>Precio del apartado</td><td class="tot-val">Q&nbsp;{{ apartado.precio_total }}</td></tr>
+                <tr><td class="azul">Total abonado</td><td class="tot-val azul">Q&nbsp;{{ apartado.total_abonado }}</td></tr>
+                <tr class="total"><td>SALDO PENDIENTE</td><td class="tot-val">Q&nbsp;{{ apartado.pendiente }}</td></tr>
             </table>
         </td>
     </tr></table>
