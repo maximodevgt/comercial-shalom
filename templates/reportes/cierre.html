@@ -2,11 +2,19 @@
 {% block titulo %}Cierre diario{% endblock %}
 
 {% block contenido %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0"><i class="fa-solid fa-cash-register"></i> Cierre diario — {{ fecha|date:'d/m/Y' }}
-        {% if solo_propias %}<span class="badge bg-secondary align-middle">Solo mis ventas</span>{% endif %}
-    </h1>
-    <a href="{% url 'reportes:cierre_pdf' %}" class="btn btn-danger"><i class="fa-solid fa-file-pdf"></i> Descargar PDF</a>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h2 class="fw-bold mb-0"><i class="fa-solid fa-cash-register me-2"></i>Cierre diario — {{ fecha|date:'d/m/Y' }}
+        {% if solo_propias %}<span class="badge text-bg-secondary align-middle fs-6">Solo mis ventas</span>{% endif %}
+    </h2>
+    <div class="d-flex gap-2">
+        <a href="{% url 'ventas:historial' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-clock-rotate-left me-1"></i>Historial</a>
+        {% if user.es_admin or user.es_cajero %}
+        <a href="{% url 'ventas:pos' %}" class="btn btn-primary"><i class="fa-solid fa-plus me-1"></i>Nueva venta</a>
+        {% endif %}
+        <a href="{% url 'reportes:cierre_pdf' %}" class="btn btn-danger">
+            <i class="fa-solid fa-file-pdf me-1"></i>Descargar PDF</a>
+    </div>
 </div>
 {% include 'reportes/_resumen.html' %}
 {% endblock %}

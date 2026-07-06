@@ -1,32 +1,47 @@
-{# Tarjetas + tabla del resumen del día. Espera: total_vendido, num_ventas,
-   productos_vendidos, ventas. #}
-<div class="row g-3 mb-4">
-    <div class="col-md-4"><div class="card text-bg-success"><div class="card-body"><div class="small">Total vendido</div><div class="fs-3 fw-bold">Q {{ total_vendido }}</div></div></div></div>
-    <div class="col-md-4"><div class="card text-bg-primary"><div class="card-body"><div class="small">Ventas</div><div class="fs-3 fw-bold">{{ num_ventas }}</div></div></div></div>
-    <div class="col-md-4"><div class="card text-bg-info"><div class="card-body"><div class="small">Productos vendidos</div><div class="fs-3 fw-bold">{{ productos_vendidos }}</div></div></div></div>
+{# Tarjetas + tabla del resumen del día. Espera: total_vendido, num_ventas, productos_vendidos, ventas. #}
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="card metrica m-total"><div class="card-body d-flex align-items-center justify-content-between">
+            <div><div class="sub">Total vendido</div><div class="valor">Q {{ total_vendido }}</div></div>
+            <i class="fa-solid fa-sack-dollar icono"></i>
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card metrica m-ventas"><div class="card-body d-flex align-items-center justify-content-between">
+            <div><div class="sub">Ventas</div><div class="valor">{{ num_ventas }}</div></div>
+            <i class="fa-solid fa-receipt icono"></i>
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card metrica m-stock"><div class="card-body d-flex align-items-center justify-content-between">
+            <div><div class="sub">Productos vendidos</div><div class="valor">{{ productos_vendidos }}</div></div>
+            <i class="fa-solid fa-boxes-stacked icono"></i>
+        </div></div>
+    </div>
 </div>
 <p class="text-muted small">Los totales consideran únicamente ventas <strong>completadas</strong> (las anuladas no cuentan).</p>
 
 <div class="card">
     <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
-        <thead class="table-light"><tr><th>#</th><th>Cliente</th><th>Cajero</th><th>Productos</th><th class="text-end">Total</th><th>Hora</th></tr></thead>
+        <thead><tr><th>#</th><th>Cliente</th><th>Cajero</th><th>Productos</th><th class="text-end">Total</th><th>Hora</th></tr></thead>
         <tbody>
             {% for v in ventas %}
             <tr>
-                <td>{{ v.pk }}</td>
+                <td class="fw-bold">{{ v.pk }}</td>
                 <td>{{ v.nombre_cliente }}</td>
-                <td><span class="badge bg-secondary">{{ v.usuario.username }}</span></td>
+                <td><span class="badge text-bg-primary">{{ v.usuario.username }}</span></td>
                 <td style="min-width:220px">
                     {% for d in v.detalles.all %}
                     <div class="d-flex align-items-center gap-2 {% if not forloop.first %}border-top pt-1 mt-1{% endif %}">
-                        {% if d.producto.foto %}<img src="{{ d.producto.foto.url }}" class="mini">{% endif %}
+                        {% if d.producto.foto %}<img src="{{ d.producto.foto.url }}" class="mini" alt="">
+                        {% else %}<span class="placeholder-foto mini"><i class="fa-solid fa-image"></i></span>{% endif %}
                         <span class="small">{{ d.producto.nombre_completo }} <span class="text-muted">×{{ d.cantidad }}</span></span>
                     </div>
                     {% endfor %}
                 </td>
                 <td class="text-end fw-bold">Q {{ v.total }}</td>
-                <td class="small">{{ v.creado|date:'H:i' }}</td>
+                <td class="small text-muted">{{ v.creado|date:'H:i' }}</td>
             </tr>
             {% empty %}
             <tr><td colspan="6" class="text-center text-muted py-4">No hay ventas completadas en la fecha.</td></tr>

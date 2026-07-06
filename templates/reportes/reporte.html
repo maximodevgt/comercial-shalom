@@ -2,17 +2,28 @@
 {% block titulo %}Reporte por fecha{% endblock %}
 
 {% block contenido %}
-<h1 class="h3 mb-3"><i class="fa-solid fa-calendar-days"></i> Reporte por fecha</h1>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h2 class="fw-bold mb-0"><i class="fa-solid fa-calendar-days me-2"></i>Reporte por fecha</h2>
+    <a href="{% url 'reportes:reporte_pdf' %}?fecha={{ fecha_str }}" class="btn btn-danger">
+        <i class="fa-solid fa-file-pdf me-1"></i>Descargar PDF</a>
+</div>
 
-<form method="get" class="row g-2 mb-4 align-items-end">
-    <div class="col-auto">
-        <label class="form-label small mb-0">Fecha</label>
-        <input type="date" name="fecha" value="{{ fecha_str }}" class="form-control">
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fw-bold small mb-1" for="fecha">Fecha</label>
+                <input id="fecha" type="date" name="fecha" value="{{ fecha_str }}" class="form-control">
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-fill">
+                    <i class="fa-solid fa-magnifying-glass me-1"></i>Buscar</button>
+                <a href="?fecha={% now 'Y-m-d' %}" class="btn btn-secondary">Hoy</a>
+            </div>
+        </form>
     </div>
-    <div class="col-auto"><button class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Ver</button></div>
-    <div class="col-auto"><a href="{% url 'reportes:reporte_pdf' %}?fecha={{ fecha_str }}" class="btn btn-danger"><i class="fa-solid fa-file-pdf"></i> PDF</a></div>
-</form>
+</div>
 
-<h2 class="h5 text-muted mb-3">Resultados del {{ fecha|date:'d/m/Y' }}</h2>
+<h3 class="h5 text-muted mb-3">Resultados del {{ fecha|date:'d/m/Y' }}</h3>
 {% include 'reportes/_resumen.html' %}
 {% endblock %}

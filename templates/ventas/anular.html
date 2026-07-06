@@ -5,21 +5,31 @@
 <div class="row justify-content-center">
     <div class="col-md-6">
         <div class="card border-danger">
-            <div class="card-header bg-danger text-white"><i class="fa-solid fa-ban"></i> Anular venta #{{ venta.pk }}</div>
+            <div class="card-header bg-danger text-white"><i class="fa-solid fa-ban me-1"></i> Anular venta #{{ venta.pk }}</div>
             <div class="card-body">
-                <p>Vas a anular la venta <strong>#{{ venta.pk }}</strong> por un total de <strong>Q {{ venta.total }}</strong>.</p>
-                <ul class="small text-muted">
-                    <li>Se restaurará el stock de los productos.</li>
-                    {% if venta.saldo_aplicado > 0 and venta.cliente %}<li>Se restituirá Q {{ venta.saldo_aplicado }} al saldo de {{ venta.cliente.nombre }}.</li>{% endif %}
-                </ul>
+                <div class="alert alert-warning">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                    Vas a anular la venta <strong>#{{ venta.pk }}</strong> por un total de <strong>Q {{ venta.total }}</strong>.
+                    <ul class="small mb-0 mt-2">
+                        <li>Se restaurará el stock de los productos.</li>
+                        {% if venta.saldo_aplicado > 0 and venta.cliente %}
+                        <li>Se restituirá <strong>Q {{ venta.saldo_aplicado }}</strong> al saldo de {{ venta.cliente.nombre }}.</li>
+                        {% endif %}
+                        <li>Esta acción queda registrada en la bitácora y no se puede deshacer.</li>
+                    </ul>
+                </div>
                 <form method="post">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label class="form-label">Motivo de la anulación <span class="text-danger">*</span></label>
-                        <textarea name="motivo" class="form-control" rows="3" required></textarea>
+                        <label class="form-label fw-bold" for="motivo">Motivo de la anulación <span class="text-danger">*</span></label>
+                        <textarea id="motivo" name="motivo" class="form-control" rows="3" required
+                                  placeholder="Explicá por qué se anula esta venta..."></textarea>
                     </div>
-                    <button type="submit" class="btn btn-danger"><i class="fa-solid fa-ban"></i> Anular venta</button>
-                    <a href="{% url 'ventas:detalle' venta.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger"><i class="fa-solid fa-ban me-1"></i>Anular venta</button>
+                        <a href="{% url 'ventas:detalle' venta.pk %}" class="btn btn-secondary">
+                            <i class="fa-solid fa-arrow-left me-1"></i>Volver</a>
+                    </div>
                 </form>
             </div>
         </div>
