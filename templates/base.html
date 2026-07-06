@@ -130,6 +130,12 @@
         a { color: var(--primario); }
         .texto-exito { color: var(--exito); }
 
+        /* SweetAlert2 acorde a la marca y al modo oscuro */
+        .swal2-popup { border-radius: var(--radio); font-size: .95rem; }
+        [data-theme="dark"] .swal2-popup { background: var(--superficie); color: var(--texto); }
+        [data-theme="dark"] .swal2-title, [data-theme="dark"] .swal2-html-container { color: var(--texto); }
+        [data-theme="dark"] .swal2-timer-progress-bar { background: rgba(255,255,255,.4); }
+
         /* Paginación con la paleta */
         .pagination { --bs-pagination-color: var(--primario);
             --bs-pagination-active-bg: var(--primario); --bs-pagination-active-border-color: var(--primario);
@@ -269,19 +275,74 @@
 
 <main class="container-fluid px-4 pt-4 pb-5">
     {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show d-flex align-items-center" role="alert">
-            <i class="fa-solid {% if 'success' in message.tags %}fa-circle-check{% elif 'danger' in message.tags or 'error' in message.tags %}fa-triangle-exclamation{% elif 'warning' in message.tags %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %} me-2"></i>
-            <div>{{ message }}</div>
-            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
-        </div>
-        {% endfor %}
+    {# Los mensajes se muestran como toasts de SweetAlert2 (ver script abajo). #}
+    <ul id="djangoMensajes" hidden>
+        {% for message in messages %}<li data-nivel="{{ message.tags }}">{{ message }}</li>{% endfor %}
+    </ul>
     {% endif %}
     {% block contenido %}{% endblock %}
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
+<script>
+// Mensajes de Django como toasts (se desvanecen solos).
+(function () {
+    const lista = document.getElementById('djangoMensajes');
+    if (!lista || typeof Swal === 'undefined') return;
+    const Toast = Swal.mixin({
+        toast: true, position: 'top-end', showConfirmButton: false,
+        timer: 3500, timerProgressBar: true,
+    });
+    const icono = n =>
+        n.includes('success') ? 'success'
+        : (n.includes('danger') || n.includes('error')) ? 'error'
+        : n.includes('warning') ? 'warning' : 'info';
+    // titleText (no title): el texto puede incluir nombres escritos por
+    // usuarios y no debe interpretarse como HTML.
+    [...lista.querySelectorAll('li')].forEach((li, i) => {
+        setTimeout(() => Toast.fire({
+            icon: icono(li.dataset.nivel || ''),
+            titleText: li.textContent.trim(),
+        }), i * 900);
+    });
+})();
+
+// Confirmaciones bonitas para acciones destructivas: cualquier elemento con
+// data-confirmar (link o botón de form). El backend no cambia: al confirmar
+// se envía el mismo POST con CSRF de siempre.
+document.addEventListener('click', function (e) {
+    const el = e.target.closest('[data-confirmar]');
+    if (!el || typeof Swal === 'undefined') return;
+    e.preventDefault();
+    Swal.fire({
+        titleText: el.dataset.confirmar,
+        text: el.dataset.detalle || 'Esta acción no se puede deshacer.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: el.dataset.accion || 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6c757d',
+    }).then(function (res) {
+        if (!res.isConfirmed) return;
+        const form = el.closest('form');
+        if (form) { form.submit(); return; }
+        // Link de borrado: POST directo con el token CSRF de la cookie
+        // (la página de confirmación queda como fallback sin JS).
+        const token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1];
+        const f = document.createElement('form');
+        f.method = 'post';
+        f.action = el.href;
+        const inp = document.createElement('input');
+        inp.type = 'hidden'; inp.name = 'csrfmiddlewaretoken'; inp.value = token || '';
+        f.appendChild(inp);
+        document.body.appendChild(f);
+        f.submit();
+    });
+});
+</script>
 <script>
 // Toggle de tema claro/oscuro (persistido en localStorage).
 (function () {

@@ -88,7 +88,9 @@
                        title="Editar" aria-label="Editar {{ p.nombre_completo }}">
                         <i class="fa-solid fa-pen"></i></a>
                     <a href="{% url 'productos:eliminar' p.pk %}" class="btn btn-danger btn-sm"
-                       title="Eliminar" aria-label="Eliminar {{ p.nombre_completo }}">
+                       title="Eliminar" aria-label="Eliminar {{ p.nombre_completo }}"
+                       data-confirmar="¿Eliminar {{ p.nombre }}?"
+                       data-detalle="Se eliminará «{{ p.nombre_completo }}». Esta acción no se puede deshacer.">
                         <i class="fa-solid fa-trash"></i></a>
                 </td>
                 {% endif %}

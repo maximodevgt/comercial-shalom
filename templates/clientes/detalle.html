@@ -11,7 +11,10 @@
         <a href="{% url 'clientes:editar' cliente.pk %}" class="btn btn-primary"><i class="fa-solid fa-pen me-1"></i>Editar</a>
         {% endif %}
         {% if user.es_admin %}
-        <a href="{% url 'clientes:eliminar' cliente.pk %}" class="btn btn-danger"><i class="fa-solid fa-trash me-1"></i>Eliminar</a>
+        <a href="{% url 'clientes:eliminar' cliente.pk %}" class="btn btn-danger"
+           data-confirmar="¿Eliminar al cliente {{ cliente.nombre }}?"
+           data-detalle="No se podrá eliminar si tiene ventas o apartados asociados.">
+            <i class="fa-solid fa-trash me-1"></i>Eliminar</a>
         {% endif %}
     </div>
 </div>

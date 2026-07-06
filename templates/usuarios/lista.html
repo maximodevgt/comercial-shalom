@@ -43,7 +43,10 @@
                     <form method="post" action="{% url 'usuarios:toggle_activo' u.pk %}" class="d-inline">
                         {% csrf_token %}
                         {% if u.is_active %}
-                        <button class="btn btn-sm btn-outline-danger">
+                        <button class="btn btn-sm btn-outline-danger"
+                                data-confirmar="¿Desactivar a {{ u.username }}?"
+                                data-detalle="No podrá iniciar sesión hasta que se reactive."
+                                data-accion="Sí, desactivar">
                             <i class="fa-solid fa-circle-pause me-1"></i>Desactivar</button>
                         {% else %}
                         <button class="btn btn-sm btn-outline-success">

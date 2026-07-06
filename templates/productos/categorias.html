@@ -27,7 +27,10 @@
                 <td class="text-end text-nowrap">
                     <a href="{% url 'productos:categoria_editar' c.pk %}" class="btn btn-warning btn-sm">
                         <i class="fa-solid fa-pen me-1"></i>Editar</a>
-                    <a href="{% url 'productos:categoria_eliminar' c.pk %}" class="btn btn-danger btn-sm">
+                    <a href="{% url 'productos:categoria_eliminar' c.pk %}" class="btn btn-danger btn-sm"
+                       title="Eliminar" aria-label="Eliminar {{ c.nombre }}"
+                       data-confirmar="¿Eliminar la categoría {{ c.nombre }}?"
+                       data-detalle="No se podrá eliminar si tiene productos asociados.">
                         <i class="fa-solid fa-trash"></i></a>
                 </td>
                 {% endif %}

@@ -44,7 +44,10 @@
                         <i class="fa-solid fa-eye me-1"></i>Ver</a>
                     <a href="{% url 'proveedores:editar' p.pk %}" class="btn btn-warning btn-sm" title="Editar">
                         <i class="fa-solid fa-pen me-1"></i>Editar</a>
-                    <a href="{% url 'proveedores:eliminar' p.pk %}" class="btn btn-danger btn-sm" title="Eliminar">
+                    <a href="{% url 'proveedores:eliminar' p.pk %}" class="btn btn-danger btn-sm"
+                       title="Eliminar" aria-label="Eliminar {{ p.empresa }}"
+                       data-confirmar="¿Eliminar al proveedor {{ p.empresa }}?"
+                       data-detalle="No se podrá eliminar si tiene productos asociados.">
                         <i class="fa-solid fa-trash"></i></a>
                 </td>
             </tr>

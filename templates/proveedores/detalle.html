@@ -8,7 +8,10 @@
     <div class="d-flex gap-2">
         <a href="{% url 'proveedores:lista' %}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left me-1"></i>Volver</a>
         <a href="{% url 'proveedores:editar' proveedor.pk %}" class="btn btn-primary"><i class="fa-solid fa-pen me-1"></i>Editar</a>
-        <a href="{% url 'proveedores:eliminar' proveedor.pk %}" class="btn btn-danger"><i class="fa-solid fa-trash me-1"></i>Eliminar</a>
+        <a href="{% url 'proveedores:eliminar' proveedor.pk %}" class="btn btn-danger"
+           data-confirmar="¿Eliminar al proveedor {{ proveedor.empresa }}?"
+           data-detalle="No se podrá eliminar si tiene productos asociados.">
+            <i class="fa-solid fa-trash me-1"></i>Eliminar</a>
     </div>
 </div>
 
