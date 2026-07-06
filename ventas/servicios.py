@@ -119,8 +119,11 @@ def crear_venta(usuario, *, cliente_id=None, nombre_cliente_libre='', telefono='
     detalles = []
     subtotal_cobrado = Decimal('0.00')
     descuento_total = Decimal('0.00')
+    # El mismo producto puede venir en varias líneas (p. ej. con precios
+    # distintos): las líneas quedan separadas en los detalles, pero el stock
+    # se valida sobre la SUMA agrupada por producto.
+    cantidad_por_producto = {}
 
-    # Agrupa cantidades por producto para validar contra el stock real total.
     for ln in lineas:
         pid = _a_entero(ln.get('producto_id'), 'producto')
         cantidad = _a_entero(ln.get('cantidad'), 'cantidad')
@@ -133,10 +136,7 @@ def crear_venta(usuario, *, cliente_id=None, nombre_cliente_libre='', telefono='
             raise ErrorVenta(f'El producto «{producto.nombre_completo}» está inactivo.')
         if cantidad < 1:
             raise ErrorVenta('La cantidad debe ser al menos 1.')
-        if cantidad > producto.stock:
-            raise ErrorVenta(
-                f'Stock insuficiente de «{producto.nombre_completo}» '
-                f'(disponible: {producto.stock}).')
+        cantidad_por_producto[pid] = cantidad_por_producto.get(pid, 0) + cantidad
         # Solo se puede BAJAR el precio (descuento), nunca subirlo.
         if precio_unitario < 0:
             raise ErrorVenta('El precio no puede ser negativo.')
@@ -159,6 +159,15 @@ def crear_venta(usuario, *, cliente_id=None, nombre_cliente_libre='', telefono='
 
     subtotal_cobrado = subtotal_cobrado.quantize(CENTAVO)
     descuento_total = descuento_total.quantize(CENTAVO)
+
+    # Stock validado sobre el total agrupado: dos líneas de 4 con stock 5
+    # deben fallar acá con mensaje claro, no con IntegrityError al descontar.
+    for pid, total_cantidad in cantidad_por_producto.items():
+        producto = productos[pid]
+        if total_cantidad > producto.stock:
+            raise ErrorVenta(
+                f'Stock insuficiente de «{producto.nombre_completo}» '
+                f'(disponible: {producto.stock}).')
 
     # 2. Saldo a favor del cliente (si aplica), con lock sobre el cliente.
     cliente = None

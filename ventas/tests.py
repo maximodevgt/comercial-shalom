@@ -55,6 +55,34 @@ class VentaServicioTest(TestCase):
         self.assertEqual(self.a.stock, 10)
         self.assertEqual(Venta.objects.count(), 0)
 
+    def test_lineas_duplicadas_que_exceden_stock_se_rechazan_agrupadas(self):
+        # Producto con stock 5: dos líneas de 4 (8 en total) deben fallar con
+        # ErrorVenta claro, no con IntegrityError al dejar el stock negativo.
+        p = Producto.objects.create(
+            categoria=self.cat, nombre='C', precio=Decimal('100.00'), stock=5)
+        with self.assertRaises(ErrorVenta) as ctx:
+            crear_venta(self.cajero, lineas=[
+                {'producto_id': p.id, 'cantidad': 4, 'precio_unitario': '100.00'},
+                {'producto_id': p.id, 'cantidad': 4, 'precio_unitario': '90.00'},
+            ])
+        self.assertIn('Stock insuficiente', str(ctx.exception))
+        p.refresh_from_db()
+        self.assertEqual(p.stock, 5)  # nada descontado
+        self.assertEqual(Venta.objects.count(), 0)
+
+    def test_lineas_duplicadas_que_caben_descuentan_bien(self):
+        # Dos líneas del mismo producto (precios distintos) que SÍ caben:
+        # se mantienen separadas en los detalles y el stock queda correcto.
+        venta = crear_venta(self.cajero, lineas=[
+            {'producto_id': self.a.id, 'cantidad': 3, 'precio_unitario': '100.00'},
+            {'producto_id': self.a.id, 'cantidad': 2, 'precio_unitario': '80.00'},
+        ])
+        self.assertEqual(venta.detalles.count(), 2)
+        self.assertEqual(venta.subtotal, Decimal('460.00'))   # 300 + 160
+        self.assertEqual(venta.descuento_total, Decimal('40.00'))
+        self.a.refresh_from_db()
+        self.assertEqual(self.a.stock, 5)  # 10 − 3 − 2
+
     def test_saldo_debitado_y_capeado(self):
         # Saldo mayor que la compra: se aplica solo lo necesario.
         cliente = Cliente.objects.create(nombre='C', saldo_favor=Decimal('500.00'))
