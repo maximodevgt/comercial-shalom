@@ -1,11 +1,13 @@
+from datetime import datetime, timedelta, timezone as dt_timezone
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
 from productos.models import Categoria, Producto
+from ventas.models import Venta
 from ventas.servicios import anular_venta, crear_venta
 
 from .consultas import datos_dashboard, resumen_dia
@@ -102,3 +104,40 @@ class DashboardTest(TestCase):
         r = self.client.get(reverse('inicio'))
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.context['reducido'])
+
+
+@override_settings(TIME_ZONE='America/Guatemala')
+class CorteDeDiaTest(TestCase):
+    """El corte del día es en hora local de Guatemala (UTC−6), no en UTC.
+
+    Con TIME_ZONE=UTC una venta de las 17:30 hora local (23:30 UTC) o de las
+    19:00 hora local (01:00 UTC del día siguiente) caía en el cierre del día
+    equivocado."""
+
+    def setUp(self):
+        self.cajero = Usuario.objects.create_user(username='caja', password='x', rol=Usuario.Rol.CAJERO)
+        self.cat = Categoria.objects.create(nombre='G')
+        self.p = Producto.objects.create(categoria=self.cat, nombre='P', precio=Decimal('100'), stock=50)
+
+    def _venta_creada_en(self, creado_utc):
+        v = crear_venta(self.cajero, lineas=[{'producto_id': self.p.id, 'cantidad': 1, 'precio_unitario': '100.00'}])
+        # `creado` es auto_now_add: se fuerza vía update() para simular la hora.
+        Venta.objects.filter(pk=v.pk).update(creado=creado_utc)
+        return v
+
+    def test_ventas_de_la_tarde_cuentan_en_el_dia_local(self):
+        hoy = timezone.localdate()
+        manana = hoy + timedelta(days=1)
+        # 23:30 UTC de hoy = 17:30 en Guatemala → cuenta HOY local.
+        tarde = self._venta_creada_en(
+            datetime(hoy.year, hoy.month, hoy.day, 23, 30, tzinfo=dt_timezone.utc))
+        # 01:00 UTC de mañana = 19:00 en Guatemala → también cuenta HOY local.
+        noche = self._venta_creada_en(
+            datetime(manana.year, manana.month, manana.day, 1, 0, tzinfo=dt_timezone.utc))
+
+        resumen = resumen_dia(hoy)
+        pks = {v.pk for v in resumen['ventas']}
+        self.assertIn(tarde.pk, pks)
+        self.assertIn(noche.pk, pks)
+        self.assertEqual(resumen['num_ventas'], 2)
+        self.assertEqual(resumen['total_vendido'], Decimal('200.00'))
