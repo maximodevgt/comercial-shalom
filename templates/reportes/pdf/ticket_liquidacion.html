@@ -3,7 +3,7 @@
 {% block tipo_doc %}Liquidación de Apartado{% endblock %}
 {% block meta_doc %}
     Apartado No. {{ apartado.pk }}{% if apartado.venta %} · Venta No. {{ apartado.venta.pk }}{% endif %}<br>
-    Fecha: {{ apartado.actualizado|date:'d/m/Y' }} · Hora: {{ apartado.actualizado|date:'H:i' }}
+    Fecha: {{ apartado.actualizado|date:'d/m/Y' }} · Hora: {{ apartado.actualizado|date:'h:i A' }}
 {% endblock %}
 
 {% block cuerpo %}
@@ -27,7 +27,7 @@
             {% for ab in apartado.abonos.all %}
             <tr class="{% cycle '' 'alt' %}">
                 <td>{{ forloop.counter }}</td>
-                <td>{{ ab.creado|date:'d/m/Y H:i' }}</td>
+                <td>{{ ab.creado|date:'d/m/Y · h:i A' }}</td>
                 <td>{{ ab.get_metodo_display }}</td>
                 <td class="r">Q {{ ab.monto }}</td>
             </tr>

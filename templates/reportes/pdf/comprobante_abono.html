@@ -3,7 +3,7 @@
 {% block tipo_doc %}Comprobante de Abono{% endblock %}
 {% block meta_doc %}
     No. {{ abono.pk }} · Apartado No. {{ apartado.pk }}<br>
-    Fecha: {{ abono.creado|date:'d/m/Y' }} · Hora: {{ abono.creado|date:'H:i' }}
+    Fecha: {{ abono.creado|date:'d/m/Y' }} · Hora: {{ abono.creado|date:'h:i A' }}
 {% endblock %}
 
 {% block cuerpo %}
@@ -24,7 +24,7 @@
         </thead>
         <tbody>
             <tr>
-                <td>{{ abono.creado|date:'d/m/Y H:i' }}</td>
+                <td>{{ abono.creado|date:'d/m/Y · h:i A' }}</td>
                 <td>{{ abono.get_metodo_display }}</td>
                 <td class="r negrita">Q {{ abono.monto }}</td>
             </tr>

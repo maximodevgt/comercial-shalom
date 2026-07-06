@@ -40,8 +40,9 @@ tipo_doc, meta_doc, cuerpo y pie. Sin dirección (solo "Guatemala").
     table.zona-tot { width: 100%; border-collapse: collapse; margin-top: 8px; }
     table.tot { width: 100%; border-collapse: collapse; }
     table.tot td { padding: 4px 6px; border-bottom: 1px solid #e3e9f4; }
-    table.tot tr.total td { background-color: #1e40af; color: #ffffff;
-        font-weight: bold; font-size: 12px; border-bottom: 0; }
+    /* TOTAL sin fondo relleno: negrita grande con línea divisoria de la marca. */
+    table.tot tr.total td { border-top: 2px solid #1e40af; border-bottom: 0;
+        color: #172554; font-weight: bold; font-size: 13px; padding-top: 6px; }
 
     .banda-anulada { color: #b91c1c; font-weight: bold; font-size: 13px;
         text-align: center; margin: 8px 0; border: 1px solid #b91c1c; padding: 4px; }

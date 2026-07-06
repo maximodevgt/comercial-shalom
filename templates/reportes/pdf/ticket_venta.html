@@ -3,7 +3,7 @@
 {% block tipo_doc %}Comprobante de Venta{% endblock %}
 {% block meta_doc %}
     No. {{ venta.pk }}<br>
-    Fecha: {{ venta.creado|date:'d/m/Y' }} · Hora: {{ venta.creado|date:'H:i' }}
+    Fecha: {{ venta.creado|date:'d/m/Y' }} · Hora: {{ venta.creado|date:'h:i A' }}
 {% endblock %}
 
 {% block cuerpo %}
