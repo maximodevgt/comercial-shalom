@@ -58,25 +58,60 @@
         [data-theme="dark"] .modal-content { --bs-modal-bg: var(--superficie); }
         [data-theme="dark"] .placeholder-foto { background: #22263a; color: #6b7394; }
 
-        /* Navbar con identidad */
-        .navbar-pos { background: linear-gradient(90deg, var(--primario-oscuro), var(--primario)); }
-        .navbar-brand { font-weight: 700; letter-spacing: .3px; }
-        .chip-logo { width: 36px; height: 36px; background: #fff; border-radius: 9px;
+        /* Sidebar vertical izquierdo (identidad distintiva) */
+        .sidebar { --bs-offcanvas-width: 240px; --bs-offcanvas-bg: var(--primario-oscuro);
+            background-image: linear-gradient(180deg, var(--primario-oscuro), var(--primario));
+            color: #fff; }
+        [data-theme="dark"] .sidebar { --bs-offcanvas-bg: #0a0f1d;
+            background-image: linear-gradient(180deg, #0a0f1d, #14264f); }
+        @media (min-width: 992px) {
+            /* Por encima de lg, offcanvas-lg vuelve a static: se fija a mano. */
+            .sidebar { position: fixed; top: 0; left: 0; z-index: 1030;
+                width: 240px !important; height: 100vh !important; }
+            /* container-fluid es width:100%: sin el calc() desborda 240px. */
+            body.con-sidebar main { margin-left: 240px; width: calc(100% - 240px); }
+        }
+        @media (max-width: 991.98px) {
+            body.con-sidebar main { padding-top: 3.6rem; }
+        }
+        .sidebar-inner { padding: 1rem .75rem; height: 100%; }
+        .sidebar-marca { padding-bottom: .9rem; border-bottom: 1px solid rgba(255,255,255,.2); }
+        .sidebar-marca .nombre { color: #fff; font-weight: 700; letter-spacing: .3px;
+            line-height: 1.25; margin-top: .5rem; }
+        .chip-logo { width: 56px; height: 56px; background: #fff; border-radius: 14px;
             display: inline-flex; align-items: center; justify-content: center; overflow: hidden;
             box-shadow: 0 1px 4px rgba(0,0,0,.25); }
-        .chip-logo img { width: 30px; height: 30px; object-fit: contain; }
-        .navbar-pos .nav-link { color: rgba(255,255,255,.82); border-radius: .5rem;
-            padding-inline: .7rem; white-space: nowrap; }
-        .navbar-pos .nav-link:hover { color: #fff; background: rgba(255,255,255,.12); }
-        .navbar-pos .nav-link.active { color: #fff; background: rgba(255,255,255,.18); font-weight: 600; }
+        .chip-logo img { width: 48px; height: 48px; object-fit: contain; }
+        .sidebar-nav { overflow-y: auto; margin: .75rem 0; }
+        .sidebar .nav-link { color: rgba(255,255,255,.82); border-radius: .5rem;
+            padding: .5rem .75rem; margin-bottom: 2px;
+            border-left: 3px solid transparent; }
+        .sidebar .nav-link i { width: 1.3rem; text-align: center; margin-right: .4rem; }
+        .sidebar .nav-link:hover { color: #fff; background: rgba(255,255,255,.12); }
+        .sidebar .nav-link.active { color: #fff; background: rgba(255,255,255,.18);
+            border-left-color: var(--exito); font-weight: 600; }
+        .sidebar-pie { border-top: 1px solid rgba(255,255,255,.2); padding-top: .75rem; }
+        .min-width-0 { min-width: 0; }
+        .btn-usuario { display: flex; align-items: center; gap: .5rem; width: 100%;
+            background: none; border: none; color: #fff; border-radius: .5rem;
+            padding: .3rem .4rem; text-align: left; font-weight: 600; font-size: .9rem; }
+        .btn-usuario:hover { background: rgba(255,255,255,.12); }
+        .btn-hamburguesa { position: fixed; top: .7rem; left: .7rem; z-index: 1041;
+            background: var(--primario-oscuro); color: #fff; border: none;
+            width: 42px; height: 42px; border-radius: .55rem; box-shadow: var(--sombra-hover); }
 
         /* Dropdown de usuario */
-        .avatar-ini { width: 38px; height: 38px; border-radius: 50%; border: 2px solid rgba(255,255,255,.55);
+        .avatar-ini { width: 38px; height: 38px; min-width: 38px; border-radius: 50%;
+            border: 2px solid rgba(255,255,255,.55);
             background: rgba(255,255,255,.16); color: #fff; font-weight: 700; font-size: .9rem;
             display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
         .avatar-ini:hover { background: rgba(255,255,255,.28); }
-        .menu-usuario { min-width: 250px; border: 1px solid var(--borde); border-radius: var(--radio);
+        .menu-usuario { min-width: 240px; border: 1px solid var(--borde); border-radius: var(--radio);
             box-shadow: var(--sombra-hover); }
+
+        /* El ticket del POS era sticky bajo el navbar superior; con sidebar
+           el tope útil es el borde de la ventana (sin tocar pos.html). */
+        main .pos-ticket { top: 1rem; }
 
         /* Botones primarios coherentes con la paleta */
         .btn-primary { --bs-btn-bg: var(--primario); --bs-btn-border-color: var(--primario);
@@ -148,20 +183,28 @@
     </style>
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body {% if user.is_authenticated %}class="con-sidebar"{% endif %}>
 {% if user.is_authenticated %}
-<nav class="navbar navbar-expand-xl navbar-dark navbar-pos mb-4">
-    <div class="container-fluid">
-        <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'inicio' %}">
-            <span class="chip-logo"><img src="{% static 'img/logo.png' %}" alt="Comercial Shalom"></span>
-            Comercial Shalom
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="nav">
+<button class="btn-hamburguesa d-lg-none" type="button" data-bs-toggle="offcanvas"
+        data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Abrir menú">
+    <i class="fa-solid fa-bars"></i>
+</button>
+
+<aside class="sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="sidebar" aria-label="Navegación principal">
+    <div class="sidebar-inner d-flex flex-column">
+        <button type="button" class="btn-close btn-close-white d-lg-none position-absolute top-0 end-0 m-2"
+                data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Cerrar menú"></button>
+
+        <div class="sidebar-marca text-center">
+            <a href="{% url 'inicio' %}" class="text-decoration-none">
+                <span class="chip-logo"><img src="{% static 'img/logo.png' %}" alt="Comercial Shalom"></span>
+                <span class="nombre d-block">Comercial<br>Shalom</span>
+            </a>
+        </div>
+
+        <nav class="sidebar-nav flex-grow-1">
             {% with ns=request.resolver_match.namespace un=request.resolver_match.url_name %}
-            <ul class="navbar-nav me-auto">
+            <ul class="nav flex-column">
                 {% block nav_links %}
                 <li class="nav-item"><a class="nav-link {% if un == 'inicio' %}active{% endif %}"
                     href="{% url 'inicio' %}"><i class="fa-solid fa-house me-1"></i>Inicio</a></li>
@@ -192,16 +235,19 @@
                 {% endblock %}
             </ul>
             {% endwith %}
-            <div class="d-flex align-items-center gap-2">
+        </nav>
+
+        <div class="sidebar-pie d-flex align-items-center gap-2">
             <button type="button" id="toggleTema" class="avatar-ini border-0" aria-label="Cambiar tema" title="Cambiar tema">
                 <i class="fa-solid fa-moon"></i>
             </button>
-            <div class="dropdown">
-                <button type="button" class="avatar-ini border-0" data-bs-toggle="dropdown" aria-expanded="false"
+            <div class="dropup flex-grow-1 min-width-0">
+                <button type="button" class="btn-usuario" data-bs-toggle="dropdown" aria-expanded="false"
                         aria-label="Menú de usuario">
-                    {% if user.first_name %}{{ user.first_name.0|upper }}{% if user.last_name %}{{ user.last_name.0|upper }}{% endif %}{% else %}{{ user.username.0|upper }}{% endif %}
+                    <span class="avatar-ini">{% if user.first_name %}{{ user.first_name.0|upper }}{% if user.last_name %}{{ user.last_name.0|upper }}{% endif %}{% else %}{{ user.username.0|upper }}{% endif %}</span>
+                    <span class="text-truncate">{{ user.get_full_name|default:user.username }}</span>
                 </button>
-                <div class="dropdown-menu dropdown-menu-end menu-usuario p-3">
+                <div class="dropdown-menu menu-usuario p-3">
                     <div class="fw-bold">{{ user.get_full_name|default:user.username }}</div>
                     {% if user.email %}<div class="small text-muted">{{ user.email }}</div>{% endif %}
                     <span class="badge mt-2 {% if user.es_admin %}text-bg-danger{% elif user.es_supervisor %}text-bg-secondary{% else %}text-bg-primary{% endif %}">
@@ -216,13 +262,12 @@
                     </form>
                 </div>
             </div>
-            </div>
         </div>
     </div>
-</nav>
+</aside>
 {% endif %}
 
-<main class="container-fluid px-4 pb-5">
+<main class="container-fluid px-4 pt-4 pb-5">
     {% if messages %}
         {% for message in messages %}
         <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show d-flex align-items-center" role="alert">
