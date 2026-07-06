@@ -45,15 +45,51 @@ class ApartadoTest(TestCase):
         with self.assertRaises(ErrorApartado):
             crear_apartado(self.cajero, producto_id=self.producto.id, precio_total='600.00')
 
-    def test_abono_no_supera_pendiente(self):
+    def test_abono_efectivo_mayor_al_pendiente_es_rechazado(self):
         apartado = crear_apartado(
             self.cajero, producto_id=self.producto.id, precio_total='500.00',
             abono_inicial='400.00')
-        # Intenta abonar 300 cuando solo quedan 100: se capea a 100.
-        registrar_abono(self.cajero, apartado.id, '300.00')
+        # Abonar 300 cuando solo quedan 100 se RECHAZA (antes se capeaba en
+        # silencio y el excedente en efectivo quedaba sin rastro).
+        with self.assertRaises(ErrorApartado) as ctx:
+            registrar_abono(self.cajero, apartado.id, '300.00')
+        msg = str(ctx.exception)
+        self.assertIn('300.00', msg)  # monto tecleado
+        self.assertIn('100.00', msg)  # pendiente real
         apartado.refresh_from_db()
-        self.assertEqual(apartado.total_abonado, Decimal('500.00'))
+        self.assertEqual(apartado.total_abonado, Decimal('400.00'))  # sin cambios
+        self.assertEqual(apartado.pendiente, Decimal('100.00'))
+
+    def test_abono_exacto_al_pendiente_liquida_sin_error(self):
+        apartado = crear_apartado(
+            self.cajero, producto_id=self.producto.id, precio_total='500.00',
+            abono_inicial='400.00')
+        registrar_abono(self.cajero, apartado.id, '100.00')
+        apartado.refresh_from_db()
         self.assertEqual(apartado.pendiente, Decimal('0.00'))
+        venta = liquidar_apartado(self.cajero, apartado.id)
+        self.assertEqual(venta.total, Decimal('500.00'))
+
+    def test_abono_inicial_mayor_al_precio_es_rechazado(self):
+        # El abono inicial de crear_apartado pasa por la misma regla.
+        with self.assertRaises(ErrorApartado):
+            crear_apartado(
+                self.cajero, producto_id=self.producto.id, precio_total='500.00',
+                abono_inicial='600.00')
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock, 3)  # rollback completo
+
+    def test_abono_saldo_mayor_al_pendiente_se_capea(self):
+        self.cliente.saldo_favor = Decimal('600.00')
+        self.cliente.save()
+        apartado = crear_apartado(
+            self.cajero, producto_id=self.producto.id, precio_total='500.00',
+            cliente_id=self.cliente.id, abono_inicial='450.00')
+        # Con método saldo se capea a min(saldo, pendiente) = 50, como antes.
+        registrar_abono(self.cajero, apartado.id, '600.00', Abono.Metodo.SALDO)
+        apartado.refresh_from_db(); self.cliente.refresh_from_db()
+        self.assertEqual(apartado.pendiente, Decimal('0.00'))
+        self.assertEqual(self.cliente.saldo_favor, Decimal('550.00'))  # 600 − 50
 
     def test_abono_con_saldo_debita_cliente(self):
         self.cliente.saldo_favor = Decimal('200.00')

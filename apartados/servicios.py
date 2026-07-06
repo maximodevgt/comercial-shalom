@@ -81,25 +81,31 @@ def crear_apartado(usuario, *, producto_id, precio_total, cliente_id=None,
 
 
 def _registrar_abono(usuario, apartado, monto, metodo, cliente):
-    """Crea un abono capeado al pendiente. Si el método es saldo, debita del
-    cliente (capeado a min(saldo, pendiente)). Asume apartado ya bloqueado."""
+    """Crea un abono. Con efectivo/tarjeta el monto NO puede superar el
+    pendiente: capear en silencio dejaba dinero recibido sin registrar
+    (descuadre de caja); se rechaza para que el cajero corrija y dé el
+    cambio. Con saldo sí se capea a min(saldo, pendiente): no hay efectivo
+    físico de por medio. Asume apartado ya bloqueado."""
     pendiente = apartado.pendiente
     if pendiente <= 0:
         raise ErrorApartado('El apartado ya está totalmente pagado.')
 
-    monto = min(monto, pendiente).quantize(CENTAVO)
+    monto = monto.quantize(CENTAVO)
+    if monto <= 0:
+        raise ErrorApartado('El monto del abono debe ser mayor a 0.')
 
     if metodo == Abono.Metodo.SALDO:
         if cliente is None:
             raise ErrorApartado('No hay cliente registrado para usar saldo.')
         if cliente.saldo_favor <= 0:
             raise ErrorApartado('El cliente no tiene saldo a favor.')
-        monto = min(monto, cliente.saldo_favor).quantize(CENTAVO)
+        monto = min(monto, pendiente, cliente.saldo_favor).quantize(CENTAVO)
         cliente.saldo_favor = (cliente.saldo_favor - monto).quantize(CENTAVO)
         cliente.save(update_fields=['saldo_favor'])
-
-    if monto <= 0:
-        raise ErrorApartado('El monto del abono debe ser mayor a 0.')
+    elif monto > pendiente:
+        raise ErrorApartado(
+            f'El abono (Q {monto}) supera el saldo pendiente (Q {pendiente}). '
+            f'Ingresá el monto correcto y entregá el cambio.')
 
     return Abono.objects.create(
         apartado=apartado, monto=monto, metodo=metodo, usuario=usuario)
