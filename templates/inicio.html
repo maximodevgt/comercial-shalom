@@ -2,28 +2,34 @@
 {% block titulo %}Inicio{% endblock %}
 
 {% block contenido %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Hola, {{ user.get_full_name|default:user.username }} <span class="badge bg-secondary">{{ user.get_rol_display }}</span></h1>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h2 class="fw-bold mb-0"><i class="fa-solid fa-house me-2"></i>Hola, {{ user.get_full_name|default:user.username }}
+        <span class="badge fs-6 align-middle {% if user.es_admin %}text-bg-danger{% elif user.es_supervisor %}text-bg-secondary{% else %}text-bg-primary{% endif %}">{{ user.get_rol_display }}</span>
+    </h2>
     <span class="text-muted">{% now 'l d/m/Y' %}</span>
 </div>
 
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <div class="card metrica m-total"><div class="card-body d-flex align-items-center justify-content-between">
-            <div><div class="small text-white-50">Total vendido hoy</div><div class="valor">Q {{ total_hoy }}</div></div>
+            <div><div class="sub">Total vendido hoy</div><div class="valor">Q {{ total_hoy }}</div></div>
             <i class="fa-solid fa-sack-dollar icono"></i>
         </div></div>
     </div>
     <div class="col-md-4">
         <div class="card metrica m-ventas"><div class="card-body d-flex align-items-center justify-content-between">
-            <div><div class="small text-white-50">Ventas de hoy</div><div class="valor">{{ num_ventas_hoy }}</div></div>
+            <div><div class="sub">Ventas de hoy</div><div class="valor">{{ num_ventas_hoy }}</div></div>
             <i class="fa-solid fa-receipt icono"></i>
         </div></div>
     </div>
     <div class="col-md-4">
         <div class="card metrica m-stock" role="button" data-bs-toggle="modal" data-bs-target="#modalStock">
             <div class="card-body d-flex align-items-center justify-content-between">
-                <div><div class="small text-white-50">Stock bajo</div><div class="valor">{{ num_stock_bajo }} <i class="fa-solid fa-up-right-from-square fs-6"></i></div></div>
+                <div>
+                    <div class="sub">Stock bajo</div>
+                    <div class="valor">{{ num_stock_bajo }}</div>
+                    <div class="small fw-semibold"><i class="fa-solid fa-hand-pointer me-1"></i>Clic para ver detalles</div>
+                </div>
                 <i class="fa-solid fa-triangle-exclamation icono"></i>
             </div>
         </div>
@@ -35,17 +41,32 @@
 {{ chart_top|json_script:"data-top" }}
 {{ chart_cajero|json_script:"data-cajero" }}
 <div class="row g-3 mb-4">
-    <div class="col-lg-6"><div class="card"><div class="card-header">Ventas de la semana</div><div class="card-body"><canvas id="chartSemana" height="140"></canvas></div></div></div>
-    <div class="col-lg-6"><div class="card"><div class="card-header">Top 5 productos</div><div class="card-body"><canvas id="chartTop" height="140"></canvas></div></div></div>
-    <div class="col-lg-6"><div class="card"><div class="card-header">Ventas por cajero</div><div class="card-body"><canvas id="chartCajero" height="140"></canvas></div></div></div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="fa-solid fa-chart-column me-1 text-primary"></i> Ventas de la semana</div>
+            <div class="card-body"><canvas id="chartSemana" height="140"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="fa-solid fa-ranking-star me-1 texto-exito"></i> Top 5 productos</div>
+            <div class="card-body"><canvas id="chartTop" height="140"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="fa-solid fa-user-tag me-1 text-warning"></i> Ventas por cajero</div>
+            <div class="card-body"><canvas id="chartCajero" height="140"></canvas></div>
+        </div>
+    </div>
 </div>
 {% endif %}
 
 <div class="card">
-    <div class="card-header"><i class="fa-solid fa-clock-rotate-left"></i> Últimas ventas de hoy</div>
+    <div class="card-header"><i class="fa-solid fa-clock-rotate-left me-1"></i> Últimas ventas de hoy</div>
     <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
-        <thead class="table-light"><tr><th>#</th><th>Cliente</th><th>Productos</th><th class="text-end">Total</th><th>Hora</th></tr></thead>
+        <thead><tr><th>#</th><th>Cliente</th><th>Productos</th><th class="text-end">Total</th><th>Hora</th></tr></thead>
         <tbody>
             {% for v in ultimas_ventas %}
             <tr>
@@ -54,7 +75,8 @@
                 <td style="min-width:220px">
                     {% for d in v.detalles.all %}
                     <div class="d-flex align-items-center gap-2 {% if not forloop.first %}border-top pt-1 mt-1{% endif %}">
-                        {% if d.producto.foto %}<img src="{{ d.producto.foto.url }}" class="mini">{% endif %}
+                        {% if d.producto.foto %}<img src="{{ d.producto.foto.url }}" class="mini" alt="">
+                        {% else %}<span class="placeholder-foto mini"><i class="fa-solid fa-image"></i></span>{% endif %}
                         <span class="small">{{ d.producto.nombre_completo }} <span class="text-muted">×{{ d.cantidad }}</span></span>
                     </div>
                     {% endfor %}
@@ -71,24 +93,51 @@
 </div>
 
 <!-- Modal stock bajo -->
-<div class="modal fade" id="modalStock" tabindex="-1">
-  <div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
-    <div class="modal-header"><h5 class="modal-title">Productos con stock bajo</h5>
-      <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-    <div class="modal-body">
-      <table class="table table-sm align-middle">
+<div class="modal fade" id="modalStock" tabindex="-1" aria-labelledby="modalStockTitulo" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered"><div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title" id="modalStockTitulo">
+        <i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> Productos con Stock Bajo
+      </h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+    </div>
+    <div class="modal-body p-0">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr><th style="width:56px">Foto</th><th>Producto</th><th class="text-center">Stock</th>
+              <th class="text-end">Precio</th>{% if user.es_admin %}<th class="text-end">Acción</th>{% endif %}</tr>
+        </thead>
         <tbody>
           {% for p in stock_bajo %}
           <tr>
-            <td style="width:44px">{% if p.foto %}<img src="{{ p.foto.url }}" class="mini">{% else %}<i class="fa-solid fa-image text-muted"></i>{% endif %}</td>
-            <td>{{ p.nombre_completo }}</td>
-            <td class="text-end">{% if p.stock == 0 %}<span class="badge bg-secondary">Agotado</span>{% else %}<span class="badge bg-warning text-dark">{{ p.stock }}</span>{% endif %}</td>
+            <td>
+              {% if p.foto %}<img src="{{ p.foto.url }}" class="thumb" style="width:40px;height:40px;" alt="">
+              {% else %}<span class="placeholder-foto" style="width:40px;height:40px;"><i class="fa-solid fa-image"></i></span>{% endif %}
+            </td>
+            <td>
+              <div class="fw-bold">{{ p.nombre_completo }}</div>
+              <div class="small text-muted">{{ p.categoria.nombre }}</div>
+            </td>
+            <td class="text-center"><span class="badge text-bg-danger">{{ p.stock }}</span></td>
+            <td class="text-end">Q {{ p.precio }}</td>
+            {% if user.es_admin %}
+            <td class="text-end">
+              <a href="{% url 'productos:editar' p.pk %}" class="btn btn-warning btn-sm">
+                <i class="fa-solid fa-pen me-1"></i>Editar</a>
+            </td>
+            {% endif %}
           </tr>
           {% empty %}
-          <tr><td class="text-muted text-center py-3"><i class="fa-solid fa-circle-check text-success me-1"></i> No hay productos con stock bajo.</td></tr>
+          <tr><td colspan="{% if user.es_admin %}5{% else %}4{% endif %}" class="text-muted text-center py-4">
+            <i class="fa-solid fa-circle-check texto-exito me-1"></i> No hay productos con stock bajo.</td></tr>
           {% endfor %}
         </tbody>
       </table>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      <a href="{% url 'productos:lista' %}" class="btn btn-primary">
+        <i class="fa-solid fa-box me-1"></i>Ver todos los productos</a>
     </div>
   </div></div>
 </div>
@@ -101,16 +150,21 @@
 const dSemana = JSON.parse(document.getElementById('data-semana').textContent);
 const dTop = JSON.parse(document.getElementById('data-top').textContent);
 const dCajero = JSON.parse(document.getElementById('data-cajero').textContent);
+// Paleta Ayutla: barras alternando verde / azul / amarillo.
+const TRIO = ['#16a34a', '#1e40af', '#f59e0b'];
+const alternado = n => Array.from({length: n}, (_, i) => TRIO[i % TRIO.length]);
 const COLORS = ['#1e40af','#16a34a','#f59e0b','#dc2626','#0891b2','#7c3aed','#db2777'];
 
 new Chart(document.getElementById('chartSemana'), {
     type: 'bar',
-    data: { labels: dSemana.labels, datasets: [{ label: 'Q vendidos', data: dSemana.valores, backgroundColor: '#1e40af', borderRadius: 4 }] },
+    data: { labels: dSemana.labels, datasets: [{ label: 'Q vendidos', data: dSemana.valores,
+        backgroundColor: alternado(dSemana.labels.length), borderRadius: 4 }] },
     options: { plugins: { legend: { display: false } } }
 });
 new Chart(document.getElementById('chartTop'), {
     type: 'bar',
-    data: { labels: dTop.labels, datasets: [{ label: 'Unidades', data: dTop.valores, backgroundColor: '#16a34a', borderRadius: 4 }] },
+    data: { labels: dTop.labels, datasets: [{ label: 'Unidades', data: dTop.valores,
+        backgroundColor: alternado(dTop.labels.length), borderRadius: 4 }] },
     options: { indexAxis: 'y', plugins: { legend: { display: false } } }
 });
 new Chart(document.getElementById('chartCajero'), {

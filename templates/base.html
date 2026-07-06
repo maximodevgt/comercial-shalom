@@ -90,13 +90,15 @@
         .card-producto:hover { box-shadow: var(--sombra-hover); border-color: var(--primario-claro); transform: translateY(-2px); }
         .card-producto.agotado { opacity: .5; cursor: not-allowed; }
 
-        /* Tarjetas de métrica del dashboard */
+        /* Tarjetas de métrica (dashboard, cierre, reportes) */
         .metrica { border: none; border-radius: var(--radio); color: #fff; box-shadow: var(--sombra); }
+        .metrica .sub { font-size: .78rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: .5px; opacity: .85; }
         .metrica .icono { font-size: 2.2rem; opacity: .35; }
         .metrica .valor { font-size: 1.9rem; font-weight: 700; line-height: 1.1; }
-        .metrica.m-total { background: linear-gradient(135deg, #15803d, #16a34a); }
-        .metrica.m-ventas { background: linear-gradient(135deg, var(--primario), var(--primario-claro)); }
-        .metrica.m-stock { background: linear-gradient(135deg, #b45309, #f59e0b); }
+        .metrica.m-total { background: var(--exito); }
+        .metrica.m-ventas { background: var(--primario); }
+        .metrica.m-stock { background: var(--advertencia); color: #212529; }
         .metrica[role="button"] { cursor: pointer; transition: transform .15s, box-shadow .15s; }
         .metrica[role="button"]:hover { transform: translateY(-2px); box-shadow: var(--sombra-hover); }
     </style>
