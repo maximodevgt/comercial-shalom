@@ -5,7 +5,7 @@
 <div class="row justify-content-center">
     <div class="col-md-7 col-lg-6">
         <div class="card">
-            <div class="card-header"><h1 class="h5 mb-0">{% if es_creacion %}Nuevo usuario{% else %}Editar usuario: {{ object.username }}{% endif %}</h1></div>
+            <div class="card-header"><h2 class="h5 mb-0"><i class="fa-solid fa-user-gear me-1"></i> {% if es_creacion %}Nuevo usuario{% else %}Editar usuario: {{ object.username }}{% endif %}</h2></div>
             <div class="card-body">
                 {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
                 <form method="post" novalidate>
@@ -13,29 +13,29 @@
 
                     {% if es_creacion %}
                     <div class="mb-3">
-                        <label class="form-label">Usuario (para iniciar sesión)</label>
+                        <label class="form-label fw-bold">Usuario (para iniciar sesión)</label>
                         {{ form.username }}
                         {% for e in form.username.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
                     </div>
                     {% else %}
                     <div class="mb-3">
-                        <label class="form-label">Usuario</label>
+                        <label class="form-label fw-bold">Usuario</label>
                         <input type="text" class="form-control" value="{{ object.username }}" disabled>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Correo (no editable)</label>
+                        <label class="form-label fw-bold">Correo (no editable)</label>
                         <input type="text" class="form-control" value="{{ object.email }}" disabled>
                     </div>
                     {% endif %}
 
                     <div class="row g-2 mb-3">
-                        <div class="col"><label class="form-label">Nombre</label>{{ form.first_name }}</div>
-                        <div class="col"><label class="form-label">Apellido</label>{{ form.last_name }}</div>
+                        <div class="col"><label class="form-label fw-bold">Nombre</label>{{ form.first_name }}</div>
+                        <div class="col"><label class="form-label fw-bold">Apellido</label>{{ form.last_name }}</div>
                     </div>
 
                     {% if es_creacion %}
                     <div class="mb-3">
-                        <label class="form-label">{{ form.correo_usuario.label }}</label>
+                        <label class="form-label fw-bold">{{ form.correo_usuario.label }}</label>
                         <div class="input-group">
                             {{ form.correo_usuario }}
                             <span class="input-group-text">{{ dominio }}</span>
@@ -45,12 +45,12 @@
                     {% endif %}
 
                     <div class="mb-3">
-                        <label class="form-label">Rol</label>
+                        <label class="form-label fw-bold">Rol</label>
                         {{ form.rol }}
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">{{ form.password.label }}</label>
+                        <label class="form-label fw-bold">{{ form.password.label }}</label>
                         <div class="input-group">
                             {{ form.password }}
                             <button type="button" class="btn btn-outline-secondary" id="togglePass"><i class="fa-solid fa-eye" id="eyeIcon"></i></button>
@@ -59,8 +59,8 @@
                         {% for e in form.password.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
                     </div>
 
-                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Guardar</button>
-                    <a href="{% url 'usuarios:lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-success"><i class="fa-solid fa-floppy-disk me-1"></i>Guardar</button>
+                    <a href="{% url 'usuarios:lista' %}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left me-1"></i>Volver</a>
                 </form>
             </div>
         </div>

@@ -3,63 +3,93 @@
 {% block titulo %}{{ cliente.nombre }}{% endblock %}
 
 {% block contenido %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0"><i class="fa-solid fa-circle-user"></i> {{ cliente.nombre }}</h1>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h2 class="fw-bold mb-0"><i class="fa-solid fa-circle-user me-2"></i>{{ cliente.nombre }}</h2>
     <div class="d-flex gap-2">
-        <a href="{% url 'clientes:editar' cliente.pk %}" class="btn btn-outline-primary"><i class="fa-solid fa-pen"></i> Editar</a>
+        <a href="{% url 'clientes:lista' %}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left me-1"></i>Volver</a>
+        {% if user.es_admin or user.es_cajero %}
+        <a href="{% url 'clientes:editar' cliente.pk %}" class="btn btn-primary"><i class="fa-solid fa-pen me-1"></i>Editar</a>
+        {% endif %}
         {% if user.es_admin %}
-        <a href="{% url 'clientes:eliminar' cliente.pk %}" class="btn btn-outline-danger"><i class="fa-solid fa-trash"></i> Eliminar</a>
+        <a href="{% url 'clientes:eliminar' cliente.pk %}" class="btn btn-danger"><i class="fa-solid fa-trash me-1"></i>Eliminar</a>
         {% endif %}
     </div>
 </div>
 
 <div class="row g-3">
     <div class="col-md-4">
-        <div class="card">
+        <div class="card mb-3">
+            <div class="card-header"><i class="fa-solid fa-address-card me-1"></i> Datos del cliente</div>
             <div class="card-body">
-                <h6 class="text-muted">Datos</h6>
-                <p class="mb-1"><i class="fa-solid fa-phone"></i> {{ cliente.telefono|default:'Sin teléfono' }}</p>
-                <p class="mb-3"><i class="fa-solid fa-location-dot"></i> {{ cliente.direccion|default:'Sin dirección' }}</p>
-                <div class="p-3 bg-light rounded text-center">
-                    <div class="text-muted small">Saldo a favor</div>
-                    <div class="fs-3 fw-bold {% if cliente.saldo_favor > 0 %}text-success{% endif %}">Q {{ cliente.saldo_favor }}</div>
+                <p class="mb-1"><i class="fa-solid fa-phone me-2 text-muted"></i>{{ cliente.telefono|default:'Sin teléfono' }}</p>
+                <p class="mb-1"><i class="fa-solid fa-location-dot me-2 text-muted"></i>{{ cliente.direccion|default:'Sin dirección' }}</p>
+                <p class="mb-0"><i class="fa-solid fa-calendar me-2 text-muted"></i>Registrado el {{ cliente.creado|date:'d/m/Y' }}</p>
+            </div>
+        </div>
+        <div class="card metrica m-total">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="sub">Saldo a favor</div>
+                    <div class="valor">Q {{ cliente.saldo_favor }}</div>
                 </div>
+                <i class="fa-solid fa-piggy-bank icono"></i>
             </div>
         </div>
     </div>
+
     <div class="col-md-8">
         <div class="card mb-3">
-            <div class="card-header"><i class="fa-solid fa-receipt"></i> Historial de ventas</div>
-            <div class="card-body">
-                {% if ventas and ventas.exists %}
-                <ul class="list-group list-group-flush">
+            <div class="card-header"><i class="fa-solid fa-receipt me-1"></i> Historial de ventas</div>
+            <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead><tr><th>#</th><th class="text-end">Total</th><th>Método</th><th>Estado</th><th>Fecha</th><th></th></tr></thead>
+                <tbody>
                     {% for v in ventas.all %}
-                    <li class="list-group-item d-flex justify-content-between">
-                        <a href="{% url 'ventas:detalle' v.pk %}">Venta #{{ v.pk }}</a>
-                        <span>Q {{ v.total }} · {{ v.creado|date:'d/m/Y' }}</span>
-                    </li>
+                    <tr>
+                        <td class="fw-bold">{{ v.pk }}</td>
+                        <td class="text-end fw-semibold">Q {{ v.total }}</td>
+                        <td class="small">{{ v.get_metodo_pago_display }}</td>
+                        <td>
+                            {% if v.estado == 'completada' %}<span class="badge text-bg-success">Completada</span>
+                            {% else %}<span class="badge text-bg-danger">Anulada</span>{% endif %}
+                        </td>
+                        <td class="small text-muted">{{ v.creado|date:'d/m/Y H:i' }}</td>
+                        <td class="text-end"><a href="{% url 'ventas:detalle' v.pk %}" class="btn btn-info btn-sm">
+                            <i class="fa-solid fa-eye"></i></a></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">Sin ventas registradas.</td></tr>
                     {% endfor %}
-                </ul>
-                {% else %}
-                <p class="text-muted mb-0">Sin ventas registradas.</p>
-                {% endif %}
+                </tbody>
+            </table>
             </div>
         </div>
+
         <div class="card">
-            <div class="card-header"><i class="fa-solid fa-bookmark"></i> Apartados</div>
-            <div class="card-body">
-                {% if apartados and apartados.exists %}
-                <ul class="list-group list-group-flush">
+            <div class="card-header"><i class="fa-solid fa-bookmark me-1"></i> Apartados</div>
+            <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead><tr><th>#</th><th>Producto</th><th class="text-end">Pendiente</th><th>Estado</th><th>Fecha</th><th></th></tr></thead>
+                <tbody>
                     {% for a in apartados.all %}
-                    <li class="list-group-item d-flex justify-content-between">
-                        <a href="{% url 'apartados:detalle' a.pk %}">Apartado #{{ a.pk }}</a>
-                        <span>{{ a.get_estado_display }}</span>
-                    </li>
+                    <tr>
+                        <td class="fw-bold">{{ a.pk }}</td>
+                        <td class="small">{{ a.producto.nombre_completo }}</td>
+                        <td class="text-end fw-semibold">Q {{ a.pendiente }}</td>
+                        <td>
+                            {% if a.estado == 'activo' %}<span class="badge text-bg-warning">Activo</span>
+                            {% elif a.estado == 'liquidado' %}<span class="badge text-bg-success">Liquidado</span>
+                            {% else %}<span class="badge text-bg-danger">Cancelado</span>{% endif %}
+                        </td>
+                        <td class="small text-muted">{{ a.creado|date:'d/m/Y' }}</td>
+                        <td class="text-end"><a href="{% url 'apartados:detalle' a.pk %}" class="btn btn-info btn-sm">
+                            <i class="fa-solid fa-eye"></i></a></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">Sin apartados registrados.</td></tr>
                     {% endfor %}
-                </ul>
-                {% else %}
-                <p class="text-muted mb-0">Sin apartados registrados.</p>
-                {% endif %}
+                </tbody>
+            </table>
             </div>
         </div>
     </div>

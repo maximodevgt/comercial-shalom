@@ -3,65 +3,86 @@
 {% block titulo %}Productos{% endblock %}
 
 {% block contenido %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0"><i class="fa-solid fa-box"></i> Productos</h1>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h2 class="fw-bold mb-0"><i class="fa-solid fa-box me-2"></i>Productos</h2>
     {% if user.es_admin %}
-    <a href="{% url 'productos:crear' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nuevo producto</a>
+    <a href="{% url 'productos:crear' %}" class="btn btn-primary"><i class="fa-solid fa-plus me-1"></i>Nuevo producto</a>
     {% endif %}
 </div>
 
-<form method="get" class="row g-2 mb-4">
-    <div class="col-md-6">
-        <input type="text" name="q" value="{{ q }}" class="form-control"
-               placeholder="Buscar por nombre, modelo o color...">
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-bold small mb-1" for="filtroCategoria">Categoría</label>
+                <select id="filtroCategoria" name="categoria" class="form-select">
+                    <option value="">Todas las categorías</option>
+                    {% for c in categorias %}
+                    <option value="{{ c.id }}" {% if categoria_sel == c.id|stringformat:'s' %}selected{% endif %}>{{ c.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label fw-bold small mb-1" for="filtroTexto">Buscar</label>
+                <input id="filtroTexto" type="text" name="q" value="{{ q }}" class="form-control"
+                       placeholder="Buscar por nombre, modelo o color...">
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-success flex-fill">
+                    <i class="fa-solid fa-magnifying-glass me-1"></i>Filtrar</button>
+                <a href="{% url 'productos:lista' %}" class="btn btn-secondary">
+                    <i class="fa-solid fa-eraser me-1"></i>Limpiar</a>
+            </div>
+        </form>
     </div>
-    <div class="col-md-4">
-        <select name="categoria" class="form-select">
-            <option value="">Todas las categorías</option>
-            {% for c in categorias %}
-            <option value="{{ c.id }}" {% if categoria_sel == c.id|stringformat:'s' %}selected{% endif %}>{{ c.nombre }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col-md-2 d-grid">
-        <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
-    </div>
-</form>
+</div>
 
-{% if productos %}
-<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 g-3">
-    {% for p in productos %}
-    <div class="col">
-        <div class="card h-100">
-            {% if p.foto %}
-            <img src="{{ p.foto.url }}" class="card-img-top thumb-contain" style="height:160px" alt="{{ p.nombre_completo }}">
-            {% else %}
-            <div class="placeholder-foto card-img-top" style="height:160px"><i class="fa-solid fa-image fs-1"></i></div>
-            {% endif %}
-            <div class="card-body">
-                <h6 class="card-title mb-1">{{ p.nombre }}</h6>
-                <div class="text-muted small mb-2">{{ p.modelo }}{% if p.modelo and p.color %} · {% endif %}{{ p.color }}</div>
-                <div class="fw-bold mb-2">Q {{ p.precio }}</div>
-                <div class="d-flex gap-1 flex-wrap">
-                    {% if p.activo %}<span class="badge bg-success">Activo</span>{% else %}<span class="badge bg-dark">Inactivo</span>{% endif %}
-                    {% if p.estado_stock == 'agotado' %}<span class="badge bg-secondary">Agotado</span>
-                    {% elif p.estado_stock == 'bajo' %}<span class="badge bg-warning text-dark">Stock bajo ({{ p.stock }})</span>
-                    {% else %}<span class="badge bg-light text-dark border">Stock: {{ p.stock }}</span>{% endif %}
-                </div>
-            </div>
-            {% if user.es_admin %}
-            <div class="card-footer bg-white d-flex gap-2">
-                <a href="{% url 'productos:editar' p.pk %}" class="btn btn-sm btn-outline-primary flex-fill"><i class="fa-solid fa-pen"></i> Editar</a>
-                <a href="{% url 'productos:eliminar' p.pk %}" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></a>
-            </div>
-            {% endif %}
-        </div>
+<div class="card">
+    <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+        <thead>
+            <tr>
+                <th style="width:56px">Foto</th><th>Categoría</th><th>Nombre</th><th>Modelo</th><th>Color</th>
+                <th class="text-end">Precio</th><th class="text-center">Stock</th><th class="text-center">Estado</th>
+                {% if user.es_admin %}<th class="text-end">Acciones</th>{% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in productos %}
+            <tr>
+                <td>
+                    {% if p.foto %}<img src="{{ p.foto.url }}" class="thumb" style="width:40px;height:40px;" alt="">
+                    {% else %}<span class="placeholder-foto" style="width:40px;height:40px;"><i class="fa-solid fa-image"></i></span>{% endif %}
+                </td>
+                <td class="small text-muted">{{ p.categoria.nombre }}</td>
+                <td class="fw-bold">{{ p.nombre }}</td>
+                <td>{{ p.modelo|default:'—' }}</td>
+                <td>{{ p.color|default:'—' }}</td>
+                <td class="text-end fw-semibold">Q {{ p.precio }}</td>
+                <td class="text-center">{{ p.stock }}</td>
+                <td class="text-center">
+                    {% if not p.activo %}<span class="badge text-bg-dark">Inactivo</span>
+                    {% elif p.estado_stock == 'agotado' %}<span class="badge text-bg-danger">Agotado</span>
+                    {% elif p.estado_stock == 'bajo' %}<span class="badge text-bg-warning">Stock bajo</span>
+                    {% else %}<span class="badge text-bg-success">Activo</span>{% endif %}
+                </td>
+                {% if user.es_admin %}
+                <td class="text-end text-nowrap">
+                    <a href="{% url 'productos:editar' p.pk %}" class="btn btn-warning btn-sm">
+                        <i class="fa-solid fa-pen me-1"></i>Editar</a>
+                    <a href="{% url 'productos:eliminar' p.pk %}" class="btn btn-danger btn-sm">
+                        <i class="fa-solid fa-trash"></i></a>
+                </td>
+                {% endif %}
+            </tr>
+            {% empty %}
+            <tr><td colspan="{% if user.es_admin %}9{% else %}8{% endif %}" class="text-center text-muted py-4">
+                No se encontraron productos.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
     </div>
-    {% endfor %}
 </div>
 
 {% include 'paginacion.html' %}
-{% else %}
-<div class="alert alert-info">No se encontraron productos.</div>
-{% endif %}
 {% endblock %}

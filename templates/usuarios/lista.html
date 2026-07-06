@@ -2,33 +2,53 @@
 {% block titulo %}Usuarios{% endblock %}
 
 {% block contenido %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0"><i class="fa-solid fa-user-shield"></i> Usuarios</h1>
-    <a href="{% url 'usuarios:crear' %}" class="btn btn-primary"><i class="fa-solid fa-user-plus"></i> Nuevo usuario</a>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h2 class="fw-bold mb-0"><i class="fa-solid fa-user-gear me-2"></i>Usuarios</h2>
+    <div class="d-flex gap-2">
+        <a href="{% url 'usuarios:logs' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-clock-rotate-left me-1"></i>Historial de Accesos</a>
+        <a href="{% url 'usuarios:crear' %}" class="btn btn-primary">
+            <i class="fa-solid fa-user-plus me-1"></i>Nuevo Usuario</a>
+    </div>
 </div>
 
 <div class="card">
     <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-            <tr><th>Usuario</th><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th class="text-end">Acciones</th></tr>
+        <thead>
+            <tr><th>Nombre</th><th>Correo</th><th class="text-center">Rol</th>
+                <th class="text-center">Estado</th><th class="text-end">Acciones</th></tr>
         </thead>
         <tbody>
             {% for u in usuarios %}
             <tr>
-                <td class="fw-semibold">{{ u.username }}</td>
-                <td>{{ u.get_full_name|default:'—' }}</td>
+                <td>
+                    <div class="fw-bold">{{ u.get_full_name|default:u.username }}</div>
+                    <div class="small text-muted">{{ u.username }}</div>
+                </td>
                 <td class="small">{{ u.email|default:'—' }}</td>
-                <td><span class="badge bg-info text-dark">{{ u.get_rol_display }}</span>{% if u.is_superuser %} <span class="badge bg-dark">Superusuario</span>{% endif %}</td>
-                <td>{% if u.is_active %}<span class="badge bg-success">Activo</span>{% else %}<span class="badge bg-secondary">Inactivo</span>{% endif %}</td>
-                <td class="text-end">
-                    <a href="{% url 'usuarios:editar' u.pk %}" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
+                <td class="text-center">
+                    <span class="badge {% if u.es_admin %}text-bg-danger{% elif u.es_supervisor %}text-bg-secondary{% else %}text-bg-primary{% endif %}">
+                        {{ u.get_rol_display }}</span>
+                    {% if u.is_superuser %}<span class="badge text-bg-dark">Superusuario</span>{% endif %}
+                </td>
+                <td class="text-center">
+                    {% if u.is_active %}<span class="badge text-bg-success">Activo</span>
+                    {% else %}<span class="badge text-bg-danger">Inactivo</span>{% endif %}
+                </td>
+                <td class="text-end text-nowrap">
+                    <a href="{% url 'usuarios:editar' u.pk %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fa-solid fa-pen me-1"></i>Editar</a>
                     {% if u.pk != user.pk %}
                     <form method="post" action="{% url 'usuarios:toggle_activo' u.pk %}" class="d-inline">
                         {% csrf_token %}
-                        <button class="btn btn-sm {% if u.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
-                            {% if u.is_active %}<i class="fa-solid fa-circle-pause"></i> Desactivar{% else %}<i class="fa-solid fa-circle-play"></i> Activar{% endif %}
-                        </button>
+                        {% if u.is_active %}
+                        <button class="btn btn-sm btn-outline-danger">
+                            <i class="fa-solid fa-circle-pause me-1"></i>Desactivar</button>
+                        {% else %}
+                        <button class="btn btn-sm btn-outline-success">
+                            <i class="fa-solid fa-circle-play me-1"></i>Activar</button>
+                        {% endif %}
                     </form>
                     {% endif %}
                 </td>

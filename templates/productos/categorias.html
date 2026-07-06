@@ -3,35 +3,41 @@
 {% block titulo %}Categorías{% endblock %}
 
 {% block contenido %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0"><i class="fa-solid fa-tags"></i> Categorías</h1>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h2 class="fw-bold mb-0"><i class="fa-solid fa-tags me-2"></i>Categorías</h2>
     {% if user.es_admin %}
-    <a href="{% url 'productos:categoria_crear' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nueva categoría</a>
+    <a href="{% url 'productos:categoria_crear' %}" class="btn btn-primary"><i class="fa-solid fa-plus me-1"></i>Nueva categoría</a>
     {% endif %}
 </div>
 
 <div class="card">
-    <table class="table table-hover mb-0 align-middle">
-        <thead class="table-light">
-            <tr><th>Nombre</th><th>Productos</th>{% if user.es_admin %}<th class="text-end">Acciones</th>{% endif %}</tr>
+    <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+        <thead>
+            <tr><th style="width:80px">ID</th><th>Nombre</th><th class="text-center">Productos</th>
+                {% if user.es_admin %}<th class="text-end">Acciones</th>{% endif %}</tr>
         </thead>
         <tbody>
             {% for c in categorias %}
             <tr>
-                <td>{{ c.nombre }}</td>
-                <td>{{ c.productos.count }}</td>
+                <td class="text-muted">{{ c.pk }}</td>
+                <td class="fw-bold">{{ c.nombre }}</td>
+                <td class="text-center"><span class="badge text-bg-primary">{{ c.productos.count }}</span></td>
                 {% if user.es_admin %}
-                <td class="text-end">
-                    <a href="{% url 'productos:categoria_editar' c.pk %}" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
-                    <a href="{% url 'productos:categoria_eliminar' c.pk %}" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></a>
+                <td class="text-end text-nowrap">
+                    <a href="{% url 'productos:categoria_editar' c.pk %}" class="btn btn-warning btn-sm">
+                        <i class="fa-solid fa-pen me-1"></i>Editar</a>
+                    <a href="{% url 'productos:categoria_eliminar' c.pk %}" class="btn btn-danger btn-sm">
+                        <i class="fa-solid fa-trash"></i></a>
                 </td>
                 {% endif %}
             </tr>
             {% empty %}
-            <tr><td colspan="3" class="text-center text-muted py-4">No hay categorías.</td></tr>
+            <tr><td colspan="{% if user.es_admin %}4{% else %}3{% endif %}" class="text-center text-muted py-4">No hay categorías.</td></tr>
             {% endfor %}
         </tbody>
     </table>
+    </div>
 </div>
 {% include 'paginacion.html' %}
 {% endblock %}
