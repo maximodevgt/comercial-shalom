@@ -115,9 +115,11 @@
                         {% else %}
                         <p class="small text-muted">Falta cubrir <strong>Q {{ apartado.pendiente }}</strong> para poder liquidar.</p>
                         {% endif %}
+                        {% if user.es_admin %}
                         <hr>
                         <button class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#modalCancelar">
                             <i class="fa-solid fa-circle-xmark me-1"></i>Cancelar apartado</button>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -126,7 +128,8 @@
     </div>
 </div>
 
-<!-- Modal cancelar -->
+<!-- Modal cancelar (solo admin: la vista también lo exige) -->
+{% if user.es_admin %}
 <div class="modal fade" id="modalCancelar" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
     <form method="post" action="{% url 'apartados:cancelar' apartado.pk %}">
@@ -170,4 +173,5 @@
     </form>
   </div></div>
 </div>
+{% endif %}
 {% endblock %}

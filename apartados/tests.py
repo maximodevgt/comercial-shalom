@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.urls import reverse
 
 from clientes.models import Cliente
 from productos.models import Categoria, Producto
@@ -119,3 +120,39 @@ class ApartadoTest(TestCase):
                           nuevo_cliente={'nombre': 'Nuevo', 'telefono': '123'})
         nuevo = Cliente.objects.get(nombre='Nuevo')
         self.assertEqual(nuevo.saldo_favor, Decimal('80.00'))
+
+
+class CancelarSoloAdminTest(TestCase):
+    """La cancelación redirige dinero abonado: solo admin (vector de fraude)."""
+
+    def setUp(self):
+        self.admin = Usuario.objects.create_user(username='admin', password='x', rol=Usuario.Rol.ADMIN)
+        self.cajero = Usuario.objects.create_user(username='caja', password='x', rol=Usuario.Rol.CAJERO)
+        self.cat = Categoria.objects.create(nombre='G')
+        self.producto = Producto.objects.create(
+            categoria=self.cat, nombre='Reloj', precio=Decimal('500.00'), stock=3)
+        self.cliente = Cliente.objects.create(nombre='Cliente', saldo_favor=Decimal('0'))
+        # Apartado del propio cajero, con Q 150 abonados.
+        self.apartado = crear_apartado(
+            self.cajero, producto_id=self.producto.id, precio_total='500.00',
+            cliente_id=self.cliente.id, abono_inicial='150.00')
+
+    def test_cajero_recibe_403_al_cancelar(self):
+        self.client.force_login(self.cajero)
+        r = self.client.post(
+            reverse('apartados:cancelar', args=[self.apartado.pk]),
+            {'destino': 'saldo_cliente'})
+        self.assertEqual(r.status_code, 403)
+        self.apartado.refresh_from_db()
+        self.assertEqual(self.apartado.estado, Apartado.Estado.ACTIVO)  # no pasó nada
+
+    def test_admin_cancela_y_acredita_saldo(self):
+        self.client.force_login(self.admin)
+        r = self.client.post(
+            reverse('apartados:cancelar', args=[self.apartado.pk]),
+            {'destino': 'saldo_cliente'})
+        self.assertEqual(r.status_code, 302)
+        self.apartado.refresh_from_db(); self.cliente.refresh_from_db(); self.producto.refresh_from_db()
+        self.assertEqual(self.apartado.estado, Apartado.Estado.CANCELADO)
+        self.assertEqual(self.cliente.saldo_favor, Decimal('150.00'))  # abonado acreditado
+        self.assertEqual(self.producto.stock, 3)  # stock restaurado

@@ -128,12 +128,10 @@ def liquidar_view(request, pk):
         return redirect('apartados:detalle', pk=pk)
 
 
-@rol_requerido(Usuario.Rol.CAJERO)
+@rol_requerido()  # solo admin: redirige dinero abonado (saldo/pérdida), igual que anular_venta
 @require_POST
 def cancelar_view(request, pk):
     apartado = get_object_or_404(Apartado, pk=pk)
-    if not _puede_ver(request.user, apartado):
-        raise PermissionDenied()
     try:
         cancelar_apartado(
             request.user, pk,
