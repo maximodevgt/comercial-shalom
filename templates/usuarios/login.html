@@ -24,7 +24,8 @@
 {% endblock %}
 
 {% block contenido %}
-<div class="card login-card">
+{# Siempre clara (aún en modo oscuro): el logo tiene fondo blanco y debe fundirse con la card. #}
+<div class="card login-card" data-bs-theme="light">
     <div class="card-body p-4 p-sm-5">
         <div class="text-center mb-4">
             <img src="{% static 'img/logo.png' %}" alt="Comercial Shalom" class="login-logo mb-2">
