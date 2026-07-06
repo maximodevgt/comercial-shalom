@@ -1,0 +1,70 @@
+{% comment %}
+Base compartida de todos los PDF (xhtml2pdf): carta, encabezado con logo,
+identidad Shalom (azul #1e40af / #172554) y footer. Los hijos definen
+tipo_doc, meta_doc, cuerpo y pie. Sin dirección (solo "Guatemala").
+{% endcomment %}<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+    @page { size: letter; margin: 15mm; }
+    body { font-family: Helvetica, sans-serif; font-size: 10.5px; color: #1e293b; }
+
+    /* Encabezado */
+    table.enc { width: 100%; border-collapse: collapse; }
+    table.enc td { vertical-align: middle; padding: 0; }
+    .logo { width: 62px; height: 62px; }
+    .marca { font-size: 20px; font-weight: bold; color: #172554; }
+    .pais { color: #555; font-size: 11px; }
+    .doc-tipo { font-size: 14px; font-weight: bold; color: #1e40af; text-transform: uppercase; text-align: right; }
+    .doc-meta { color: #555; text-align: right; font-size: 10px; }
+    .sep-enc { border-bottom: 2px solid #172554; margin: 6px 0 10px 0; }
+
+    /* Bloques de datos */
+    .bloque-titulo { font-weight: bold; color: #172554; text-transform: uppercase;
+        font-size: 9.5px; border-bottom: 1px solid #c9d6ee; padding-bottom: 2px;
+        margin: 10px 0 4px 0; }
+    .dato { padding: 1px 0; }
+
+    /* Tabla de ítems */
+    table.items { width: 100%; border-collapse: collapse; margin-top: 6px; }
+    table.items th { background-color: #172554; color: #ffffff; padding: 5px 6px;
+        text-align: left; font-size: 9.5px; }
+    table.items td { padding: 5px 6px; border-bottom: 1px solid #d8e0ef; vertical-align: top; }
+    table.items tr.alt td { background-color: #f0f4fb; }
+
+    .r { text-align: right; } .c { text-align: center; }
+    .muted { color: #555; }
+    .azul { color: #1e40af; } .rojo { color: #b91c1c; }
+    .negrita { font-weight: bold; }
+
+    /* Totales (alineados a la derecha vía tabla contenedora) */
+    table.zona-tot { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    table.tot { width: 100%; border-collapse: collapse; }
+    table.tot td { padding: 4px 6px; border-bottom: 1px solid #e3e9f4; }
+    table.tot tr.total td { background-color: #1e40af; color: #ffffff;
+        font-weight: bold; font-size: 12px; border-bottom: 0; }
+
+    .banda-anulada { color: #b91c1c; font-weight: bold; font-size: 13px;
+        text-align: center; margin: 8px 0; border: 1px solid #b91c1c; padding: 4px; }
+
+    .pie { margin-top: 20px; border-top: 1px solid #c9d6ee; padding-top: 8px;
+        text-align: center; color: #555; font-size: 10px; }
+    .pie .aviso { font-weight: bold; color: #1e293b; }
+</style></head>
+<body>
+    <table class="enc"><tr>
+        <td style="width: 70px;">{% if negocio.logo %}<img src="{{ negocio.logo }}" class="logo">{% endif %}</td>
+        <td>
+            <div class="marca">{{ negocio.nombre }}</div>
+            <div class="pais">{{ negocio.direccion }}</div>
+        </td>
+        <td style="width: 40%;">
+            <div class="doc-tipo">{% block tipo_doc %}{% endblock %}</div>
+            <div class="doc-meta">{% block meta_doc %}{% endblock %}</div>
+        </td>
+    </tr></table>
+    <div class="sep-enc"></div>
+
+    {% block cuerpo %}{% endblock %}
+
+    <div class="pie">{% block pie %}{% endblock %}</div>
+</body></html>

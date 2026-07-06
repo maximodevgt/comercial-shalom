@@ -1,37 +1,61 @@
-<!DOCTYPE html>
-<html><head><meta charset="utf-8">
-<style>
-    @page { size: 80mm 297mm; margin: 6mm; }
-    body { font-family: Helvetica, sans-serif; font-size: 10px; }
-    h1 { font-size: 14px; text-align: center; margin: 0; }
-    .center { text-align: center; } .muted { color: #555; }
-    table { width: 100%; border-collapse: collapse; }
-    td { padding: 2px 0; } .r { text-align: right; }
-    .line { border-top: 1px dashed #000; margin: 6px 0; }
-    .tot { font-size: 12px; font-weight: bold; }
-</style></head>
-<body>
-    <h1>{{ negocio.nombre }}</h1>
-    <p class="center muted">Liquidación de apartado</p>
-    <div class="line"></div>
-    <p>
-        Apartado #{{ apartado.pk }}{% if apartado.venta %} — Venta #{{ apartado.venta.pk }}{% endif %}<br>
-        Producto: {{ apartado.producto.nombre_completo }}<br>
-        Cliente: {{ apartado.nombre_cliente }}<br>
-        Fecha: {{ apartado.actualizado|date:'d/m/Y H:i' }}
-    </p>
-    <div class="line"></div>
-    <table>
-        <tr><th style="text-align:left">Abonos</th><th class="r"></th></tr>
-        {% for ab in apartado.abonos.all %}
-        <tr><td class="muted">{{ ab.creado|date:'d/m/Y' }} · {{ ab.get_metodo_display }}</td><td class="r">Q {{ ab.monto }}</td></tr>
-        {% endfor %}
+{% extends 'reportes/pdf/_base.html' %}
+
+{% block tipo_doc %}Liquidación de Apartado{% endblock %}
+{% block meta_doc %}
+    Apartado No. {{ apartado.pk }}{% if apartado.venta %} · Venta No. {{ apartado.venta.pk }}{% endif %}<br>
+    Fecha: {{ apartado.actualizado|date:'d/m/Y' }} · Hora: {{ apartado.actualizado|date:'H:i' }}
+{% endblock %}
+
+{% block cuerpo %}
+    <div class="bloque-titulo">Datos del apartado</div>
+    <div class="dato"><strong>Producto:</strong> {{ apartado.producto.nombre_completo }}</div>
+    <div class="dato"><strong>Cliente:</strong> {{ apartado.nombre_cliente }}</div>
+    {% if apartado.telefono %}<div class="dato"><strong>Teléfono:</strong> {{ apartado.telefono }}</div>{% endif %}
+    <div class="dato"><strong>Registrado por:</strong> {{ apartado.usuario.get_full_name|default:apartado.usuario.username }}</div>
+
+    <div class="bloque-titulo">Historial de abonos</div>
+    <table class="items">
+        <thead>
+            <tr>
+                <th style="width: 30px;">#</th>
+                <th>Fecha</th>
+                <th>Método de pago</th>
+                <th class="r">Monto</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ab in apartado.abonos.all %}
+            <tr class="{% cycle '' 'alt' %}">
+                <td>{{ forloop.counter }}</td>
+                <td>{{ ab.creado|date:'d/m/Y H:i' }}</td>
+                <td>{{ ab.get_metodo_display }}</td>
+                <td class="r">Q {{ ab.monto }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="c muted">Sin abonos registrados.</td></tr>
+            {% endfor %}
+        </tbody>
     </table>
-    <div class="line"></div>
-    <table>
-        {% if apartado.descuento > 0 %}<tr><td>Descuento</td><td class="r">- Q {{ apartado.descuento }}</td></tr>{% endif %}
-        <tr class="tot"><td>TOTAL PAGADO</td><td class="r">Q {{ apartado.precio_total }}</td></tr>
-    </table>
-    <div class="line"></div>
-    <p class="center muted">Apartado liquidado. ¡Gracias!</p>
-</body></html>
+
+    <table class="zona-tot"><tr>
+        <td style="width: 55%; vertical-align: top;">
+            <div class="bloque-titulo">Confirmación</div>
+            <div class="dato">El apartado fue <strong class="azul">liquidado en su totalidad</strong>{% if apartado.venta %}
+                y generó la venta <strong>No. {{ apartado.venta.pk }}</strong>{% endif %}.</div>
+        </td>
+        <td style="width: 45%; vertical-align: top;">
+            <table class="tot">
+                {% if apartado.descuento > 0 %}
+                <tr><td>Precio de lista</td><td class="r">Q {{ apartado.precio_original }}</td></tr>
+                <tr><td class="rojo">Descuento</td><td class="r rojo">-Q {{ apartado.descuento }}</td></tr>
+                {% endif %}
+                <tr class="total"><td>TOTAL PAGADO</td><td class="r">Q {{ apartado.precio_total }}</td></tr>
+            </table>
+        </td>
+    </tr></table>
+{% endblock %}
+
+{% block pie %}
+    Apartado liquidado. ¡Gracias por su compra!<br>
+    <span class="aviso">No se devuelve efectivo.</span>
+{% endblock %}

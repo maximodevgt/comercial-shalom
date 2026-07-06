@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.staticfiles import finders
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
@@ -18,6 +19,8 @@ from .pdf import ErrorPDF, render_pdf
 NEGOCIO = {
     'nombre': 'Comercial Shalom',
     'direccion': 'Guatemala',
+    # xhtml2pdf necesita la ruta ABSOLUTA del archivo (no la URL estática).
+    'logo': finders.find('img/logo.png'),
 }
 
 
@@ -110,7 +113,8 @@ def cierre_pdf(request):
     usuario = u if (u.es_cajero and not u.es_admin) else None
     ctx = resumen_dia(timezone.localdate(), usuario=usuario)
     ctx['negocio'] = NEGOCIO
-    ctx['titulo'] = 'Cierre diario'
+    ctx['titulo'] = 'Cierre Diario'
+    ctx['cajero_filtro'] = usuario  # el encabezado muestra "Cajero: X" si aplica
     return _pdf_o_redirect(
         request, 'reportes/pdf/cierre.html', ctx,
         f'cierre_{ctx["fecha"]}.pdf', 'reportes:cierre')
@@ -125,7 +129,7 @@ def reporte_pdf(request):
     fecha = _fecha(request.GET.get('fecha'))
     ctx = resumen_dia(fecha)
     ctx['negocio'] = NEGOCIO
-    ctx['titulo'] = 'Reporte por fecha'
+    ctx['titulo'] = 'Reporte de Ventas por Fecha'
     return _pdf_o_redirect(
         request, 'reportes/pdf/cierre.html', ctx,
         f'reporte_{fecha}.pdf', 'reportes:reporte')

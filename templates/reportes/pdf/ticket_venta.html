@@ -1,48 +1,73 @@
-<!DOCTYPE html>
-<html><head><meta charset="utf-8">
-<style>
-    @page { size: 80mm 297mm; margin: 6mm; }
-    body { font-family: Helvetica, sans-serif; font-size: 10px; color: #000; }
-    h1 { font-size: 14px; text-align: center; margin: 0; }
-    .center { text-align: center; }
-    .muted { color: #555; }
-    table { width: 100%; border-collapse: collapse; }
-    td { padding: 2px 0; vertical-align: top; }
-    .r { text-align: right; }
-    .line { border-top: 1px dashed #000; margin: 6px 0; }
-    .tot { font-size: 12px; font-weight: bold; }
-</style></head>
-<body>
-    <h1>{{ negocio.nombre }}</h1>
-    <p class="center muted">{{ negocio.direccion }}</p>
-    <div class="line"></div>
-    <p>
-        <strong>Ticket de venta #{{ venta.pk }}</strong><br>
-        Fecha: {{ venta.creado|date:'d/m/Y H:i' }}<br>
-        Cajero: {{ venta.usuario.get_full_name|default:venta.usuario.username }}<br>
-        Cliente: {{ venta.nombre_cliente }}
-        {% if venta.estado == 'anulada' %}<br><strong>*** ANULADA ***</strong>{% endif %}
-    </p>
-    <div class="line"></div>
-    <table>
-        {% for d in venta.detalles.all %}
-        <tr>
-            <td colspan="2">{{ d.producto.nombre_completo }}</td>
-        </tr>
-        <tr>
-            <td class="muted">{{ d.cantidad }} x Q {{ d.precio_unitario }}{% if d.descuento > 0 %} (desc.){% endif %}</td>
-            <td class="r">Q {{ d.subtotal }}</td>
-        </tr>
-        {% endfor %}
+{% extends 'reportes/pdf/_base.html' %}
+
+{% block tipo_doc %}Comprobante de Venta{% endblock %}
+{% block meta_doc %}
+    No. {{ venta.pk }}<br>
+    Fecha: {{ venta.creado|date:'d/m/Y' }} · Hora: {{ venta.creado|date:'H:i' }}
+{% endblock %}
+
+{% block cuerpo %}
+    {% if venta.esta_anulada %}
+    <div class="banda-anulada">*** VENTA ANULADA *** {% if venta.motivo_anulacion %}Motivo: {{ venta.motivo_anulacion }}{% endif %}</div>
+    {% endif %}
+
+    <div class="bloque-titulo">Datos del cliente</div>
+    <div class="dato"><strong>Cliente:</strong> {{ venta.nombre_cliente }}</div>
+    {% if venta.telefono %}<div class="dato"><strong>Teléfono:</strong> {{ venta.telefono }}</div>{% endif %}
+    <div class="dato"><strong>Atendido por:</strong> {{ venta.usuario.get_full_name|default:venta.usuario.username }}</div>
+
+    <div class="bloque-titulo">Detalle de la venta</div>
+    <table class="items">
+        <thead>
+            <tr>
+                <th style="width: 24px;">#</th>
+                <th>Descripción</th>
+                <th class="c" style="width: 45px;">Cant.</th>
+                <th class="r" style="width: 80px;">P. unitario</th>
+                <th class="r" style="width: 80px;">Descuento</th>
+                <th class="r" style="width: 85px;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in venta.detalles.all %}
+            <tr class="{% cycle '' 'alt' %}">
+                <td>{{ forloop.counter }}</td>
+                <td>{{ d.producto.nombre_completo }}</td>
+                <td class="c">{{ d.cantidad }}</td>
+                <td class="r">Q {{ d.precio_unitario }}</td>
+                <td class="r">{% if d.descuento > 0 %}<span class="rojo">-Q {{ d.descuento }}</span>{% else %}—{% endif %}</td>
+                <td class="r">Q {{ d.subtotal }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
-    <div class="line"></div>
-    <table>
-        <tr><td>Subtotal</td><td class="r">Q {{ venta.subtotal }}</td></tr>
-        {% if venta.descuento_total > 0 %}<tr><td>Descuento</td><td class="r">- Q {{ venta.descuento_total }}</td></tr>{% endif %}
-        {% if venta.saldo_aplicado > 0 %}<tr><td>Saldo aplicado</td><td class="r">- Q {{ venta.saldo_aplicado }}</td></tr>{% endif %}
-        <tr class="tot"><td>TOTAL</td><td class="r">Q {{ venta.total }}</td></tr>
-        <tr><td>Método</td><td class="r">{{ venta.get_metodo_pago_display }}</td></tr>
-    </table>
-    <div class="line"></div>
-    <p class="center muted">¡Gracias por su compra!</p>
-</body></html>
+
+    <table class="zona-tot"><tr>
+        <td style="width: 55%;">
+            <div class="bloque-titulo">Forma de pago</div>
+            <div class="dato"><strong>Método:</strong> {{ venta.get_metodo_pago_display }}</div>
+            {% if venta.metodo_pago == 'tarjeta' and venta.monto_tarjeta %}
+            <div class="dato muted">Monto indicado por la terminal: Q {{ venta.monto_tarjeta }}</div>
+            {% endif %}
+        </td>
+        <td style="width: 45%; vertical-align: top;">
+            <table class="tot">
+                {% if venta.descuento_total > 0 or venta.saldo_aplicado > 0 %}
+                <tr><td>Subtotal</td><td class="r">Q {{ venta.subtotal }}</td></tr>
+                {% endif %}
+                {% if venta.descuento_total > 0 %}
+                <tr><td class="rojo">Descuento</td><td class="r rojo">-Q {{ venta.descuento_total }}</td></tr>
+                {% endif %}
+                {% if venta.saldo_aplicado > 0 %}
+                <tr><td class="azul">Saldo aplicado</td><td class="r azul">-Q {{ venta.saldo_aplicado }}</td></tr>
+                {% endif %}
+                <tr class="total"><td>TOTAL</td><td class="r">Q {{ venta.total }}</td></tr>
+            </table>
+        </td>
+    </tr></table>
+{% endblock %}
+
+{% block pie %}
+    ¡Gracias por su compra!<br>
+    <span class="aviso">No se devuelve efectivo.</span>
+{% endblock %}
