@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block titulo %}Iniciar sesión{% endblock %}
 
@@ -6,10 +7,9 @@
 <style>
     body { background: linear-gradient(135deg, #172554 0%, #1e40af 55%, #2563eb 100%); }
     main { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .login-card { width: 100%; max-width: 400px; border-radius: 1rem; box-shadow: 0 1.5rem 3rem rgba(0,0,0,.35); }
-    .login-logo { width: 66px; height: 66px; border-radius: 1rem; background: linear-gradient(135deg, #1e40af, #3b82f6);
-        color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 1.9rem;
-        box-shadow: 0 .5rem 1rem rgba(30,64,175,.4); }
+    .login-card { width: 100%; max-width: 420px; border-radius: 1rem; box-shadow: 0 1.5rem 3rem rgba(0,0,0,.35); }
+    /* El logo tiene fondo blanco: se funde con la card sin marco visible. */
+    .login-logo { width: 140px; max-width: 60%; height: auto; }
     .campo { position: relative; margin-bottom: 1rem; }
     .campo > .ico { position: absolute; left: .95rem; top: 50%; transform: translateY(-50%); color: #94a3b8; }
     .campo input { width: 100%; padding: .7rem .9rem .7rem 2.5rem; border: 1px solid #cbd5e1;
@@ -27,7 +27,7 @@
 <div class="card login-card">
     <div class="card-body p-4 p-sm-5">
         <div class="text-center mb-4">
-            <div class="login-logo mb-3"><i class="fa-solid fa-store"></i></div>
+            <img src="{% static 'img/logo.png' %}" alt="Comercial Shalom" class="login-logo mb-2">
             <h1 class="h4 fw-bold mb-0">Comercial Shalom</h1>
             <p class="text-muted small mb-0">Sistema de punto de venta</p>
         </div>

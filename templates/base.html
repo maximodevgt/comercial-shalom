@@ -5,40 +5,54 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Comercial Shalom — {% block titulo %}POS{% endblock %}</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%231e40af'/><text x='16' y='23' font-size='19' font-family='Arial,sans-serif' font-weight='bold' fill='white' text-anchor='middle'>S</text></svg>">
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primario: #1e40af;         /* azul profundo — identidad Shalom */
-            --primario-oscuro: #172554;  /* navbar / encabezados de tabla */
+            --primario: #1e40af;        /* azul del logo */
+            --primario-oscuro: #172554; /* navbar, thead */
             --primario-claro: #3b82f6;
             --secundario: #475569;
-            --exito: #16a34a;
+            --exito: #16a34a;           /* verde del logo */
             --peligro: #dc2626;
             --advertencia: #f59e0b;
             --info: #0891b2;
-            --fondo: #eef1f6;
+            --fondo-body: #dbe7fa;      /* azul muy claro, como el fondo de Ayutla */
             --superficie: #ffffff;
-            --borde: #e5e9f0;
+            --borde: #cfd9ea;
             --texto: #1e293b;
-            --radio: .65rem;
-            --sombra: 0 1px 3px rgba(15,23,42,.08), 0 1px 2px rgba(15,23,42,.04);
-            --sombra-hover: 0 .5rem 1.25rem rgba(15,23,42,.14);
+            --radio: .75rem;            /* ~12px */
+            --sombra: 0 1px 3px rgba(15,23,42,.10), 0 1px 2px rgba(15,23,42,.06);
+            --sombra-hover: 0 .5rem 1.25rem rgba(15,23,42,.16);
             /* Mapea el "primary" de Bootstrap a la paleta */
             --bs-primary: var(--primario);
             --bs-primary-rgb: 30, 64, 175;
             --bs-link-color-rgb: 30, 64, 175;
             --bs-link-hover-color-rgb: 23, 37, 84;
         }
-        body { background: var(--fondo); color: var(--texto); }
+        body { background: var(--fondo-body); color: var(--texto); }
 
         /* Navbar con identidad */
-        .navbar-pos { background: var(--primario-oscuro); }
+        .navbar-pos { background: linear-gradient(90deg, var(--primario-oscuro), var(--primario)); }
         .navbar-brand { font-weight: 700; letter-spacing: .3px; }
-        .navbar-pos .nav-link { color: rgba(255,255,255,.82); border-radius: .4rem; padding-inline: .7rem; }
-        .navbar-pos .nav-link:hover, .navbar-pos .nav-link.active { color: #fff; background: rgba(255,255,255,.12); }
+        .chip-logo { width: 36px; height: 36px; background: #fff; border-radius: 9px;
+            display: inline-flex; align-items: center; justify-content: center; overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+        .chip-logo img { width: 30px; height: 30px; object-fit: contain; }
+        .navbar-pos .nav-link { color: rgba(255,255,255,.82); border-radius: .5rem;
+            padding-inline: .7rem; white-space: nowrap; }
+        .navbar-pos .nav-link:hover { color: #fff; background: rgba(255,255,255,.12); }
+        .navbar-pos .nav-link.active { color: #fff; background: rgba(255,255,255,.18); font-weight: 600; }
+
+        /* Dropdown de usuario */
+        .avatar-ini { width: 38px; height: 38px; border-radius: 50%; border: 2px solid rgba(255,255,255,.55);
+            background: rgba(255,255,255,.16); color: #fff; font-weight: 700; font-size: .9rem;
+            display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+        .avatar-ini:hover { background: rgba(255,255,255,.28); }
+        .menu-usuario { min-width: 250px; border: 1px solid var(--borde); border-radius: var(--radio);
+            box-shadow: var(--sombra-hover); }
 
         /* Botones primarios coherentes con la paleta */
         .btn-primary { --bs-btn-bg: var(--primario); --bs-btn-border-color: var(--primario);
@@ -47,15 +61,20 @@
         .btn-outline-primary { --bs-btn-color: var(--primario); --bs-btn-border-color: var(--primario);
             --bs-btn-hover-bg: var(--primario); --bs-btn-hover-border-color: var(--primario);
             --bs-btn-active-bg: var(--primario); }
+        .btn-success { --bs-btn-bg: var(--exito); --bs-btn-border-color: var(--exito);
+            --bs-btn-hover-bg: #15803d; --bs-btn-hover-border-color: #15803d;
+            --bs-btn-active-bg: #15803d; --bs-btn-active-border-color: #15803d; }
         .btn { border-radius: .5rem; }
         a { color: var(--primario); }
+        .texto-exito { color: var(--exito); }
 
         /* Cards consistentes */
         .card { border: 1px solid var(--borde); border-radius: var(--radio); box-shadow: var(--sombra); }
-        .card-header { background: var(--superficie); border-bottom: 1px solid var(--borde); font-weight: 600; }
+        .card-header { background: var(--superficie); border-bottom: 1px solid var(--borde);
+            font-weight: 600; border-radius: var(--radio) var(--radio) 0 0 !important; }
 
         /* Tablas: encabezado oscuro + hover */
-        .table { --bs-table-hover-bg: #f1f5ff; }
+        .table { --bs-table-hover-bg: #eef4ff; }
         .table > thead th { background: var(--primario-oscuro); color: #fff;
             border-color: var(--primario-oscuro); font-weight: 600; }
 
@@ -85,47 +104,66 @@
 </head>
 <body>
 {% if user.is_authenticated %}
-<nav class="navbar navbar-expand-lg navbar-dark navbar-pos mb-4">
+<nav class="navbar navbar-expand-xl navbar-dark navbar-pos mb-4">
     <div class="container-fluid">
-        <a class="navbar-brand" href="{% url 'inicio' %}"><i class="fa-solid fa-store me-1"></i> Comercial Shalom</a>
+        <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'inicio' %}">
+            <span class="chip-logo"><img src="{% static 'img/logo.png' %}" alt="Comercial Shalom"></span>
+            Comercial Shalom
+        </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="nav">
+            {% with ns=request.resolver_match.namespace un=request.resolver_match.url_name %}
             <ul class="navbar-nav me-auto">
                 {% block nav_links %}
-                <li class="nav-item"><a class="nav-link" href="{% url 'inicio' %}"><i class="fa-solid fa-house"></i> Inicio</a></li>
-                {% if user.es_admin or user.es_cajero %}
-                <li class="nav-item"><a class="nav-link" href="{% url 'ventas:pos' %}"><i class="fa-solid fa-cart-shopping"></i> Nueva venta</a></li>
+                <li class="nav-item"><a class="nav-link {% if un == 'inicio' %}active{% endif %}"
+                    href="{% url 'inicio' %}"><i class="fa-solid fa-house me-1"></i>Inicio</a></li>
+                <li class="nav-item"><a class="nav-link {% if ns == 'productos' and 'categoria' not in un %}active{% endif %}"
+                    href="{% url 'productos:lista' %}"><i class="fa-solid fa-box me-1"></i>Productos</a></li>
+                {% if user.es_admin %}
+                <li class="nav-item"><a class="nav-link {% if ns == 'productos' and 'categoria' in un %}active{% endif %}"
+                    href="{% url 'productos:categorias' %}"><i class="fa-solid fa-tags me-1"></i>Categorías</a></li>
                 {% endif %}
-                <li class="nav-item"><a class="nav-link" href="{% url 'ventas:historial' %}"><i class="fa-solid fa-receipt"></i> Ventas</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'apartados:lista' %}"><i class="fa-solid fa-bookmark"></i> Apartados</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'productos:lista' %}"><i class="fa-solid fa-box"></i> Productos</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'clientes:lista' %}"><i class="fa-solid fa-users"></i> Clientes</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'reportes:cierre' %}"><i class="fa-solid fa-cash-register"></i> Cierre</a></li>
+                <li class="nav-item"><a class="nav-link {% if ns == 'ventas' %}active{% endif %}"
+                    href="{% url 'ventas:historial' %}"><i class="fa-solid fa-cart-shopping me-1"></i>Ventas</a></li>
+                <li class="nav-item"><a class="nav-link {% if ns == 'apartados' %}active{% endif %}"
+                    href="{% url 'apartados:lista' %}"><i class="fa-solid fa-bookmark me-1"></i>Apartados</a></li>
+                <li class="nav-item"><a class="nav-link {% if ns == 'clientes' %}active{% endif %}"
+                    href="{% url 'clientes:lista' %}"><i class="fa-solid fa-users me-1"></i>Clientes</a></li>
+                <li class="nav-item"><a class="nav-link {% if ns == 'reportes' and 'cierre' in un %}active{% endif %}"
+                    href="{% url 'reportes:cierre' %}"><i class="fa-solid fa-cash-register me-1"></i>Cierre Diario</a></li>
                 {% if user.es_admin or user.es_supervisor %}
-                <li class="nav-item"><a class="nav-link" href="{% url 'reportes:reporte' %}"><i class="fa-solid fa-chart-column"></i> Reportes</a></li>
+                <li class="nav-item"><a class="nav-link {% if ns == 'reportes' and 'reporte' in un %}active{% endif %}"
+                    href="{% url 'reportes:reporte' %}"><i class="fa-solid fa-chart-column me-1"></i>Reportes</a></li>
                 {% endif %}
                 {% if user.es_admin %}
-                <li class="nav-item"><a class="nav-link" href="{% url 'productos:categorias' %}"><i class="fa-solid fa-tags"></i> Categorías</a></li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"><i class="fa-solid fa-gear"></i> Administración</a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{% url 'usuarios:lista' %}"><i class="fa-solid fa-user-shield me-2"></i> Usuarios</a></li>
-                        <li><a class="dropdown-item" href="{% url 'usuarios:logs' %}"><i class="fa-solid fa-list-check me-2"></i> Bitácora</a></li>
-                    </ul>
-                </li>
+                <li class="nav-item"><a class="nav-link {% if ns == 'usuarios' %}active{% endif %}"
+                    href="{% url 'usuarios:lista' %}"><i class="fa-solid fa-user-gear me-1"></i>Usuarios</a></li>
                 {% endif %}
                 {% endblock %}
             </ul>
-            <span class="navbar-text text-light me-3">
-                <i class="fa-solid fa-circle-user me-1"></i>{{ user.get_full_name|default:user.username }}
-                <span class="badge bg-light text-dark ms-1">{{ user.get_rol_display }}</span>
-            </span>
-            <form action="{% url 'usuarios:logout' %}" method="post" class="d-inline">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-right-from-bracket"></i> Salir</button>
-            </form>
+            {% endwith %}
+            <div class="dropdown">
+                <button type="button" class="avatar-ini border-0" data-bs-toggle="dropdown" aria-expanded="false"
+                        aria-label="Menú de usuario">
+                    {% if user.first_name %}{{ user.first_name.0|upper }}{% if user.last_name %}{{ user.last_name.0|upper }}{% endif %}{% else %}{{ user.username.0|upper }}{% endif %}
+                </button>
+                <div class="dropdown-menu dropdown-menu-end menu-usuario p-3">
+                    <div class="fw-bold">{{ user.get_full_name|default:user.username }}</div>
+                    {% if user.email %}<div class="small text-muted">{{ user.email }}</div>{% endif %}
+                    <span class="badge mt-2 {% if user.es_admin %}text-bg-danger{% elif user.es_supervisor %}text-bg-secondary{% else %}text-bg-primary{% endif %}">
+                        {{ user.get_rol_display }}
+                    </span>
+                    <hr class="my-3">
+                    <form action="{% url 'usuarios:logout' %}" method="post" class="mb-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="fa-solid fa-right-from-bracket me-1"></i> Cerrar Sesión
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </nav>
