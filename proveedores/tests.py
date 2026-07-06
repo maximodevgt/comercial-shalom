@@ -1,6 +1,10 @@
+from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+
+from productos.models import Categoria, Producto
 
 from .models import Proveedor
 
@@ -55,3 +59,48 @@ class ProveedorTest(TestCase):
         })
         self.assertEqual(r.status_code, 200)  # re-render con error
         self.assertFalse(Proveedor.objects.filter(empresa='Sin Tel').exists())
+
+
+class ProductoProveedorTest(TestCase):
+    """La FK Producto→Proveedor: asignación, visualización y PROTECT."""
+
+    def setUp(self):
+        self.admin = Usuario.objects.create_user(username='admin', password='x', rol=Usuario.Rol.ADMIN)
+        self.cat = Categoria.objects.create(nombre='G')
+        self.prov = Proveedor.objects.create(
+            nombre='Juan Pérez', empresa='Distribuidora GT', telefono='5555-1111')
+
+    def test_producto_con_proveedor_se_guarda_y_se_muestra(self):
+        p = Producto.objects.create(
+            categoria=self.cat, proveedor=self.prov, nombre='Lámpara',
+            precio=Decimal('75.00'), stock=4)
+        self.assertEqual(p.proveedor.empresa, 'Distribuidora GT')
+        self.assertIn(p, self.prov.productos.all())
+        self.client.force_login(self.admin)
+        # La lista de productos muestra la empresa (columna solo admin).
+        r = self.client.get(reverse('productos:lista'))
+        self.assertContains(r, 'Distribuidora GT')
+        # El detalle del proveedor lista el producto que surte.
+        r2 = self.client.get(reverse('proveedores:detalle', args=[self.prov.pk]))
+        self.assertContains(r2, 'Lámpara')
+
+    def test_eliminar_proveedor_con_productos_es_rechazado(self):
+        Producto.objects.create(
+            categoria=self.cat, proveedor=self.prov, nombre='Lámpara',
+            precio=Decimal('75.00'), stock=4)
+        self.client.force_login(self.admin)
+        r = self.client.post(
+            reverse('proveedores:eliminar', args=[self.prov.pk]), follow=True)
+        self.assertTrue(Proveedor.objects.filter(pk=self.prov.pk).exists())  # sigue vivo
+        mensajes = [str(m) for m in r.context['messages']]
+        self.assertTrue(any('productos asociados' in m for m in mensajes))
+
+    def test_form_de_producto_acepta_proveedor_opcional(self):
+        from productos.forms import ProductoForm
+        form = ProductoForm(data={
+            'categoria': self.cat.pk, 'proveedor': '', 'nombre': 'Sin prov',
+            'modelo': '', 'color': '', 'precio': '10.00', 'stock': 1, 'activo': True,
+        })
+        self.assertTrue(form.is_valid(), form.errors)
+        producto = form.save()
+        self.assertIsNone(producto.proveedor)

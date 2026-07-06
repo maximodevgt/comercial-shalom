@@ -43,6 +43,7 @@
         <thead>
             <tr>
                 <th style="width:56px">Foto</th><th>Categoría</th><th>Nombre</th><th>Modelo</th><th>Color</th>
+                {% if user.es_admin %}<th>Proveedor</th>{% endif %}
                 <th class="text-end">Precio</th><th class="text-center">Stock</th><th class="text-center">Estado</th>
                 {% if user.es_admin %}<th class="text-end">Acciones</th>{% endif %}
             </tr>
@@ -58,6 +59,11 @@
                 <td class="fw-bold">{{ p.nombre }}</td>
                 <td>{{ p.modelo|default:'—' }}</td>
                 <td>{{ p.color|default:'—' }}</td>
+                {% if user.es_admin %}
+                <td class="small">{% if p.proveedor %}
+                    <a href="{% url 'proveedores:detalle' p.proveedor.pk %}" class="text-decoration-none">{{ p.proveedor.empresa }}</a>
+                    {% else %}—{% endif %}</td>
+                {% endif %}
                 <td class="text-end fw-semibold">Q {{ p.precio }}</td>
                 <td class="text-center">{{ p.stock }}</td>
                 <td class="text-center">
@@ -76,7 +82,7 @@
                 {% endif %}
             </tr>
             {% empty %}
-            <tr><td colspan="{% if user.es_admin %}9{% else %}8{% endif %}" class="text-center text-muted py-4">
+            <tr><td colspan="{% if user.es_admin %}10{% else %}8{% endif %}" class="text-center text-muted py-4">
                 No se encontraron productos.</td></tr>
             {% endfor %}
         </tbody>

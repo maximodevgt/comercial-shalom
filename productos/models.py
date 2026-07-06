@@ -30,6 +30,15 @@ class Producto(models.Model):
         related_name='productos',
         verbose_name='categoría',
     )
+    # Nullable: los productos existentes no requieren proveedor.
+    proveedor = models.ForeignKey(
+        'proveedores.Proveedor',
+        on_delete=models.PROTECT,
+        related_name='productos',
+        verbose_name='proveedor',
+        null=True,
+        blank=True,
+    )
     nombre = models.CharField('nombre', max_length=120)
     modelo = models.CharField('modelo', max_length=120, blank=True)
     color = models.CharField('color', max_length=60, blank=True)

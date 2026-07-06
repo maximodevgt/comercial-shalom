@@ -30,13 +30,18 @@ class ProductoForm(BootstrapMixin, forms.ModelForm):
     class Meta:
         model = Producto
         fields = (
-            'categoria', 'nombre', 'modelo', 'color',
+            'categoria', 'proveedor', 'nombre', 'modelo', 'color',
             'precio', 'stock', 'activo', 'foto',
         )
         widgets = {
             'precio': forms.NumberInput(attrs={'step': '0.01', 'min': '0'}),
             'stock': forms.NumberInput(attrs={'min': '0'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Proveedor opcional (queryset ya ordenado por empresa vía Meta).
+        self.fields['proveedor'].empty_label = '— Sin proveedor —'
 
     def clean_precio(self):
         precio = self.cleaned_data['precio']
