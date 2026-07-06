@@ -216,3 +216,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# macOS
+.DS_Store
+
+# Configuración local de Claude Code (launch.json del preview, etc.)
+.claude/
+
+# Archivos subidos por usuarios (fotos de producto); se sirven en DEBUG
+media/
