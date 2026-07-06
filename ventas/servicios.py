@@ -39,7 +39,9 @@ def anular_venta(usuario, venta_id, motivo):
         raise ErrorAnulacion('El motivo de la anulación es obligatorio.')
 
     venta = (
-        Venta.objects.select_for_update()
+        # of=('self',): bloquea solo la venta; Postgres no permite FOR UPDATE
+        # sobre el outer join del select_related (cliente es nullable).
+        Venta.objects.select_for_update(of=('self',))
         .select_related('cliente')
         .filter(id=venta_id)
         .first()

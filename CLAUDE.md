@@ -8,7 +8,7 @@ Respondé SIEMPRE en español latinoamericano. Todos los mensajes, explicaciones
 
 ## Project state
 
-Sistema POS **completo y funcional** (fases 1–10 implementadas). Python 3.14, Django 6.0, MariaDB 11.8 en `127.0.0.1:3306` (base `comercial_shalom`). Frontend con Bootstrap 5, Font Awesome 6 y Chart.js (todo por CDN). Identidad visual definida con variables CSS en `templates/base.html` (`:root`, color primario azul profundo). Íconos solo Font Awesome (sin emojis). Suite de tests verde.
+Sistema POS **completo y funcional** (fases 1–10 implementadas). Python 3.14, Django 6.0, PostgreSQL 15 en `127.0.0.1:5432` (base `comercial_shalom`). Frontend con Bootstrap 5, Font Awesome 6 y Chart.js (todo por CDN). Identidad visual definida con variables CSS en `templates/base.html` (`:root`, color primario azul profundo). Íconos solo Font Awesome (sin emojis). Suite de tests verde.
 
 ### Apps y modelos
 
@@ -31,7 +31,7 @@ Sistema POS **completo y funcional** (fases 1–10 implementadas). Python 3.14, 
 
 ### Nota sobre el modelo de usuario custom
 
-Exige aplicar las migraciones desde una base limpia. Si alguna vez hay que volver a cambiar `AUTH_USER_MODEL`, recrear la base (`DROP DATABASE` + `CREATE DATABASE ... utf8mb4`).
+Exige aplicar las migraciones desde una base limpia. Si alguna vez hay que volver a cambiar `AUTH_USER_MODEL`, recrear la base (`DROP DATABASE` + `CREATE DATABASE comercial_shalom`).
 
 ## Reglas de oro del proyecto
 
@@ -102,7 +102,6 @@ The domains above map naturally to separate Django apps (e.g. `productos`, `inve
 
 ### Base de datos
 
-- Motor: **MariaDB** (drop-in compatible con MySQL; en Fedora 44 el repo oficial ya no incluye `community-mysql`). Backend Django: `django.db.backends.mysql`, driver `mysqlclient`.
-- Base: `comercial_shalom` — charset `utf8mb4`, collation `utf8mb4_unicode_ci`.
-- Usuario administrador: `root` (auth `mysql_native_password`). El password va en `.env`, no en el repo.
-- Dependencias de sistema para compilar `mysqlclient` en Fedora: `mariadb-connector-c-devel`, `gcc`, `make`, `redhat-rpm-config`, `pkgconf-pkg-config`.
+- Motor: **PostgreSQL 15**. Backend Django: `django.db.backends.postgresql`, driver `psycopg2-binary`.
+- Base: `comercial_shalom` en `127.0.0.1:5432`.
+- Credenciales (usuario, password, host, puerto) van en `.env`, no en el repo.

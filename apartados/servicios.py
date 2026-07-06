@@ -109,7 +109,9 @@ def _registrar_abono(usuario, apartado, monto, metodo, cliente):
 def registrar_abono(usuario, apartado_id, monto, metodo=Abono.Metodo.EFECTIVO):
     """Registra un abono posterior sobre un apartado activo."""
     apartado = (
-        Apartado.objects.select_for_update().select_related('cliente')
+        # of=('self',): bloquea solo el apartado; Postgres no permite FOR UPDATE
+        # sobre el outer join del select_related (cliente es nullable).
+        Apartado.objects.select_for_update(of=('self',)).select_related('cliente')
         .filter(id=apartado_id).first())
     if apartado is None:
         raise ErrorApartado('El apartado no existe.')
@@ -130,7 +132,8 @@ def liquidar_apartado(usuario, apartado_id):
     """Liquida un apartado saldado: crea la Venta correspondiente (sin volver
     a tocar el stock, ya descontado al crear) y lo marca liquidado."""
     apartado = (
-        Apartado.objects.select_for_update().select_related('cliente', 'producto')
+        Apartado.objects.select_for_update(of=('self',))
+        .select_related('cliente', 'producto')
         .filter(id=apartado_id).first())
     if apartado is None:
         raise ErrorApartado('El apartado no existe.')
@@ -184,7 +187,8 @@ def cancelar_apartado(usuario, apartado_id, *, destino='saldo_cliente',
     Si el apartado tiene cliente, siempre se le acredita a ese cliente.
     """
     apartado = (
-        Apartado.objects.select_for_update().select_related('cliente', 'producto')
+        Apartado.objects.select_for_update(of=('self',))
+        .select_related('cliente', 'producto')
         .filter(id=apartado_id).first())
     if apartado is None:
         raise ErrorApartado('El apartado no existe.')
