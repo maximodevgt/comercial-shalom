@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block titulo %}{{ proveedor.empresa }}{% endblock %}
+
+{% block contenido %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h2 class="fw-bold mb-0"><i class="fa-solid fa-truck-field me-2"></i>{{ proveedor.empresa }}</h2>
+    <div class="d-flex gap-2">
+        <a href="{% url 'proveedores:lista' %}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left me-1"></i>Volver</a>
+        <a href="{% url 'proveedores:editar' proveedor.pk %}" class="btn btn-primary"><i class="fa-solid fa-pen me-1"></i>Editar</a>
+        <a href="{% url 'proveedores:eliminar' proveedor.pk %}" class="btn btn-danger"><i class="fa-solid fa-trash me-1"></i>Eliminar</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card card-acento-azul">
+            <div class="card-header"><i class="fa-solid fa-address-card me-1"></i> Datos del proveedor</div>
+            <div class="card-body">
+                <p class="mb-1"><i class="fa-solid fa-user me-2 text-muted"></i>{{ proveedor.nombre }}</p>
+                <p class="mb-1"><i class="fa-solid fa-phone me-2 text-muted"></i>{{ proveedor.telefono }}</p>
+                <p class="mb-1"><i class="fa-solid fa-envelope me-2 text-muted"></i>{{ proveedor.email|default:'Sin correo' }}</p>
+                <p class="mb-1"><i class="fa-solid fa-location-dot me-2 text-muted"></i>{{ proveedor.direccion|default:'Sin dirección' }}</p>
+                <p class="mb-0"><i class="fa-solid fa-calendar me-2 text-muted"></i>Registrado el {{ proveedor.creado|date:'d/m/Y' }}</p>
+                {% if proveedor.notas %}
+                <hr>
+                <div class="small text-muted"><i class="fa-solid fa-note-sticky me-1"></i>{{ proveedor.notas|linebreaksbr }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card card-acento-verde">
+            <div class="card-header"><i class="fa-solid fa-boxes-stacked me-1"></i> Productos que surte</div>
+            <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead><tr><th>Producto</th><th class="text-end">Precio</th><th class="text-center">Stock</th></tr></thead>
+                <tbody>
+                    {% for p in proveedor.productos.all %}
+                    <tr>
+                        <td class="fw-semibold">{{ p.nombre_completo }}</td>
+                        <td class="text-end">Q {{ p.precio }}</td>
+                        <td class="text-center">
+                            {% if p.estado_stock == 'agotado' %}<span class="badge text-bg-danger">Agotado</span>
+                            {% elif p.estado_stock == 'bajo' %}<span class="badge text-bg-warning">{{ p.stock }}</span>
+                            {% else %}<span class="badge text-bg-success">{{ p.stock }}</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted py-4">Aún no tiene productos asociados.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

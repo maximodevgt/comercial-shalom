@@ -170,6 +170,8 @@
                 {% if user.es_admin %}
                 <li class="nav-item"><a class="nav-link {% if ns == 'productos' and 'categoria' in un %}active{% endif %}"
                     href="{% url 'productos:categorias' %}"><i class="fa-solid fa-tags me-1"></i>Categorías</a></li>
+                <li class="nav-item"><a class="nav-link {% if ns == 'proveedores' %}active{% endif %}"
+                    href="{% url 'proveedores:lista' %}"><i class="fa-solid fa-truck-field me-1"></i>Proveedores</a></li>
                 {% endif %}
                 <li class="nav-item"><a class="nav-link {% if ns == 'ventas' %}active{% endif %}"
                     href="{% url 'ventas:historial' %}"><i class="fa-solid fa-cart-shopping me-1"></i>Ventas</a></li>

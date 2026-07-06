@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Eliminar proveedor{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white"><i class="fa-solid fa-triangle-exclamation me-1"></i> Confirmar eliminación</div>
+            <div class="card-body">
+                <p>¿Seguro que querés eliminar al proveedor <strong>{{ objeto }}</strong>?</p>
+                <p class="text-muted small">No se podrá eliminar si tiene productos asociados.</p>
+                <form method="post" class="d-flex gap-2">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash me-1"></i>Sí, eliminar</button>
+                    <a href="{% url 'proveedores:detalle' objeto.pk %}" class="btn btn-secondary">
+                        <i class="fa-solid fa-arrow-left me-1"></i>Volver</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

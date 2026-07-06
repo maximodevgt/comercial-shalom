@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'clientes',
     'apartados',
     'reportes',
+    'proveedores',
 ]
 
 # Modelo de usuario personalizado (roles: admin, cajero, supervisor).
