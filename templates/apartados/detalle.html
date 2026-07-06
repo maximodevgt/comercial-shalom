@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load moneda %}
 {% block titulo %}Apartado #{{ apartado.pk }}{% endblock %}
 
 {% block contenido %}
@@ -33,15 +34,15 @@
                     <span class="badge text-bg-primary">{{ apartado.usuario.get_full_name|default:apartado.usuario.username }}</span></p>
                 <p class="mb-1"><strong>Fecha:</strong> {{ apartado.creado|date:'d/m/Y h:i A' }}</p>
                 {% if apartado.descuento > 0 %}
-                <p class="mb-1 texto-exito"><strong>Descuento:</strong> Q {{ apartado.descuento }}</p>{% endif %}
+                <p class="mb-1 texto-exito"><strong>Descuento:</strong> {{ apartado.descuento|quetzal }}</p>{% endif %}
                 {% if apartado.venta %}
                 <p class="mb-0"><a href="{% url 'ventas:detalle' apartado.venta.pk %}">
                     <i class="fa-solid fa-receipt me-1"></i>Ver venta generada #{{ apartado.venta.pk }}</a></p>{% endif %}
             </div>
             <div class="card-footer">
-                <div class="d-flex justify-content-between"><span>Precio total</span><strong>Q {{ apartado.precio_total }}</strong></div>
-                <div class="d-flex justify-content-between texto-exito"><span>Abonado</span><span>Q {{ apartado.total_abonado }}</span></div>
-                <div class="d-flex justify-content-between fs-5 fw-bold"><span>Pendiente</span><span>Q {{ apartado.pendiente }}</span></div>
+                <div class="d-flex justify-content-between"><span>Precio total</span><strong>{{ apartado.precio_total|quetzal }}</strong></div>
+                <div class="d-flex justify-content-between texto-exito"><span>Abonado</span><span>{{ apartado.total_abonado|quetzal }}</span></div>
+                <div class="d-flex justify-content-between fs-5 fw-bold"><span>Pendiente</span><span>{{ apartado.pendiente|quetzal }}</span></div>
             </div>
         </div>
     </div>
@@ -62,7 +63,7 @@
                                 {% else %}<span class="badge text-bg-success">Efectivo</span>{% endif %}
                             </td>
                             <td><span class="badge text-bg-primary">{{ ab.usuario.username }}</span></td>
-                            <td class="text-end fw-semibold">Q {{ ab.monto }}</td>
+                            <td class="text-end fw-semibold">{{ ab.monto|quetzal }}</td>
                             <td class="text-end">
                                 <a href="{% url 'reportes:comprobante_abono_pdf' ab.pk %}" class="btn btn-sm btn-danger"
                                    target="_blank" title="Comprobante PDF"><i class="fa-solid fa-file-pdf"></i></a>
@@ -113,7 +114,7 @@
                                 <i class="fa-solid fa-bag-shopping me-1"></i>Liquidar y generar venta</button>
                         </form>
                         {% else %}
-                        <p class="small text-muted">Falta cubrir <strong>Q {{ apartado.pendiente }}</strong> para poder liquidar.</p>
+                        <p class="small text-muted">Falta cubrir <strong>{{ apartado.pendiente|quetzal }}</strong> para poder liquidar.</p>
                         {% endif %}
                         {% if user.es_admin %}
                         <hr>
@@ -139,7 +140,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
       <div class="modal-body">
-        <p>Se restaurará el stock del producto. Lo abonado (<strong>Q {{ apartado.total_abonado }}</strong>) se maneja así:</p>
+        <p>Se restaurará el stock del producto. Lo abonado (<strong>{{ apartado.total_abonado|quetzal }}</strong>) se maneja así:</p>
         {% if apartado.cliente %}
         <div class="alert alert-info"><i class="fa-solid fa-circle-info me-1"></i>
             Se acreditará como saldo a favor de <strong>{{ apartado.cliente.nombre }}</strong>.</div>

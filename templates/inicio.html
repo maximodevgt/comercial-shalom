@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load moneda %}
 {% block titulo %}Inicio{% endblock %}
 
 {% block extra_css %}
@@ -21,7 +22,7 @@
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <div class="card metrica m-total"><div class="card-body d-flex align-items-center justify-content-between">
-            <div><div class="sub">Total vendido hoy</div><div class="valor">Q {{ total_hoy }}</div></div>
+            <div><div class="sub">Total vendido hoy</div><div class="valor">{{ total_hoy|quetzal }}</div></div>
             <i class="fa-solid fa-sack-dollar icono"></i>
         </div></div>
     </div>
@@ -90,7 +91,7 @@
                     </div>
                     {% endfor %}
                 </td>
-                <td class="text-end fw-bold">Q {{ v.total }}</td>
+                <td class="text-end fw-bold">{{ v.total|quetzal }}</td>
                 <td class="small">{{ v.creado|date:'h:i A' }}</td>
             </tr>
             {% empty %}
@@ -128,7 +129,7 @@
               <div class="small text-muted">{{ p.categoria.nombre }}</div>
             </td>
             <td class="text-center"><span class="badge text-bg-danger">{{ p.stock }}</span></td>
-            <td class="text-end">Q {{ p.precio }}</td>
+            <td class="text-end">{{ p.precio|quetzal }}</td>
             {% if user.es_admin %}
             <td class="text-end">
               <a href="{% url 'productos:editar' p.pk %}" class="btn btn-warning btn-sm">

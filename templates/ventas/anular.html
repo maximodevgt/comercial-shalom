@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load moneda %}
 {% block titulo %}Anular venta #{{ venta.pk }}{% endblock %}
 
 {% block contenido %}
@@ -9,11 +10,11 @@
             <div class="card-body">
                 <div class="alert alert-warning">
                     <i class="fa-solid fa-triangle-exclamation me-1"></i>
-                    Vas a anular la venta <strong>#{{ venta.pk }}</strong> por un total de <strong>Q {{ venta.total }}</strong>.
+                    Vas a anular la venta <strong>#{{ venta.pk }}</strong> por un total de <strong>{{ venta.total|quetzal }}</strong>.
                     <ul class="small mb-0 mt-2">
                         <li>Se restaurará el stock de los productos.</li>
                         {% if venta.saldo_aplicado > 0 and venta.cliente %}
-                        <li>Se restituirá <strong>Q {{ venta.saldo_aplicado }}</strong> al saldo de {{ venta.cliente.nombre }}.</li>
+                        <li>Se restituirá <strong>{{ venta.saldo_aplicado|quetzal }}</strong> al saldo de {{ venta.cliente.nombre }}.</li>
                         {% endif %}
                         <li>Esta acción queda registrada en la bitácora y no se puede deshacer.</li>
                     </ul>

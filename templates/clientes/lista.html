@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load moneda %}
 
 {% block titulo %}Clientes{% endblock %}
 
@@ -41,8 +42,8 @@
                 <td class="fw-bold">{{ c.nombre }}</td>
                 <td>{{ c.telefono|default:'—' }}</td>
                 <td class="text-end">
-                    {% if c.saldo_favor > 0 %}<span class="fw-bold texto-exito">Q {{ c.saldo_favor }}</span>
-                    {% else %}<span class="text-muted">Q {{ c.saldo_favor }}</span>{% endif %}
+                    {% if c.saldo_favor > 0 %}<span class="fw-bold texto-exito">{{ c.saldo_favor|quetzal }}</span>
+                    {% else %}<span class="text-muted">{{ c.saldo_favor|quetzal }}</span>{% endif %}
                 </td>
                 <td class="small text-muted">{{ c.creado|date:'d/m/Y' }}</td>
                 <td class="text-end text-nowrap">

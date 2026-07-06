@@ -1,4 +1,5 @@
 {% extends 'reportes/pdf/_base.html' %}
+{% load moneda %}
 
 {% block tipo_doc %}Comprobante de Venta{% endblock %}
 {% block meta_doc %}
@@ -34,9 +35,9 @@
                 <td>{{ forloop.counter }}</td>
                 <td>{{ d.producto.nombre_completo }}</td>
                 <td class="c">{{ d.cantidad }}</td>
-                <td class="r">Q {{ d.precio_unitario }}</td>
-                <td class="r">{% if d.descuento > 0 %}<span class="rojo">-Q {{ d.descuento }}</span>{% else %}—{% endif %}</td>
-                <td class="r">Q {{ d.subtotal }}</td>
+                <td class="r">{{ d.precio_unitario|quetzal }}</td>
+                <td class="r">{% if d.descuento > 0 %}<span class="rojo">-{{ d.descuento|quetzal }}</span>{% else %}—{% endif %}</td>
+                <td class="r">{{ d.subtotal|quetzal }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -47,21 +48,21 @@
             <div class="bloque-titulo mt0">Forma de pago</div>
             <div class="dato"><strong>Método:</strong> {{ venta.get_metodo_pago_display }}</div>
             {% if venta.metodo_pago == 'tarjeta' and venta.monto_tarjeta %}
-            <div class="dato muted">Monto indicado por la terminal: Q&nbsp;{{ venta.monto_tarjeta }}</div>
+            <div class="dato muted">Monto indicado por la terminal: {{ venta.monto_tarjeta|quetzal }}</div>
             {% endif %}
         </td>
         <td class="col-tot">
             <table class="tot">
                 {% if venta.descuento_total > 0 or venta.saldo_aplicado > 0 %}
-                <tr><td>Subtotal</td><td class="tot-val">Q&nbsp;{{ venta.subtotal }}</td></tr>
+                <tr><td>Subtotal</td><td class="tot-val">{{ venta.subtotal|quetzal }}</td></tr>
                 {% endif %}
                 {% if venta.descuento_total > 0 %}
-                <tr><td class="rojo">Descuento</td><td class="tot-val rojo">-Q&nbsp;{{ venta.descuento_total }}</td></tr>
+                <tr><td class="rojo">Descuento</td><td class="tot-val rojo">-{{ venta.descuento_total|quetzal }}</td></tr>
                 {% endif %}
                 {% if venta.saldo_aplicado > 0 %}
-                <tr><td class="verde">Saldo aplicado</td><td class="tot-val verde">-Q&nbsp;{{ venta.saldo_aplicado }}</td></tr>
+                <tr><td class="verde">Saldo aplicado</td><td class="tot-val verde">-{{ venta.saldo_aplicado|quetzal }}</td></tr>
                 {% endif %}
-                <tr class="total"><td>TOTAL</td><td class="tot-val">Q&nbsp;{{ venta.total }}</td></tr>
+                <tr class="total"><td>TOTAL</td><td class="tot-val">{{ venta.total|quetzal }}</td></tr>
             </table>
         </td>
     </tr></table>

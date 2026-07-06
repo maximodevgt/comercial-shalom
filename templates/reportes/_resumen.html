@@ -1,8 +1,9 @@
+{% load moneda %}
 {# Tarjetas + tabla del resumen del día. Espera: total_vendido, num_ventas, productos_vendidos, ventas. #}
 <div class="row g-3 mb-3">
     <div class="col-md-4">
         <div class="card metrica m-total"><div class="card-body d-flex align-items-center justify-content-between">
-            <div><div class="sub">Total vendido</div><div class="valor">Q {{ total_vendido }}</div></div>
+            <div><div class="sub">Total vendido</div><div class="valor">{{ total_vendido|quetzal }}</div></div>
             <i class="fa-solid fa-sack-dollar icono"></i>
         </div></div>
     </div>
@@ -40,7 +41,7 @@
                     </div>
                     {% endfor %}
                 </td>
-                <td class="text-end fw-bold">Q {{ v.total }}</td>
+                <td class="text-end fw-bold">{{ v.total|quetzal }}</td>
                 <td class="small text-muted">{{ v.creado|date:'h:i A' }}</td>
             </tr>
             {% empty %}

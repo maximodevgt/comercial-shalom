@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load moneda %}
 
 {% block titulo %}Productos{% endblock %}
 
@@ -74,7 +75,7 @@
                     <a href="{% url 'proveedores:detalle' p.proveedor.pk %}" class="text-decoration-none">{{ p.proveedor.empresa }}</a>
                     {% else %}—{% endif %}</td>
                 {% endif %}
-                <td class="text-end fw-semibold text-nowrap">Q {{ p.precio }}</td>
+                <td class="text-end fw-semibold text-nowrap">{{ p.precio|quetzal }}</td>
                 <td class="text-center">{{ p.stock }}</td>
                 <td class="text-center">
                     {% if not p.activo %}<span class="badge text-bg-dark">Inactivo</span>

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load moneda %}
 {% block titulo %}Apartados{% endblock %}
 
 {% block contenido %}
@@ -55,9 +56,9 @@
                     </div>
                 </td>
                 <td><span class="badge text-bg-primary">{{ a.usuario.get_full_name|default:a.usuario.username }}</span></td>
-                <td class="text-end">Q {{ a.precio_total }}</td>
-                <td class="text-end">Q {{ a.total_abonado }}</td>
-                <td class="text-end fw-bold">Q {{ a.pendiente }}</td>
+                <td class="text-end">{{ a.precio_total|quetzal }}</td>
+                <td class="text-end">{{ a.total_abonado|quetzal }}</td>
+                <td class="text-end fw-bold">{{ a.pendiente|quetzal }}</td>
                 <td class="text-center">
                     {% if a.estado == 'activo' %}<span class="badge text-bg-warning">Activo</span>
                     {% elif a.estado == 'liquidado' %}<span class="badge text-bg-success">Liquidado</span>

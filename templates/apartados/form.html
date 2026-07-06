@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load moneda %}
 {% block titulo %}Nuevo apartado{% endblock %}
 
 {% block extra_css %}
@@ -54,7 +55,7 @@
                         <select name="producto" id="producto" class="form-select" required>
                             <option value="">Elegí un producto...</option>
                             {% for p in productos_data %}
-                            <option value="{{ p.id }}">{{ p.nombre_completo }} — Q {{ p.precio }} (stock {{ p.stock }})</option>
+                            <option value="{{ p.id }}">{{ p.nombre_completo }} — {{ p.precio|quetzal }} (stock {{ p.stock }})</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -130,7 +131,8 @@ sel.addEventListener('change', () => {
     if (!p) { card.style.display = 'none'; return; }
     card.style.display = '';
     document.getElementById('nombre-producto').textContent = p.nombre_completo;
-    document.getElementById('precio-lista').textContent = 'Q ' + Number(p.precio).toFixed(2);
+    document.getElementById('precio-lista').textContent = 'Q ' + Number(p.precio).toLocaleString('en-US',
+        {minimumFractionDigits: 2, maximumFractionDigits: 2});
     const foto = document.getElementById('foto-producto');
     const ph = document.getElementById('foto-placeholder');
     if (p.foto) { foto.src = p.foto; foto.style.display = ''; ph.style.display = 'none'; }

@@ -1,4 +1,5 @@
 {% extends 'reportes/pdf/_base.html' %}
+{% load moneda %}
 {% comment %}Compartido por el cierre diario y el reporte por fecha (cambia `titulo`).{% endcomment %}
 
 {% block tipo_doc %}{{ titulo }}{% endblock %}
@@ -12,7 +13,7 @@
         <tr>
             <td class="c" style="width: 33%; border: 1px solid #cbe3d2;">
                 <span class="muted">Total vendido</span><br>
-                <span class="negrita verde" style="font-size: 15px;">Q {{ total_vendido }}</span>
+                <span class="negrita verde" style="font-size: 15px;">{{ total_vendido|quetzal }}</span>
             </td>
             <td class="c" style="width: 33%; border: 1px solid #cbe3d2;">
                 <span class="muted">Ventas</span><br>
@@ -47,11 +48,11 @@
                 <td>{{ v.usuario.get_full_name|default:v.usuario.username }}</td>
                 <td>{{ v.nombre_cliente }}</td>
                 <td>
-                    {% for d in v.detalles.all %}{{ d.producto.nombre_completo }} <span class="muted">×{{ d.cantidad }} · Q {{ d.precio_unitario }} c/u</span>{% if not forloop.last %}<br>{% endif %}{% endfor %}
+                    {% for d in v.detalles.all %}{{ d.producto.nombre_completo }} <span class="muted">×{{ d.cantidad }} · {{ d.precio_unitario|quetzal }} c/u</span>{% if not forloop.last %}<br>{% endif %}{% endfor %}
                 </td>
                 <td class="c">{{ v.cantidad_total }}</td>
                 <td>{{ v.get_metodo_pago_display }}</td>
-                <td class="r negrita">Q&nbsp;{{ v.total }}</td>
+                <td class="r negrita">{{ v.total|quetzal }}</td>
                 <td class="c">{{ v.creado|date:'h:i' }}&nbsp;{{ v.creado|date:'A' }}</td>
             </tr>
             {% empty %}

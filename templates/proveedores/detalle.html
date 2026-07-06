@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load moneda %}
 
 {% block titulo %}{{ proveedor.empresa }}{% endblock %}
 
@@ -43,7 +44,7 @@
                     {% for p in proveedor.productos.all %}
                     <tr>
                         <td class="fw-semibold">{{ p.nombre_completo }}</td>
-                        <td class="text-end">Q {{ p.precio }}</td>
+                        <td class="text-end">{{ p.precio|quetzal }}</td>
                         <td class="text-center">
                             {% if p.estado_stock == 'agotado' %}<span class="badge text-bg-danger">Agotado</span>
                             {% elif p.estado_stock == 'bajo' %}<span class="badge text-bg-warning">{{ p.stock }}</span>

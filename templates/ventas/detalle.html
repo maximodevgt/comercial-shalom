@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load moneda %}
 {% block titulo %}Venta #{{ venta.pk }}{% endblock %}
 
 {% block contenido %}
@@ -34,7 +35,7 @@
                 <p class="mb-1"><strong>Método:</strong>
                     {% if venta.metodo_pago == 'tarjeta' %}<span class="badge text-bg-info">Tarjeta</span>
                     {% else %}<span class="badge text-bg-success">Efectivo</span>{% endif %}</p>
-                {% if venta.metodo_pago == 'tarjeta' %}<p class="mb-1"><strong>Monto POS:</strong> Q {{ venta.monto_tarjeta }}</p>{% endif %}
+                {% if venta.metodo_pago == 'tarjeta' %}<p class="mb-1"><strong>Monto POS:</strong> {{ venta.monto_tarjeta|quetzal }}</p>{% endif %}
                 <p class="mb-0"><strong>Fecha:</strong> {{ venta.creado|date:'d/m/Y h:i A' }}</p>
             </div>
         </div>
@@ -56,24 +57,24 @@
                         <td>{{ d.producto.nombre_completo }}</td>
                         <td class="text-center">{{ d.cantidad }}</td>
                         <td class="text-end">
-                            {% if d.descuento > 0 %}<span class="text-decoration-line-through text-muted small">Q {{ d.precio_original }}</span> {% endif %}
-                            Q {{ d.precio_unitario }}</td>
-                        <td class="text-end fw-semibold">Q {{ d.subtotal }}</td>
+                            {% if d.descuento > 0 %}<span class="text-decoration-line-through text-muted small">{{ d.precio_original|quetzal }}</span> {% endif %}
+                            {{ d.precio_unitario|quetzal }}</td>
+                        <td class="text-end fw-semibold">{{ d.subtotal|quetzal }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
                 <tfoot>
-                    <tr><td colspan="4" class="text-end">Subtotal</td><td class="text-end">Q {{ venta.subtotal }}</td></tr>
+                    <tr><td colspan="4" class="text-end">Subtotal</td><td class="text-end">{{ venta.subtotal|quetzal }}</td></tr>
                     {% if venta.descuento_total > 0 %}
                     <tr><td colspan="4" class="text-end text-danger">Descuento</td>
-                        <td class="text-end text-danger">− Q {{ venta.descuento_total }}</td></tr>
+                        <td class="text-end text-danger">− {{ venta.descuento_total|quetzal }}</td></tr>
                     {% endif %}
                     {% if venta.saldo_aplicado > 0 %}
                     <tr><td colspan="4" class="text-end text-info">Saldo aplicado</td>
-                        <td class="text-end text-info">− Q {{ venta.saldo_aplicado }}</td></tr>
+                        <td class="text-end text-info">− {{ venta.saldo_aplicado|quetzal }}</td></tr>
                     {% endif %}
                     <tr class="fw-bold fs-5"><td colspan="4" class="text-end">Total</td>
-                        <td class="text-end texto-exito">Q {{ venta.total }}</td></tr>
+                        <td class="text-end texto-exito">{{ venta.total|quetzal }}</td></tr>
                 </tfoot>
             </table>
             </div>
