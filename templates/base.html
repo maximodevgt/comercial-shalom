@@ -30,7 +30,8 @@
             --info: #0891b2;
             --fondo-body: #dbe7fa;      /* azul muy claro, como el fondo de Ayutla */
             --superficie: #ffffff;
-            --borde: #cfd9ea;
+            --borde: #b9c8e4;
+            --borde-fuerte: #8aa2cf;
             --texto: #1e293b;
             --radio: .75rem;            /* ~12px */
             --sombra: 0 1px 3px rgba(15,23,42,.10), 0 1px 2px rgba(15,23,42,.06);
@@ -45,7 +46,8 @@
         [data-theme="dark"] {
             --fondo-body: #0f1117;
             --superficie: #1a1d27;
-            --borde: #2e3250;
+            --borde: #33406b;
+            --borde-fuerte: #4a5a8f;
             --texto: #e8eaf6;
             --sombra: 0 1px 3px rgba(0,0,0,.5), 0 1px 2px rgba(0,0,0,.4);
             --sombra-hover: 0 .5rem 1.25rem rgba(0,0,0,.6);
@@ -100,15 +102,25 @@
             --bs-pagination-border-color: var(--borde); --bs-pagination-disabled-border-color: var(--borde); }
 
         /* Cards consistentes */
-        .card { --bs-card-bg: var(--superficie); border: 1px solid var(--borde);
+        .card { --bs-card-bg: var(--superficie); border: 1.5px solid var(--borde-fuerte);
             border-radius: var(--radio); box-shadow: var(--sombra); }
         .card-header { background: var(--superficie); border-bottom: 1px solid var(--borde);
             font-weight: 600; border-radius: var(--radio) var(--radio) 0 0 !important; }
+        /* Acentos del logo: borde superior de 3px para distinguir secciones. */
+        .card-acento-azul { border-top: 3px solid var(--primario); }
+        .card-acento-verde { border-top: 3px solid var(--exito); }
 
-        /* Tablas: encabezado oscuro + hover */
-        .table { --bs-table-hover-bg: #eef4ff; }
+        /* Tablas: encabezado oscuro + hover + celdas con borde visible */
+        .table { --bs-table-hover-bg: #eef4ff; border: 1px solid var(--borde-fuerte); }
+        .table > :not(caption) > * > * { border: 1px solid var(--borde); }
         .table > thead th { background: var(--primario-oscuro); color: #fff;
             border-color: var(--primario-oscuro); font-weight: 600; }
+
+        /* Inputs y selects con borde marcado y focus con la identidad */
+        .form-control, .form-select { border-color: var(--borde-fuerte); }
+        .form-control:focus, .form-select:focus { border-color: var(--primario);
+            box-shadow: 0 0 0 .2rem rgba(30,64,175,.15); }
+        .input-group-text { border-color: var(--borde-fuerte); }
 
         /* Miniaturas / fotos */
         .thumb { object-fit: cover; border-radius: 6px; background: #e9ecef; }

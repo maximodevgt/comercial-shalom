@@ -1,6 +1,15 @@
 {% extends 'base.html' %}
 {% block titulo %}Inicio{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Gráficas compactas: la fila entera entra sin scroll en una laptop 13". */
+    .chart-box { height: 220px; position: relative; }
+    .card-grafica .card-header { padding: .45rem .75rem; font-size: .85rem; }
+    .card-grafica .card-body { padding: .5rem .75rem; }
+</style>
+{% endblock %}
+
 {% block contenido %}
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h2 class="fw-bold mb-0"><i class="fa-solid fa-house me-2"></i>Hola, {{ user.get_full_name|default:user.username }}
@@ -41,22 +50,22 @@
 {{ chart_top|json_script:"data-top" }}
 {{ chart_cajero|json_script:"data-cajero" }}
 <div class="row g-3 mb-4">
-    <div class="col-lg-6">
-        <div class="card h-100">
+    <div class="col-lg-4">
+        <div class="card card-grafica card-acento-azul h-100">
             <div class="card-header"><i class="fa-solid fa-chart-column me-1 text-primary"></i> Ventas de la semana</div>
-            <div class="card-body"><canvas id="chartSemana" height="140"></canvas></div>
+            <div class="card-body"><div class="chart-box"><canvas id="chartSemana"></canvas></div></div>
         </div>
     </div>
-    <div class="col-lg-6">
-        <div class="card h-100">
+    <div class="col-lg-4">
+        <div class="card card-grafica card-acento-verde h-100">
             <div class="card-header"><i class="fa-solid fa-ranking-star me-1 texto-exito"></i> Top 5 productos</div>
-            <div class="card-body"><canvas id="chartTop" height="140"></canvas></div>
+            <div class="card-body"><div class="chart-box"><canvas id="chartTop"></canvas></div></div>
         </div>
     </div>
-    <div class="col-lg-6">
-        <div class="card h-100">
+    <div class="col-lg-4">
+        <div class="card card-grafica card-acento-azul h-100">
             <div class="card-header"><i class="fa-solid fa-user-tag me-1 text-warning"></i> Ventas por cajero</div>
-            <div class="card-body"><canvas id="chartCajero" height="140"></canvas></div>
+            <div class="card-body"><div class="chart-box"><canvas id="chartCajero"></canvas></div></div>
         </div>
     </div>
 </div>
@@ -159,17 +168,21 @@ new Chart(document.getElementById('chartSemana'), {
     type: 'bar',
     data: { labels: dSemana.labels, datasets: [{ label: 'Q vendidos', data: dSemana.valores,
         backgroundColor: alternado(dSemana.labels.length), borderRadius: 4 }] },
-    options: { plugins: { legend: { display: false } } }
+    options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
 });
 new Chart(document.getElementById('chartTop'), {
     type: 'bar',
     data: { labels: dTop.labels, datasets: [{ label: 'Unidades', data: dTop.valores,
         backgroundColor: alternado(dTop.labels.length), borderRadius: 4 }] },
-    options: { indexAxis: 'y', plugins: { legend: { display: false } } }
+    options: { indexAxis: 'y', maintainAspectRatio: false,
+        // Unidades vendidas: el eje siempre en enteros.
+        scales: { x: { ticks: { stepSize: 1, precision: 0 } } },
+        plugins: { legend: { display: false } } }
 });
 new Chart(document.getElementById('chartCajero'), {
     type: 'doughnut',
-    data: { labels: dCajero.labels, datasets: [{ data: dCajero.valores, backgroundColor: COLORS }] }
+    data: { labels: dCajero.labels, datasets: [{ data: dCajero.valores, backgroundColor: COLORS }] },
+    options: { maintainAspectRatio: false }
 });
 </script>
 {% endif %}
