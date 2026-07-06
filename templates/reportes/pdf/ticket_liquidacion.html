@@ -40,7 +40,7 @@
     <table class="zona-tot"><tr>
         <td class="col-pago">
             <div class="bloque-titulo mt0">Confirmación</div>
-            <div class="dato">El apartado fue <strong class="azul">liquidado en su totalidad</strong>{% if apartado.venta %}
+            <div class="dato">El apartado fue <strong class="verde">liquidado en su totalidad</strong>{% if apartado.venta %}
                 y generó la venta <strong>No. {{ apartado.venta.pk }}</strong>{% endif %}.</div>
         </td>
         <td class="col-tot">
@@ -56,6 +56,10 @@
 {% endblock %}
 
 {% block pie %}
-    Apartado liquidado. ¡Gracias por su compra!<br>
-    <span class="aviso">No se devuelve efectivo.</span>
+    ¡Gracias por su compra! — {{ negocio.nombre }}
+    <table class="aviso-zona"><tr>
+        <td style="width: 25%;"></td>
+        <td class="aviso-caja">Apartado liquidado — No se devuelve efectivo.</td>
+        <td style="width: 25%;"></td>
+    </tr></table>
 {% endblock %}

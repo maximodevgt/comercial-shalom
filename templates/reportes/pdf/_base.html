@@ -1,7 +1,8 @@
 {% comment %}
 Base compartida de todos los PDF (xhtml2pdf): carta, encabezado con logo,
-identidad Shalom (azul #1e40af / #172554) y footer. Los hijos definen
-tipo_doc, meta_doc, cuerpo y pie. Sin dirección (solo "Guatemala").
+identidad VERDE de Shalom (#15803d / #166534 — Ayutla usa azul; el verde
+distingue a los dos comercios). Los hijos definen tipo_doc, meta_doc,
+cuerpo y pie.
 {% endcomment %}<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <style>
@@ -12,28 +13,28 @@ tipo_doc, meta_doc, cuerpo y pie. Sin dirección (solo "Guatemala").
     table.enc { width: 100%; border-collapse: collapse; }
     table.enc td { vertical-align: middle; padding: 0; }
     .logo { width: 62px; height: 62px; }
-    .marca { font-size: 20px; font-weight: bold; color: #172554; }
+    .marca { font-size: 20px; font-weight: bold; color: #166534; }
     .pais { color: #555; font-size: 11px; }
-    .doc-tipo { font-size: 14px; font-weight: bold; color: #1e40af; text-transform: uppercase; text-align: right; }
+    .doc-tipo { font-size: 14px; font-weight: bold; color: #15803d; text-transform: uppercase; text-align: right; }
     .doc-meta { color: #555; text-align: right; font-size: 10px; }
-    .sep-enc { border-bottom: 2px solid #172554; margin: 6px 0 10px 0; }
+    .sep-enc { border-bottom: 2px solid #166534; margin: 6px 0 10px 0; }
 
     /* Bloques de datos */
-    .bloque-titulo { font-weight: bold; color: #172554; text-transform: uppercase;
-        font-size: 9.5px; border-bottom: 1px solid #c9d6ee; padding-bottom: 2px;
+    .bloque-titulo { font-weight: bold; color: #166534; text-transform: uppercase;
+        font-size: 9.5px; border-bottom: 1px solid #cbe3d2; padding-bottom: 2px;
         margin: 10px 0 4px 0; }
     .dato { padding: 1px 0; }
 
     /* Tabla de ítems */
     table.items { width: 100%; border-collapse: collapse; margin-top: 6px; }
-    table.items th { background-color: #172554; color: #ffffff; padding: 5px 6px;
+    table.items th { background-color: #15803d; color: #ffffff; padding: 5px 6px;
         text-align: left; font-size: 9.5px; }
-    table.items td { padding: 5px 6px; border-bottom: 1px solid #d8e0ef; vertical-align: top; }
-    table.items tr.alt td { background-color: #f0f4fb; }
+    table.items td { padding: 5px 6px; border-bottom: 1px solid #d7e8dc; vertical-align: top; }
+    table.items tr.alt td { background-color: #f0f7f1; }
 
     .r { text-align: right; } .c { text-align: center; }
     .muted { color: #555; }
-    .azul { color: #1e40af; } .rojo { color: #b91c1c; }
+    .verde { color: #15803d; } .rojo { color: #b91c1c; }
     .negrita { font-weight: bold; }
 
     /* Zona inferior en dos columnas: pago a la izquierda, totales a la
@@ -50,18 +51,28 @@ tipo_doc, meta_doc, cuerpo y pie. Sin dirección (solo "Guatemala").
        columna de ancho FIJO alineada a la derecha; la línea del TOTAL
        abarca exactamente el ancho del bloque (border de sus dos celdas). */
     table.tot { width: 100%; border-collapse: collapse; }
-    table.tot td { padding: 4px 6px; border-bottom: 1px solid #e3e9f4; }
+    table.tot td { padding: 4px 6px; border-bottom: 1px solid #e2efe6; }
     table.tot td.tot-val { width: 100px; text-align: right; }
-    /* TOTAL sin fondo relleno: negrita grande con línea divisoria de la marca. */
-    table.tot tr.total td { border-top: 2px solid #1e40af; border-bottom: 0;
-        color: #172554; font-weight: bold; font-size: 13px; padding-top: 6px; }
+    /* Fila destacada (TOTAL / SALDO PENDIENTE / TOTAL PAGADO): fondo verde
+       sólido con texto blanco, estilo Ayutla pero en la identidad Shalom. */
+    table.tot tr.total td { background-color: #15803d; color: #ffffff;
+        border-bottom: 0; font-weight: bold; font-size: 12.5px;
+        padding: 6px 8px; }
 
     .banda-anulada { color: #b91c1c; font-weight: bold; font-size: 13px;
         text-align: center; margin: 8px 0; border: 1px solid #b91c1c; padding: 4px; }
 
-    .pie { margin-top: 20px; border-top: 1px solid #c9d6ee; padding-top: 8px;
-        text-align: center; color: #555; font-size: 10px; }
-    .pie .aviso { font-weight: bold; color: #1e293b; }
+    /* El borde va en un div interno (pie-linea): si estuviera en .pie,
+       xhtml2pdf lo repite al fragmentar el div (texto + tabla del aviso). */
+    .pie { margin-top: 20px; text-align: center; color: #555; font-size: 10px; }
+    .pie-linea { border-top: 1px dashed #15803d; margin-bottom: 8px; }
+    /* Leyenda de no devolución: recuadro punteado rojo, como Ayutla.
+       Nota: xhtml2pdf pinta dashed/dotted como línea sólida (limitación
+       verificada del motor); se declara dashed igual por fidelidad al CSS. */
+    table.aviso-zona { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    td.aviso-caja { border: 1px dashed #c0392b; border-radius: 4px;
+        color: #c0392b; font-weight: bold; text-align: center;
+        padding: 6px 12px; }
 </style></head>
 <body>
     <table class="enc"><tr>
@@ -69,6 +80,8 @@ tipo_doc, meta_doc, cuerpo y pie. Sin dirección (solo "Guatemala").
         <td>
             <div class="marca">{{ negocio.nombre }}</div>
             <div class="pais">{{ negocio.direccion }}</div>
+            {# Dirección solicitada por el cliente (revisar: es la ubicación de Ayutla). #}
+            <div class="pais">Ciudad Tecún Umán, Ayutla, San Marcos</div>
         </td>
         <td style="width: 40%;">
             <div class="doc-tipo">{% block tipo_doc %}{% endblock %}</div>
@@ -79,5 +92,5 @@ tipo_doc, meta_doc, cuerpo y pie. Sin dirección (solo "Guatemala").
 
     {% block cuerpo %}{% endblock %}
 
-    <div class="pie">{% block pie %}{% endblock %}</div>
+    <div class="pie"><div class="pie-linea"></div>{% block pie %}{% endblock %}</div>
 </body></html>

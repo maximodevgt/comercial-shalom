@@ -39,7 +39,7 @@
         <td class="col-tot">
             <table class="tot">
                 <tr><td>Precio del apartado</td><td class="tot-val">Q&nbsp;{{ apartado.precio_total }}</td></tr>
-                <tr><td class="azul">Total abonado</td><td class="tot-val azul">Q&nbsp;{{ apartado.total_abonado }}</td></tr>
+                <tr><td class="verde">Total abonado</td><td class="tot-val verde">Q&nbsp;{{ apartado.total_abonado }}</td></tr>
                 <tr class="total"><td>SALDO PENDIENTE</td><td class="tot-val">Q&nbsp;{{ apartado.pendiente }}</td></tr>
             </table>
         </td>
@@ -47,6 +47,10 @@
 {% endblock %}
 
 {% block pie %}
-    Conserve este comprobante.<br>
-    <span class="aviso">No se devuelve efectivo.</span>
+    Conserve este comprobante. ¡Gracias por su preferencia! — {{ negocio.nombre }}
+    <table class="aviso-zona"><tr>
+        <td style="width: 25%;"></td>
+        <td class="aviso-caja">No se devuelve efectivo.</td>
+        <td style="width: 25%;"></td>
+    </tr></table>
 {% endblock %}

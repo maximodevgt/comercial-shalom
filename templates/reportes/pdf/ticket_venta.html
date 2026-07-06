@@ -59,7 +59,7 @@
                 <tr><td class="rojo">Descuento</td><td class="tot-val rojo">-Q&nbsp;{{ venta.descuento_total }}</td></tr>
                 {% endif %}
                 {% if venta.saldo_aplicado > 0 %}
-                <tr><td class="azul">Saldo aplicado</td><td class="tot-val azul">-Q&nbsp;{{ venta.saldo_aplicado }}</td></tr>
+                <tr><td class="verde">Saldo aplicado</td><td class="tot-val verde">-Q&nbsp;{{ venta.saldo_aplicado }}</td></tr>
                 {% endif %}
                 <tr class="total"><td>TOTAL</td><td class="tot-val">Q&nbsp;{{ venta.total }}</td></tr>
             </table>
@@ -68,6 +68,10 @@
 {% endblock %}
 
 {% block pie %}
-    ¡Gracias por su compra!<br>
-    <span class="aviso">No se devuelve efectivo.</span>
+    ¡Gracias por su compra! — {{ negocio.nombre }}
+    <table class="aviso-zona"><tr>
+        <td style="width: 25%;"></td>
+        <td class="aviso-caja">No se devuelve efectivo.</td>
+        <td style="width: 25%;"></td>
+    </tr></table>
 {% endblock %}
