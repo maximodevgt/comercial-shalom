@@ -5,21 +5,62 @@
 
 {% block extra_css %}
 <style>
-    /* Fondo con la identidad del logo: diagonal azul + un resplandor verde
-       sutil en la esquina inferior izquierda (elegante, no chillón). */
+    /* Fondo azul→verde vivo con la identidad de la marca: diagonal de azul
+       profundo a verde, con dos resplandores (azul arriba-derecha, verde
+       abajo-izquierda) que le dan profundidad. */
     body {
         background:
-            radial-gradient(900px 500px at 12% 115%, rgba(22, 163, 74, .38), transparent 60%),
-            linear-gradient(135deg, var(--primario-oscuro) 0%, var(--primario) 58%, var(--primario-claro) 100%);
+            radial-gradient(1000px 520px at 88% -8%, rgba(59, 130, 246, .45), transparent 55%),
+            radial-gradient(900px 560px at 8% 115%, rgba(22, 163, 74, .45), transparent 55%),
+            linear-gradient(135deg, var(--primario-oscuro) 0%, var(--primario) 42%, var(--primario-claro) 70%, var(--exito) 125%);
     }
-    main { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    main { min-height: 100vh; display: flex; align-items: center; justify-content: center;
+        position: relative; }
+
+    /* Capa de figuras geométricas decorativas, detrás de la tarjeta. Cubre
+       el viewport, no recibe eventos y recorta lo que se sale (sin scroll). */
+    .login-figuras { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+    .fig { position: absolute; }
+    /* Triángulos con bordes CSS. */
+    .tri { width: 0; height: 0; border-style: solid; }
+    .tri-tl-verde { top: -50px; left: -45px;
+        border-width: 300px 300px 0 0; border-color: var(--exito) transparent transparent transparent; opacity: .16; }
+    .tri-br-azul { bottom: -60px; right: -55px;
+        border-width: 0 0 320px 320px; border-color: transparent transparent var(--primario-claro) transparent; opacity: .20; }
+    .tri-mini-verde { top: 22%; right: 6%;
+        border-width: 0 0 120px 120px; border-color: transparent transparent var(--exito) transparent; opacity: .18; }
+    .tri-mini-azul { bottom: 16%; left: 7%;
+        border-width: 90px 90px 0 0; border-color: var(--primario-claro) transparent transparent transparent; opacity: .16; }
+    /* Polígono (pentágono) blanco muy tenue. */
+    .poligono { top: 8%; right: 14%; width: 190px; height: 190px; opacity: .07;
+        background: #ffffff; clip-path: polygon(50% 0, 100% 38%, 82% 100%, 18% 100%, 0 38%); }
+    /* Líneas finas blancas cruzando las esquinas. */
+    .linea { height: 2px; width: 360px; background: rgba(255, 255, 255, .30); }
+    .linea-1 { top: 15%; right: -70px; transform: rotate(-28deg); }
+    .linea-2 { bottom: 20%; left: -80px; transform: rotate(-28deg); width: 300px; }
+
+    @media (prefers-reduced-motion: no-preference) {
+        .flotar { animation: figFlotar 9s ease-in-out infinite; }
+        .flotar-lento { animation: figFlotar 13s ease-in-out infinite; }
+        @keyframes figFlotar { 0%,100% { translate: 0 0; } 50% { translate: 0 -16px; } }
+    }
+
+    /* En pantallas chicas se achican/ocultan las figuras que estorban al
+       formulario; las de esquina se reducen. */
+    @media (max-width: 640px) {
+        .tri-mini-verde, .tri-mini-azul, .poligono { display: none; }
+        .tri-tl-verde { border-width: 180px 180px 0 0; }
+        .tri-br-azul { border-width: 0 0 190px 190px; }
+        .linea { width: 220px; }
+    }
 
     /* La card es SIEMPRE clara (el logo tiene fondo blanco). Se fuerzan el
        fondo y el color aunque el sistema esté en modo oscuro: data-bs-theme
        no resetea nuestra variable custom --superficie, que cascada del
-       <html data-theme="dark">. */
-    .login-card { width: 100%; max-width: 420px; border-radius: 1.1rem; overflow: hidden;
-        border: none; box-shadow: 0 1.5rem 3rem rgba(15, 23, 42, .38);
+       <html data-theme="dark">. Va por encima de las figuras (z-index). */
+    .login-card { position: relative; z-index: 2; width: 100%; max-width: 420px;
+        border-radius: 1.2rem; overflow: hidden; border: none;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, .45), 0 8px 22px rgba(15, 23, 42, .28);
         --bs-card-bg: #ffffff; background-color: #ffffff; color: #1e293b; }
     .login-card .text-muted { color: #64748b !important; }
     /* Filete superior azul→verde de la marca, como acento de la tarjeta. */
@@ -51,6 +92,17 @@
 {% endblock %}
 
 {% block contenido %}
+{# Figuras geométricas decorativas (solo estética), detrás de la tarjeta. #}
+<div class="login-figuras" aria-hidden="true">
+    <span class="fig tri tri-tl-verde flotar-lento"></span>
+    <span class="fig tri tri-br-azul flotar"></span>
+    <span class="fig tri tri-mini-verde flotar"></span>
+    <span class="fig tri tri-mini-azul flotar-lento"></span>
+    <span class="fig poligono flotar"></span>
+    <span class="fig linea linea-1"></span>
+    <span class="fig linea linea-2"></span>
+</div>
+
 {# Siempre clara (aún en modo oscuro): el logo tiene fondo blanco y debe fundirse con la card. #}
 <div class="card login-card" data-bs-theme="light">
     <div class="brand-bar"></div>
