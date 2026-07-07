@@ -11,21 +11,25 @@
 {% block cuerpo %}
     <table class="items" style="margin-top: 2px;">
         <tr>
-            <td class="c" style="width: 33%; border: 1px solid #cbe3d2;">
+            <td class="c" style="width: 25%; border: 1px solid #cbe3d2;">
                 <span class="muted">Total vendido</span><br>
                 <span class="negrita verde" style="font-size: 15px;">{{ total_vendido|quetzal }}</span>
             </td>
-            <td class="c" style="width: 33%; border: 1px solid #cbe3d2;">
+            <td class="c" style="width: 25%; border: 1px solid #cbe3d2;">
                 <span class="muted">Ventas</span><br>
                 <span class="negrita verde" style="font-size: 15px;">{{ num_ventas }}</span>
             </td>
-            <td class="c" style="border: 1px solid #cbe3d2;">
+            <td class="c" style="width: 25%; border: 1px solid #cbe3d2;">
                 <span class="muted">Productos vendidos</span><br>
                 <span class="negrita verde" style="font-size: 15px;">{{ productos_vendidos }}</span>
             </td>
+            <td class="c" style="border: 1px solid #cbe3d2;">
+                <span class="muted">Anuladas</span><br>
+                <span class="negrita rojo" style="font-size: 15px;">{{ num_anuladas }}</span>
+            </td>
         </tr>
     </table>
-    <div class="muted" style="margin-top: 4px;">Solo ventas completadas (las anuladas no cuentan).</div>
+    <div class="muted" style="margin-top: 4px;">Solo ventas completadas (las anuladas no cuentan; se listan solo para control).</div>
 
     <div class="bloque-titulo">Detalle de ventas</div>
     <table class="items">
@@ -42,21 +46,22 @@
             </tr>
         </thead>
         <tbody>
-            {% for v in ventas %}
-            <tr class="{% cycle '' 'alt' %}">
+            {% for v in ventas_dia %}
+            <tr class="{% if v.esta_anulada %}anulada{% else %}{% cycle '' 'alt' %}{% endif %}">
                 <td>{{ v.pk }}</td>
                 <td>{{ v.usuario.get_full_name|default:v.usuario.username }}</td>
                 <td>{{ v.nombre_cliente }}</td>
                 <td>
                     {% for d in v.detalles.all %}{{ d.producto.nombre_completo }} <span class="muted">×{{ d.cantidad }} · {{ d.precio_unitario|quetzal }} c/u</span>{% if not forloop.last %}<br>{% endif %}{% endfor %}
+                    {% if v.esta_anulada %}<br><span class="rojo negrita">ANULADA{% if v.motivo_anulacion %}: {{ v.motivo_anulacion }}{% endif %}</span>{% endif %}
                 </td>
                 <td class="c">{{ v.cantidad_total }}</td>
                 <td>{{ v.get_metodo_pago_display }}</td>
-                <td class="r negrita">{{ v.total|quetzal }}</td>
+                <td class="r {% if v.esta_anulada %}muted{% else %}negrita{% endif %}">{{ v.total|quetzal }}</td>
                 <td class="c">{{ v.creado|date:'h:i' }}&nbsp;{{ v.creado|date:'A' }}</td>
             </tr>
             {% empty %}
-            <tr><td colspan="8" class="c muted">Sin ventas completadas en la fecha.</td></tr>
+            <tr><td colspan="8" class="c muted">Sin ventas en la fecha.</td></tr>
             {% endfor %}
         </tbody>
     </table>

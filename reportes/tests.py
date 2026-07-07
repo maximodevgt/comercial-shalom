@@ -34,6 +34,18 @@ class ReportesTest(TestCase):
         self.assertEqual(resumen['num_ventas'], 2)
         self.assertEqual(resumen['productos_vendidos'], 3)  # 1 + 2
 
+    def test_cierre_lista_anuladas_sin_alterar_totales(self):
+        resumen = resumen_dia(timezone.localdate())
+        # La anulada aparece para control (listado combinado + contador)...
+        self.assertEqual(resumen['num_anuladas'], 1)
+        pks = [v.pk for v in resumen['ventas_dia']]
+        self.assertIn(self.v3.pk, pks)
+        self.assertEqual(len(pks), 3)  # 2 completadas + 1 anulada
+        # ...pero los totales de dinero siguen siendo SOLO de completadas.
+        self.assertEqual(resumen['total_vendido'], Decimal('300.00'))
+        self.assertEqual(resumen['num_ventas'], 2)
+        self.assertEqual(resumen['productos_vendidos'], 3)
+
     def test_reporte_fecha_muestra_solo_completadas(self):
         self.client.force_login(self.admin)
         hoy = timezone.localdate().strftime('%Y-%m-%d')

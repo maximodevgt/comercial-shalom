@@ -1,34 +1,47 @@
 {% load moneda %}
-{# Tarjetas + tabla del resumen del día. Espera: total_vendido, num_ventas, productos_vendidos, ventas. #}
+{# Tarjetas + tabla del resumen del día. Espera: total_vendido, num_ventas, productos_vendidos, num_anuladas, ventas_dia. #}
 <div class="row g-3 mb-3">
-    <div class="col-md-4">
-        <div class="card metrica m-total"><div class="card-body d-flex align-items-center justify-content-between">
+    <div class="col-md-3">
+        <div class="card metrica m-total h-100"><div class="card-body d-flex align-items-center justify-content-between">
             <div><div class="sub">Total vendido</div><div class="valor">{{ total_vendido|quetzal }}</div></div>
             <i class="fa-solid fa-sack-dollar icono"></i>
         </div></div>
     </div>
-    <div class="col-md-4">
-        <div class="card metrica m-ventas"><div class="card-body d-flex align-items-center justify-content-between">
+    <div class="col-md-3">
+        <div class="card metrica m-ventas h-100"><div class="card-body d-flex align-items-center justify-content-between">
             <div><div class="sub">Ventas</div><div class="valor">{{ num_ventas }}</div></div>
             <i class="fa-solid fa-receipt icono"></i>
         </div></div>
     </div>
-    <div class="col-md-4">
-        <div class="card metrica m-stock"><div class="card-body d-flex align-items-center justify-content-between">
+    <div class="col-md-3">
+        <div class="card metrica m-stock h-100"><div class="card-body d-flex align-items-center justify-content-between">
             <div><div class="sub">Productos vendidos</div><div class="valor">{{ productos_vendidos }}</div></div>
             <i class="fa-solid fa-boxes-stacked icono"></i>
         </div></div>
     </div>
+    <div class="col-md-3">
+        {# Solo control: las anuladas NO suman a ningún total monetario. #}
+        <div class="card h-100" style="background: rgba(220,38,38,.10); border-color: rgba(220,38,38,.3);">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="small text-muted fw-semibold text-uppercase">Anuladas</div>
+                    <div class="fs-3 fw-bold text-danger">{{ num_anuladas }}</div>
+                </div>
+                <i class="fa-solid fa-ban text-danger fs-2 opacity-50"></i>
+            </div>
+        </div>
+    </div>
 </div>
-<p class="text-muted small">Los totales consideran únicamente ventas <strong>completadas</strong> (las anuladas no cuentan).</p>
+<p class="text-muted small">Los totales consideran únicamente ventas <strong>completadas</strong> (las anuladas no cuentan; se listan solo para control).</p>
 
 <div class="card">
     <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
-        <thead><tr><th>#</th><th>Cliente</th><th>Cajero</th><th>Productos</th><th class="text-end">Total</th><th>Hora</th></tr></thead>
+        <thead><tr><th>#</th><th>Cliente</th><th>Cajero</th><th>Productos</th>
+            <th class="text-end">Total</th><th>Estado</th><th>Hora</th></tr></thead>
         <tbody>
-            {% for v in ventas %}
-            <tr>
+            {% for v in ventas_dia %}
+            <tr {% if v.esta_anulada %}class="table-danger"{% endif %}>
                 <td class="fw-bold">{{ v.pk }}</td>
                 <td>{{ v.nombre_cliente }}</td>
                 <td><span class="badge text-bg-primary">{{ v.usuario.username }}</span></td>
@@ -41,11 +54,19 @@
                     </div>
                     {% endfor %}
                 </td>
-                <td class="text-end fw-bold">{{ v.total|quetzal }}</td>
-                <td class="small text-muted">{{ v.creado|date:'h:i A' }}</td>
+                <td class="text-end fw-bold {% if v.esta_anulada %}text-decoration-line-through text-muted{% endif %}">{{ v.total|quetzal }}</td>
+                <td>
+                    {% if v.esta_anulada %}
+                    <span class="badge text-bg-danger">Anulada</span>
+                    <div class="small text-muted" style="max-width:180px">{{ v.motivo_anulacion }}</div>
+                    {% else %}
+                    <span class="badge text-bg-success">Completada</span>
+                    {% endif %}
+                </td>
+                <td class="small text-muted text-nowrap">{{ v.creado|date:'h:i A' }}</td>
             </tr>
             {% empty %}
-            <tr><td colspan="6" class="text-center text-muted py-4">No hay ventas completadas en la fecha.</td></tr>
+            <tr><td colspan="7" class="text-center text-muted py-4">No hay ventas en la fecha.</td></tr>
             {% endfor %}
         </tbody>
     </table>

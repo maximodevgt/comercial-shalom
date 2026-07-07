@@ -15,16 +15,29 @@ from ventas.models import DetalleVenta, Venta
 
 
 def resumen_dia(fecha, usuario=None):
-    """Resumen de ventas COMPLETADAS de una fecha. Si se pasa `usuario`, se
-    filtra a las ventas de ese cajero."""
+    """Resumen de ventas de una fecha. Si se pasa `usuario`, se filtra a las
+    ventas de ese cajero.
+
+    Los agregados de DINERO (total_vendido, num_ventas, productos_vendidos)
+    se calculan SOLO sobre ventas completadas. Las anuladas se incluyen
+    aparte —y en el listado combinado `ventas_dia`— únicamente para control:
+    no suman a ningún total.
+    """
     ventas = (
         Venta.objects
         .filter(estado=Venta.Estado.COMPLETADA, creado__date=fecha)
         .select_related('cliente', 'usuario')
         .prefetch_related('detalles__producto')
     )
+    anuladas = (
+        Venta.objects
+        .filter(estado=Venta.Estado.ANULADA, creado__date=fecha)
+        .select_related('cliente', 'usuario')
+        .prefetch_related('detalles__producto')
+    )
     if usuario is not None:
         ventas = ventas.filter(usuario=usuario)
+        anuladas = anuladas.filter(usuario=usuario)
 
     total_vendido = ventas.aggregate(
         t=Coalesce(Sum('total'), Decimal('0.00')))['t']
@@ -33,11 +46,18 @@ def resumen_dia(fecha, usuario=None):
         .filter(venta__in=ventas)
         .aggregate(c=Coalesce(Sum('cantidad'), 0))['c']
     )
+    # Listado combinado (más reciente primero) para las tablas del cierre y
+    # el reporte; el estado de cada fila se distingue en el template.
+    ventas_dia = sorted(
+        [*ventas, *anuladas], key=lambda v: v.creado, reverse=True)
     return {
         'fecha': fecha,
         'ventas': ventas,
+        'ventas_anuladas': anuladas,
+        'ventas_dia': ventas_dia,
         'total_vendido': total_vendido,
         'num_ventas': ventas.count(),
+        'num_anuladas': anuladas.count(),
         'productos_vendidos': productos_vendidos,
     }
 
