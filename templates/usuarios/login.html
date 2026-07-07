@@ -52,34 +52,45 @@
         .tri-tl-verde { border-width: 180px 180px 0 0; }
         .tri-br-azul { border-width: 0 0 190px 190px; }
         .linea { width: 220px; }
-        /* El logo-techo se reduce pero sigue protagonista. */
-        .casa-logo-techo { padding: 1.5rem 1rem .8rem; }
-        .login-logo { width: 74%; max-width: 230px; }
     }
 
-    /* La tarjeta es una CASA cuyo TECHO es el logo mismo, grande y protagonista,
-       coronando un cuerpo blanco. Una sola pieza, con sombra que la hace flotar. */
+    /* Silueta COMPLETA de casa: TECHO EN PICO (triángulo blanco) arriba y
+       CUERPO recto (paredes) abajo, todo blanco como una sola pieza. La sombra
+       envuelve toda la casa (drop-shadow sobre .casa) para que "flote". */
     .casa { position: relative; z-index: 2; width: 100%; max-width: 400px;
-        filter: drop-shadow(0 24px 42px rgba(15, 23, 42, .45)); }
+        filter: drop-shadow(0 22px 40px rgba(15, 23, 42, .45)); }
 
-    /* Techo = el LOGO grande. Zona blanca de esquinas superiores redondeadas
-       que corona la casa; el logo la domina y se ve completo (trae su texto). */
-    .casa-logo-techo { background: #fff; border-radius: 1.4rem 1.4rem 0 0;
-        padding: 1.9rem 1.25rem .9rem; text-align: center; }
-    .login-logo { width: 82%; max-width: 300px; height: auto; display: block; margin: 0 auto; }
-    /* Filete verde de la marca: base del tejado (eave) hacia el cuerpo, sutil. */
-    .casa-eave { height: 4px;
+    /* Techo en pico: triángulo blanco con la punta centrada arriba. */
+    .casa-techo { height: 175px; background: #ffffff;
+        clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+    /* Filete verde de la marca en el alero (transición techo→cuerpo), sutil.
+       Va detrás del logo (z-index): asoma a los lados como base del tejado. */
+    .casa-eave { position: absolute; left: 0; right: 0; top: 173px; height: 3px; z-index: 1;
         background: linear-gradient(90deg, var(--primario) 0%, var(--primario-claro) 45%, var(--exito) 100%); }
+    /* El logo VIVE en el techo, bajo el pico: grande, centrado y completo. Su
+       caja (fondo blanco) queda dentro de la silueta para no romper la sombra. */
+    .login-logo { position: absolute; z-index: 3; left: 50%; top: 84px; transform: translateX(-50%);
+        width: 170px; height: auto; }
 
-    /* Cuerpo de la casa: SIEMPRE claro (aunque el sistema esté en modo oscuro;
-       data-bs-theme no resetea --superficie, que cascada del <html dark>).
-       Esquinas superiores rectas para pegar sin costura con la base del techo. */
-    .login-card { position: relative; margin: 0; border: none; border-radius: 0 0 1.3rem 1.3rem;
+    /* Cuerpo (paredes rectas): SIEMPRE claro (el modo oscuro no debe oscurecerlo;
+       data-bs-theme no resetea --superficie del <html dark>). Esquinas superiores
+       rectas (ahí baja el techo); las de abajo, levemente redondeadas. */
+    .login-card { position: relative; margin: 0; border: none; border-radius: 0 0 1.2rem 1.2rem;
         --bs-card-bg: #ffffff; background-color: #ffffff; color: #1e293b; box-shadow: none; }
     .login-card .text-muted { color: #64748b !important; }
-    /* Padding propio (no p-4/p-sm-5). Sin título/subtítulo, el form respira. */
-    .casa-cuerpo { padding: 1.85rem 1.5rem 1.75rem; }
-    @media (min-width: 576px) { .casa-cuerpo { padding: 2.1rem 2.5rem 2.25rem; } }
+    /* El tope del cuerpo deja lugar al logo que baja desde el techo. */
+    .casa-cuerpo { padding: 5.7rem 1.5rem 1.75rem; }
+    @media (min-width: 576px) { .casa-cuerpo { padding: 5.9rem 2.5rem 2.25rem; } }
+
+    /* Responsive de la casa: va DESPUÉS de las reglas base (misma
+       especificidad) para que sí las sobrescriba. El techo en pico y el logo
+       se reducen; el logo sigue protagonista y dentro del triángulo. */
+    @media (max-width: 640px) {
+        .casa-techo { height: 138px; }
+        .casa-eave { top: 136px; }
+        .login-logo { width: 132px; top: 62px; }
+        .casa-cuerpo { padding-top: 4.4rem; }
+    }
 
     .campo { position: relative; margin-bottom: 1rem; }
     .campo > .ico { position: absolute; left: .95rem; top: 50%; transform: translateY(-50%);
@@ -115,15 +126,16 @@
     <span class="fig linea linea-2"></span>
 </div>
 
-{# Tarjeta con forma de casa: el logo grande ES el techo + cuerpo blanco. #}
+{# Silueta de casa: techo triangular en pico + cuerpo recto, todo blanco. #}
 <div class="casa">
-    {# Techo = el logo real, grande y protagonista (ya trae el nombre dentro). #}
-    <div class="casa-logo-techo">
-        <img src="{% static 'img/logo.png' %}" alt="Comercial Shalom" class="login-logo">
-    </div>
+    {# Techo en pico (triángulo blanco). #}
+    <div class="casa-techo" aria-hidden="true"></div>
+    {# Alero: filete verde de la marca en la transición techo→cuerpo. #}
     <div class="casa-eave" aria-hidden="true"></div>
+    {# El logo vive en el techo, bajo el pico (absoluto sobre la casa). #}
+    <img src="{% static 'img/logo.png' %}" alt="Comercial Shalom" class="login-logo">
 
-    {# Cuerpo de la casa: SIEMPRE claro; el logo tiene fondo blanco y se funde. #}
+    {# Cuerpo (paredes rectas): SIEMPRE claro; contiene el formulario. #}
     <div class="card login-card" data-bs-theme="light">
     <div class="card-body casa-cuerpo">
         {% if form.errors %}
