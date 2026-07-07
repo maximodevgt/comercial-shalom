@@ -1,10 +1,12 @@
 import threading
+from datetime import datetime, time, timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.db import connection
 from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from apartados.models import Apartado
 from apartados.servicios import crear_apartado, liquidar_apartado, registrar_abono
@@ -263,3 +265,79 @@ class VentaConcurrenciaTest(TransactionTestCase):
         producto.refresh_from_db()
         self.assertEqual(producto.stock, 0)
         self.assertEqual(Venta.objects.count(), 1)
+
+
+class HistorialFiltroFechaTest(TestCase):
+    """El historial muestra SOLO hoy por defecto; ?todas=1 abre el histórico."""
+
+    def setUp(self):
+        self.admin = Usuario.objects.create_user(
+            username='adm', password='x', rol=Usuario.Rol.ADMIN)
+        self.cajero = Usuario.objects.create_user(
+            username='cj', password='x', rol=Usuario.Rol.CAJERO)
+        self.cat = Categoria.objects.create(nombre='G')
+        self.p = Producto.objects.create(
+            categoria=self.cat, nombre='P', precio=Decimal('100'), stock=100)
+
+        # Venta de HOY (Q100).
+        self.venta_hoy = crear_venta(self.cajero, lineas=[
+            {'producto_id': self.p.id, 'cantidad': 1, 'precio_unitario': '100.00'}])
+        # Venta de hace 5 días (Q200): se fuerza `creado` a una fecha pasada.
+        self.venta_pasada = crear_venta(self.cajero, lineas=[
+            {'producto_id': self.p.id, 'cantidad': 2, 'precio_unitario': '100.00'}])
+        self.dia_pasado = timezone.localdate() - timedelta(days=5)
+        pasado_mediodia = timezone.make_aware(
+            datetime.combine(self.dia_pasado, time(12, 0)))
+        Venta.objects.filter(pk=self.venta_pasada.pk).update(creado=pasado_mediodia)
+
+        self.client.force_login(self.admin)
+
+    def test_sin_params_muestra_solo_hoy(self):
+        # (a) Sin filtros: aparece solo la venta de hoy y el total es el de hoy.
+        r = self.client.get(reverse('ventas:historial'))
+        ids = [v.pk for v in r.context['ventas']]
+        self.assertIn(self.venta_hoy.pk, ids)
+        self.assertNotIn(self.venta_pasada.pk, ids)
+        self.assertEqual(r.context['total_vendido'], Decimal('100.00'))
+        self.assertEqual(r.context['num_completadas'], 1)
+
+    def test_todas_incluye_dias_anteriores(self):
+        # (b) ?todas=1: aparecen las de días anteriores y el total es el histórico.
+        r = self.client.get(reverse('ventas:historial'), {'todas': '1'})
+        ids = [v.pk for v in r.context['ventas']]
+        self.assertIn(self.venta_hoy.pk, ids)
+        self.assertIn(self.venta_pasada.pk, ids)
+        self.assertEqual(r.context['total_vendido'], Decimal('300.00'))  # 100 + 200
+        self.assertEqual(r.context['num_completadas'], 2)
+
+    def test_rango_explicito_respeta_fechas(self):
+        # (c) desde/hasta explícito: solo lo que cae en el rango.
+        f = self.dia_pasado.strftime('%Y-%m-%d')
+        r = self.client.get(reverse('ventas:historial'), {'desde': f, 'hasta': f})
+        ids = [v.pk for v in r.context['ventas']]
+        self.assertIn(self.venta_pasada.pk, ids)
+        self.assertNotIn(self.venta_hoy.pk, ids)
+        self.assertEqual(r.context['total_vendido'], Decimal('200.00'))
+
+    def test_periodo_label_por_caso(self):
+        # (d) El texto del período es correcto en cada caso.
+        hoy = timezone.localdate()
+        d_pasado = hoy - timedelta(days=5)
+
+        r = self.client.get(reverse('ventas:historial'))
+        self.assertEqual(r.context['periodo_label'], f'Hoy — {hoy:%d/%m/%Y}')
+        self.assertTrue(r.context['es_hoy'])
+
+        r = self.client.get(reverse('ventas:historial'), {'todas': '1'})
+        self.assertEqual(r.context['periodo_label'], 'Todas las ventas')
+        self.assertFalse(r.context['es_hoy'])
+
+        r = self.client.get(reverse('ventas:historial'), {
+            'desde': d_pasado.strftime('%Y-%m-%d'), 'hasta': hoy.strftime('%Y-%m-%d')})
+        self.assertEqual(
+            r.context['periodo_label'],
+            f'Del {d_pasado:%d/%m/%Y} al {hoy:%d/%m/%Y}')
+
+        r = self.client.get(reverse('ventas:historial'), {
+            'desde': hoy.strftime('%Y-%m-%d'), 'hasta': hoy.strftime('%Y-%m-%d')})
+        self.assertEqual(r.context['periodo_label'], f'Día {hoy:%d/%m/%Y}')

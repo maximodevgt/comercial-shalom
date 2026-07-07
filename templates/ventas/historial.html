@@ -46,9 +46,8 @@
             <div class="col-md-2 d-flex gap-2">
                 <button type="submit" class="btn btn-success flex-fill" title="Filtrar">
                     <i class="fa-solid fa-magnifying-glass"></i></button>
-                <a href="?hoy=1" class="btn rounded-pill {% if filtros.hoy %}btn-primary{% else %}btn-outline-primary{% endif %}">Hoy</a>
-                <a href="{% url 'ventas:historial' %}" class="btn btn-secondary" title="Limpiar">
-                    <i class="fa-solid fa-eraser"></i></a>
+                <a href="{% url 'ventas:historial' %}" class="btn rounded-pill {% if es_hoy %}btn-primary{% else %}btn-outline-primary{% endif %}" title="Ver solo hoy">Hoy</a>
+                <a href="?todas=1" class="btn {% if filtros.todas %}btn-secondary{% else %}btn-outline-secondary{% endif %}" title="Ver todas las ventas (histórico)">Todas</a>
             </div>
         </form>
     </div>
@@ -57,19 +56,19 @@
 <div class="row g-3 mb-3">
     <div class="col-md-4">
         <div class="card h-100"><div class="card-body py-2">
-            <div class="small text-muted fw-semibold text-uppercase">Total vendido (filtro)</div>
+            <div class="small text-muted fw-semibold text-uppercase">Total vendido — {{ periodo_label }}</div>
             <div class="fs-4 fw-bold texto-exito">{{ total_vendido|quetzal }}</div>
         </div></div>
     </div>
     <div class="col-md-4">
         <div class="card h-100" style="background: rgba(22,163,74,.12); border-color: rgba(22,163,74,.3);"><div class="card-body py-2">
-            <div class="small text-muted fw-semibold text-uppercase">Completadas</div>
+            <div class="small text-muted fw-semibold text-uppercase">Completadas — {{ periodo_label }}</div>
             <div class="fs-4 fw-bold">{{ num_completadas }}</div>
         </div></div>
     </div>
     <div class="col-md-4">
         <div class="card h-100" style="background: rgba(220,38,38,.10); border-color: rgba(220,38,38,.3);"><div class="card-body py-2">
-            <div class="small text-muted fw-semibold text-uppercase">Anuladas</div>
+            <div class="small text-muted fw-semibold text-uppercase">Anuladas — {{ periodo_label }}</div>
             <div class="fs-4 fw-bold text-danger">{{ num_anuladas }}</div>
         </div></div>
     </div>

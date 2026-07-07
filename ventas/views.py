@@ -120,13 +120,36 @@ class HistorialVentasView(LoginRequiredMixin, ListView):
         return qs
 
     def _rango_fechas(self):
-        if self.request.GET.get('hoy'):
+        """Rango (desde, hasta) del filtro de fecha; fija self.periodo_label.
+
+        Por defecto —sin desde/hasta ni ?todas— el historial muestra SOLO hoy,
+        para no confundir el total del histórico con el del día. ?todas=1 quita
+        el filtro de fecha (histórico completo); desde/hasta arman un rango.
+        """
+        self.es_hoy = False
+        if self.request.GET.get('todas'):
+            self.periodo_label = 'Todas las ventas'
+            return None, None
+
+        desde = self._fecha(self.request.GET.get('desde'))
+        hasta = self._fecha(self.request.GET.get('hasta'))
+
+        # Sin rango explícito: por defecto, solo el día de hoy (zona local).
+        if desde is None and hasta is None:
             hoy = timezone.localdate()
+            self.es_hoy = True
+            self.periodo_label = f'Hoy — {hoy:%d/%m/%Y}'
             return hoy, hoy
-        return (
-            self._fecha(self.request.GET.get('desde')),
-            self._fecha(self.request.GET.get('hasta')),
-        )
+
+        if desde and hasta:
+            self.periodo_label = (
+                f'Día {desde:%d/%m/%Y}' if desde == hasta
+                else f'Del {desde:%d/%m/%Y} al {hasta:%d/%m/%Y}')
+        elif desde:
+            self.periodo_label = f'Desde el {desde:%d/%m/%Y}'
+        else:
+            self.periodo_label = f'Hasta el {hasta:%d/%m/%Y}'
+        return desde, hasta
 
     @staticmethod
     def _fecha(valor):
@@ -162,6 +185,10 @@ class HistorialVentasView(LoginRequiredMixin, ListView):
         if ctx['puede_filtrar_cajero']:
             ctx['cajeros'] = Usuario.objects.filter(rol=Usuario.Rol.CAJERO)
         ctx['filtros'] = self.request.GET
+        # Período que se está viendo (calculado en _rango_fechas) para aclarar
+        # a qué corresponden los totales y resaltar el botón "Hoy".
+        ctx['periodo_label'] = self.periodo_label
+        ctx['es_hoy'] = self.es_hoy
         return ctx
 
 
