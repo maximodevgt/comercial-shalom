@@ -267,3 +267,28 @@ class AbonosEnCierreTest(TestCase):
         r = resumen_dia(timezone.localdate())
         self.assertEqual(r['total_abonos'], Decimal('150.00'))
         self.assertEqual(r['num_abonos'], 2)
+
+    def test_abonos_solo_en_pdf_de_cierre_no_en_reporte(self):
+        # Consistencia M-4: la sección de abonos aparece en el PDF del cierre
+        # pero NO en el del reporte por fecha, aunque compartan el template.
+        from io import BytesIO
+
+        from pypdf import PdfReader
+
+        self._apartado_con_abono(self.cajero, '100.00')
+        admin = Usuario.objects.create_user(
+            username='adm', password='x', rol=Usuario.Rol.ADMIN)
+        self.client.force_login(admin)
+
+        def texto_pdf(response):
+            rdr = PdfReader(BytesIO(response.content))
+            return ' '.join(p.extract_text() for p in rdr.pages)
+
+        r_cierre = self.client.get(reverse('reportes:cierre_pdf'))
+        self.assertEqual(r_cierre.status_code, 200)
+        self.assertIn('Abonos de apartados recibidos', texto_pdf(r_cierre))
+
+        hoy = timezone.localdate().strftime('%Y-%m-%d')
+        r_reporte = self.client.get(reverse('reportes:reporte_pdf'), {'fecha': hoy})
+        self.assertEqual(r_reporte.status_code, 200)
+        self.assertNotIn('Abonos de apartados recibidos', texto_pdf(r_reporte))

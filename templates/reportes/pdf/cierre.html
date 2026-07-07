@@ -66,7 +66,10 @@
         </tbody>
     </table>
 
-    {# Abonos de apartados: dinero de caja que NO es venta; aparte del total. #}
+    {# Abonos de apartados: dinero de caja que NO es venta; aparte del total.
+       Solo en el cierre (mostrar_abonos), no en el reporte por fecha, aunque
+       compartan este template. #}
+    {% if mostrar_abonos %}
     <div class="bloque-titulo">Abonos de apartados recibidos ({{ total_abonos|quetzal }})</div>
     {% if num_abonos %}
     <table class="items">
@@ -86,6 +89,7 @@
     <div class="muted">No se recibieron abonos de apartados en la fecha.</div>
     {% endif %}
     <div class="muted" style="margin-top: 4px;">Estos montos NO están incluidos en el total de ventas del día.</div>
+    {% endif %}
 {% endblock %}
 
 {% block pie %}

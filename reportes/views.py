@@ -131,6 +131,9 @@ def cierre_pdf(request):
     ctx['negocio'] = NEGOCIO
     ctx['titulo'] = 'Cierre Diario'
     ctx['cajero_filtro'] = usuario  # el encabezado muestra "Cajero: X" si aplica
+    # Los abonos del día son parte del cierre de caja, no del reporte por
+    # fecha (aunque ambos comparten el template PDF).
+    ctx['mostrar_abonos'] = True
     return _pdf_o_redirect(
         request, 'reportes/pdf/cierre.html', ctx,
         f'cierre_{ctx["fecha"]}.pdf', 'reportes:cierre')
@@ -146,6 +149,8 @@ def reporte_pdf(request):
     ctx = resumen_dia(fecha)
     ctx['negocio'] = NEGOCIO
     ctx['titulo'] = 'Reporte de Ventas por Fecha'
+    # El reporte por fecha NO muestra abonos (solo el cierre de caja).
+    ctx['mostrar_abonos'] = False
     return _pdf_o_redirect(
         request, 'reportes/pdf/cierre.html', ctx,
         f'reporte_{fecha}.pdf', 'reportes:reporte')
