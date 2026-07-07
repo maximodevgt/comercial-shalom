@@ -6,7 +6,8 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from apartados.servicios import crear_apartado
+from apartados.models import Abono
+from apartados.servicios import crear_apartado, registrar_abono
 from productos.models import Categoria, Producto
 from ventas.models import Venta
 from ventas.servicios import anular_venta, crear_venta
@@ -195,3 +196,74 @@ class PdfApartadoAutorizacionTest(TestCase):
         self.client.force_login(self.otro)
         r = self.client.get(reverse('reportes:ticket_liquidacion_pdf', args=[self.apartado.pk]))
         self.assertEqual(r.status_code, 403)
+
+
+class AbonosEnCierreTest(TestCase):
+    """Los abonos de apartados del día aparecen en el cierre, aparte del total
+    de ventas y sin contaminarlo (M-4)."""
+
+    def setUp(self):
+        self.cajero = Usuario.objects.create_user(
+            username='caja', password='x', rol=Usuario.Rol.CAJERO)
+        self.otro = Usuario.objects.create_user(
+            username='otro', password='x', rol=Usuario.Rol.CAJERO)
+        self.cat = Categoria.objects.create(nombre='G')
+        self.p = Producto.objects.create(
+            categoria=self.cat, nombre='P', precio=Decimal('500'), stock=50)
+
+    def _apartado_con_abono(self, cajero, abono_inicial, metodo='efectivo'):
+        # crear_apartado registra el abono inicial con el método indicado.
+        return crear_apartado(
+            cajero, producto_id=self.p.id, precio_total='500.00',
+            nombre_cliente_libre='Cli', abono_inicial=abono_inicial,
+            metodo_abono=metodo)
+
+    def test_abono_de_hoy_aparece_con_su_metodo(self):
+        self._apartado_con_abono(self.cajero, '100.00', metodo='tarjeta')
+        r = resumen_dia(timezone.localdate())
+        self.assertEqual(r['total_abonos'], Decimal('100.00'))
+        self.assertEqual(r['num_abonos'], 1)
+        metodos = {a['metodo_display']: a['total'] for a in r['abonos_por_metodo']}
+        self.assertEqual(metodos, {'Tarjeta': Decimal('100.00')})
+
+    def test_abono_de_ayer_no_aparece_hoy(self):
+        ap = self._apartado_con_abono(self.cajero, '100.00')
+        # Mover el abono a ayer (creado es auto_now_add: se fuerza vía update).
+        ayer = timezone.now() - timedelta(days=1)
+        Abono.objects.filter(apartado=ap).update(creado=ayer)
+        r = resumen_dia(timezone.localdate())
+        self.assertEqual(r['total_abonos'], Decimal('0.00'))
+        self.assertEqual(r['num_abonos'], 0)
+        self.assertEqual(r['abonos_por_metodo'], [])
+
+    def test_abonos_no_contaminan_total_vendido(self):
+        # Una venta de 500 + un apartado con abono de 100: el total de ventas
+        # sigue siendo 500; el abono va aparte.
+        crear_venta(self.cajero, lineas=[
+            {'producto_id': self.p.id, 'cantidad': 1, 'precio_unitario': '500.00'}])
+        self._apartado_con_abono(self.cajero, '100.00')
+        r = resumen_dia(timezone.localdate())
+        self.assertEqual(r['total_vendido'], Decimal('500.00'))
+        self.assertEqual(r['num_ventas'], 1)
+        self.assertEqual(r['total_abonos'], Decimal('100.00'))
+
+    def test_cajero_solo_ve_sus_abonos(self):
+        # Abono del cajero (150) y abono de otro cajero (300).
+        self._apartado_con_abono(self.cajero, '150.00')
+        self._apartado_con_abono(self.otro, '300.00')
+        # Cierre global (admin): ve ambos.
+        glob = resumen_dia(timezone.localdate())
+        self.assertEqual(glob['total_abonos'], Decimal('450.00'))
+        self.assertEqual(glob['num_abonos'], 2)
+        # Cierre del cajero: solo el suyo (scoping por apartado__usuario).
+        propio = resumen_dia(timezone.localdate(), usuario=self.cajero)
+        self.assertEqual(propio['total_abonos'], Decimal('150.00'))
+        self.assertEqual(propio['num_abonos'], 1)
+
+    def test_abono_posterior_tambien_cuenta(self):
+        # Un abono registrado después de la creación también entra al cierre.
+        ap = self._apartado_con_abono(self.cajero, '100.00')
+        registrar_abono(self.cajero, ap.id, '50.00', metodo='efectivo')
+        r = resumen_dia(timezone.localdate())
+        self.assertEqual(r['total_abonos'], Decimal('150.00'))
+        self.assertEqual(r['num_abonos'], 2)

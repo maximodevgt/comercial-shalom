@@ -65,6 +65,27 @@
             {% endfor %}
         </tbody>
     </table>
+
+    {# Abonos de apartados: dinero de caja que NO es venta; aparte del total. #}
+    <div class="bloque-titulo">Abonos de apartados recibidos ({{ total_abonos|quetzal }})</div>
+    {% if num_abonos %}
+    <table class="items">
+        <thead>
+            <tr><th>Método de pago</th><th class="r" style="width: 120px;">Monto</th></tr>
+        </thead>
+        <tbody>
+            {% for a in abonos_por_metodo %}
+            <tr class="{% cycle '' 'alt' %}">
+                <td>{{ a.metodo_display }}</td>
+                <td class="r negrita">{{ a.total|quetzal }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="muted">No se recibieron abonos de apartados en la fecha.</div>
+    {% endif %}
+    <div class="muted" style="margin-top: 4px;">Estos montos NO están incluidos en el total de ventas del día.</div>
 {% endblock %}
 
 {% block pie %}

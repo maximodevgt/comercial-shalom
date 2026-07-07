@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load moneda %}
 {% block titulo %}Cierre diario{% endblock %}
 
 {% block contenido %}
@@ -17,4 +18,34 @@
     </div>
 </div>
 {% include 'reportes/_resumen.html' %}
+
+{# Abonos de apartados: dinero que entra a caja pero NO es venta. Va aparte
+   del total de ventas para poder cuadrar la caja física del día. #}
+<div class="card card-acento-verde mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fa-solid fa-coins me-1"></i>Abonos de apartados recibidos hoy</span>
+        <span class="fw-bold texto-exito fs-5">{{ total_abonos|quetzal }}</span>
+    </div>
+    <div class="card-body">
+        {% if num_abonos %}
+        <div class="row g-2 mb-2">
+            {% for a in abonos_por_metodo %}
+            <div class="col-sm-4">
+                <div class="border rounded p-2 h-100">
+                    <div class="small text-muted text-uppercase fw-semibold">{{ a.metodo_display }}</div>
+                    <div class="fs-5 fw-bold">{{ a.total|quetzal }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-muted small">{{ num_abonos }} abono{{ num_abonos|pluralize }} recibido{{ num_abonos|pluralize }} hoy.</div>
+        {% else %}
+        <div class="text-muted">No se recibieron abonos de apartados hoy.</div>
+        {% endif %}
+        <div class="alert alert-info mb-0 mt-3 py-2 small">
+            <i class="fa-solid fa-circle-info me-1"></i>
+            Estos montos <strong>no están incluidos</strong> en el total de ventas del día.
+        </div>
+    </div>
+</div>
 {% endblock %}

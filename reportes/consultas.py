@@ -6,12 +6,45 @@ los números cuadren exactos con el dashboard."""
 from datetime import timedelta
 from decimal import Decimal
 
-from django.db.models import Count, Sum
+from django.db.models import Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
+from apartados.models import Abono
 from productos.models import Producto
 from ventas.models import DetalleVenta, Venta
+
+
+def _abonos_del_dia(fecha, usuario=None):
+    """Abonos de apartados recibidos en `fecha` (por `creado__date`), para el
+    cierre. Son dinero que entra a caja pero que NO es una venta: se muestran
+    aparte y NO suman a total_vendido.
+
+    Scoping por cajero: se filtra por `apartado__usuario` (el dueño del
+    apartado), que es como el resto del sistema define "lo propio" del cajero
+    (ver apartados.views._puede_ver), no por quién registró el abono.
+
+    Devuelve (total, por_metodo, cantidad). `por_metodo` recorre
+    Abono.Metodo.choices para un orden fijo (efectivo, tarjeta, saldo) e
+    incluye solo los métodos con abonos ese día.
+    """
+    abonos = Abono.objects.filter(creado__date=fecha)
+    if usuario is not None:
+        abonos = abonos.filter(apartado__usuario=usuario)
+
+    total = abonos.aggregate(t=Coalesce(Sum('monto'), Decimal('0.00')))['t']
+    cantidad = abonos.count()
+    # Un solo agregado agrupado por método (sin queries por fila).
+    por_metodo_raw = {
+        fila['metodo']: fila['t']
+        for fila in abonos.values('metodo').annotate(t=Coalesce(Sum('monto'), Decimal('0.00')))
+    }
+    por_metodo = [
+        {'metodo_display': etiqueta, 'total': por_metodo_raw[valor]}
+        for valor, etiqueta in Abono.Metodo.choices
+        if valor in por_metodo_raw
+    ]
+    return total, por_metodo, cantidad
 
 
 def resumen_dia(fecha, usuario=None):
@@ -50,6 +83,10 @@ def resumen_dia(fecha, usuario=None):
     # el reporte; el estado de cada fila se distingue en el template.
     ventas_dia = sorted(
         [*ventas, *anuladas], key=lambda v: v.creado, reverse=True)
+
+    # Abonos del día (dinero de caja que NO es venta): informativo, aparte.
+    total_abonos, abonos_por_metodo, num_abonos = _abonos_del_dia(fecha, usuario)
+
     return {
         'fecha': fecha,
         'ventas': ventas,
@@ -59,6 +96,9 @@ def resumen_dia(fecha, usuario=None):
         'num_ventas': ventas.count(),
         'num_anuladas': anuladas.count(),
         'productos_vendidos': productos_vendidos,
+        'total_abonos': total_abonos,
+        'abonos_por_metodo': abonos_por_metodo,
+        'num_abonos': num_abonos,
     }
 
 
