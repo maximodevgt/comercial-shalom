@@ -6,6 +6,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from apartados.servicios import crear_apartado
 from productos.models import Categoria, Producto
 from ventas.models import Venta
 from ventas.servicios import anular_venta, crear_venta
@@ -153,3 +154,44 @@ class CorteDeDiaTest(TestCase):
         self.assertIn(noche.pk, pks)
         self.assertEqual(resumen['num_ventas'], 2)
         self.assertEqual(resumen['total_vendido'], Decimal('200.00'))
+
+
+class PdfApartadoAutorizacionTest(TestCase):
+    """IDOR (C-1, C-2): un cajero solo accede a los PDF de abono y liquidación
+    de SUS propios apartados, no a los de otros cajeros."""
+
+    def setUp(self):
+        self.duenio = Usuario.objects.create_user(
+            username='duenio', password='x', rol=Usuario.Rol.CAJERO)
+        self.otro = Usuario.objects.create_user(
+            username='otro', password='x', rol=Usuario.Rol.CAJERO)
+        cat = Categoria.objects.create(nombre='G')
+        producto = Producto.objects.create(
+            categoria=cat, nombre='Reloj', precio=Decimal('500.00'), stock=3)
+        # Apartado del dueño, con un abono inicial (para el comprobante de abono).
+        self.apartado = crear_apartado(
+            self.duenio, producto_id=producto.id, precio_total='500.00',
+            nombre_cliente_libre='Cliente', abono_inicial='100.00')
+        self.abono = self.apartado.abonos.get()
+
+    def test_duenio_descarga_comprobante_abono(self):
+        self.client.force_login(self.duenio)
+        r = self.client.get(reverse('reportes:comprobante_abono_pdf', args=[self.abono.pk]))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r['Content-Type'], 'application/pdf')
+
+    def test_otro_cajero_no_ve_comprobante_abono(self):
+        self.client.force_login(self.otro)
+        r = self.client.get(reverse('reportes:comprobante_abono_pdf', args=[self.abono.pk]))
+        self.assertEqual(r.status_code, 403)
+
+    def test_duenio_descarga_liquidacion(self):
+        self.client.force_login(self.duenio)
+        r = self.client.get(reverse('reportes:ticket_liquidacion_pdf', args=[self.apartado.pk]))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r['Content-Type'], 'application/pdf')
+
+    def test_otro_cajero_no_ve_liquidacion(self):
+        self.client.force_login(self.otro)
+        r = self.client.get(reverse('reportes:ticket_liquidacion_pdf', args=[self.apartado.pk]))
+        self.assertEqual(r.status_code, 403)

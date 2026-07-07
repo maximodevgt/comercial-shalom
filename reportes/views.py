@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.views.generic import TemplateView
 
 from apartados.models import Abono, Apartado
+from apartados.views import _puede_ver
 from usuarios.models import Usuario
 from usuarios.permisos import RolRequeridoMixin
 from ventas.models import Venta
@@ -89,6 +90,9 @@ def comprobante_abono_pdf(request, pk):
         raise PermissionDenied()
     abono = get_object_or_404(
         Abono.objects.select_related('apartado__producto', 'apartado__cliente', 'usuario'), pk=pk)
+    # IDOR (C-1): el cajero solo puede ver los abonos de sus propios apartados.
+    if not _puede_ver(request.user, abono.apartado):
+        raise PermissionDenied()
     return _pdf_o_redirect(
         request, 'reportes/pdf/comprobante_abono.html',
         {'abono': abono, 'apartado': abono.apartado, 'negocio': NEGOCIO},
@@ -100,6 +104,9 @@ def ticket_liquidacion_pdf(request, pk):
         raise PermissionDenied()
     apartado = get_object_or_404(
         Apartado.objects.select_related('producto', 'cliente', 'venta').prefetch_related('abonos'), pk=pk)
+    # IDOR (C-2): el cajero solo puede ver la liquidación de sus propios apartados.
+    if not _puede_ver(request.user, apartado):
+        raise PermissionDenied()
     return _pdf_o_redirect(
         request, 'reportes/pdf/ticket_liquidacion.html',
         {'apartado': apartado, 'negocio': NEGOCIO}, f'liquidacion_{pk}.pdf',
