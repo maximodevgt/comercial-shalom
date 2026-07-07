@@ -12,7 +12,7 @@
     <div class="d-flex gap-2">
         <a href="{% url 'apartados:lista' %}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left me-1"></i>Volver</a>
         {% if apartado.estado == 'liquidado' %}
-        <a href="{% url 'reportes:ticket_liquidacion_pdf' apartado.pk %}" class="btn btn-danger" target="_blank">
+        <a href="{% url 'reportes:ticket_liquidacion_pdf' apartado.pk %}" class="btn btn-danger" target="_blank" rel="noopener">
             <i class="fa-solid fa-file-pdf me-1"></i>Ticket liquidación</a>
         {% endif %}
     </div>
@@ -66,7 +66,7 @@
                             <td class="text-end fw-semibold">{{ ab.monto|quetzal }}</td>
                             <td class="text-end">
                                 <a href="{% url 'reportes:comprobante_abono_pdf' ab.pk %}" class="btn btn-sm btn-danger"
-                                   target="_blank" title="Comprobante PDF"><i class="fa-solid fa-file-pdf"></i></a>
+                                   target="_blank" rel="noopener" title="Comprobante PDF"><i class="fa-solid fa-file-pdf"></i></a>
                             </td>
                         </tr>
                         {% empty %}

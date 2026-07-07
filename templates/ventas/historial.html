@@ -114,7 +114,7 @@
                 <td class="text-end text-nowrap">
                     <a href="{% url 'ventas:detalle' v.pk %}" class="btn btn-sm btn-info" title="Ver">
                         <i class="fa-solid fa-eye"></i></a>
-                    <a href="{% url 'reportes:ticket_venta_pdf' v.pk %}" class="btn btn-sm btn-danger" target="_blank" title="Ticket PDF">
+                    <a href="{% url 'reportes:ticket_venta_pdf' v.pk %}" class="btn btn-sm btn-danger" target="_blank" rel="noopener" title="Ticket PDF">
                         <i class="fa-solid fa-file-pdf"></i></a>
                     {% if user.es_admin and not v.esta_anulada %}
                     <a href="{% url 'ventas:anular' v.pk %}" class="btn btn-sm btn-outline-danger" title="Anular">

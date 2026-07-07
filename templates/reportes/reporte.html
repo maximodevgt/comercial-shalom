@@ -4,7 +4,7 @@
 {% block contenido %}
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h2 class="fw-bold mb-0"><i class="fa-solid fa-calendar-days me-2"></i>Reporte por fecha</h2>
-    <a href="{% url 'reportes:reporte_pdf' %}?fecha={{ fecha_str }}" class="btn btn-danger">
+    <a href="{% url 'reportes:reporte_pdf' %}?fecha={{ fecha_str }}" class="btn btn-danger" target="_blank" rel="noopener">
         <i class="fa-solid fa-file-pdf me-1"></i>Descargar PDF</a>
 </div>
 

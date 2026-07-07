@@ -10,7 +10,7 @@
     </h2>
     <div class="d-flex gap-2">
         <a href="{% url 'ventas:historial' %}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left me-1"></i>Volver</a>
-        <a href="{% url 'reportes:ticket_venta_pdf' venta.pk %}" class="btn btn-danger" target="_blank">
+        <a href="{% url 'reportes:ticket_venta_pdf' venta.pk %}" class="btn btn-danger" target="_blank" rel="noopener">
             <i class="fa-solid fa-file-pdf me-1"></i>Ticket PDF</a>
         {% if user.es_admin and not venta.esta_anulada %}
         <a href="{% url 'ventas:anular' venta.pk %}" class="btn btn-outline-danger"><i class="fa-solid fa-ban me-1"></i>Anular</a>
