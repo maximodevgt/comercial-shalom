@@ -6,6 +6,8 @@ from django.db import connection
 from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 
+from apartados.models import Apartado
+from apartados.servicios import crear_apartado, liquidar_apartado, registrar_abono
 from clientes.models import Cliente
 from productos.models import Categoria, Producto
 
@@ -196,6 +198,40 @@ class AnulacionTest(TestCase):
         self.assertEqual(r.context['total_vendido'], Decimal('100.00'))
         self.assertEqual(r.context['num_completadas'], 1)
         self.assertEqual(r.context['num_anuladas'], 1)
+
+    def test_anular_venta_normal_cambia_estado_y_restaura_stock(self):
+        # (a) Una venta normal se sigue anulando: estado ANULADA y stock +cant.
+        venta = crear_venta(self.cajero, lineas=[
+            {'producto_id': self.p.id, 'cantidad': 2, 'precio_unitario': '100.00'}])
+        self.p.refresh_from_db()
+        self.assertEqual(self.p.stock, 8)
+        self.assertFalse(venta.es_de_liquidacion)  # no proviene de apartado
+        anular_venta(self.admin, venta.id, 'devolución')
+        self.p.refresh_from_db(); venta.refresh_from_db()
+        self.assertEqual(venta.estado, Venta.Estado.ANULADA)
+        self.assertEqual(self.p.stock, 10)  # restaurado (+2)
+
+    def test_no_se_puede_anular_venta_de_liquidacion(self):
+        # (b) Escenario real con los servicios: apartado saldado y liquidado.
+        apartado = crear_apartado(
+            self.cajero, producto_id=self.p.id, precio_total='100.00',
+            abono_inicial='60.00')
+        registrar_abono(self.cajero, apartado.id, '40.00')  # salda el pendiente
+        venta = liquidar_apartado(self.cajero, apartado.id)
+
+        self.p.refresh_from_db()
+        stock_antes = self.p.stock  # -1 al crear el apartado; liquidar no toca stock
+        self.assertTrue(venta.es_de_liquidacion)
+
+        with self.assertRaises(ErrorAnulacion):
+            anular_venta(self.admin, venta.id, 'intento de anulación')
+
+        # Nada cambió: venta completada, stock intacto, apartado liquidado.
+        venta.refresh_from_db(); self.p.refresh_from_db()
+        apartado.refresh_from_db()
+        self.assertEqual(venta.estado, Venta.Estado.COMPLETADA)
+        self.assertEqual(self.p.stock, stock_antes)
+        self.assertEqual(apartado.estado, Apartado.Estado.LIQUIDADO)
 
 
 class VentaConcurrenciaTest(TransactionTestCase):

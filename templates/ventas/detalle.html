@@ -12,8 +12,11 @@
         <a href="{% url 'ventas:historial' %}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left me-1"></i>Volver</a>
         <a href="{% url 'reportes:ticket_venta_pdf' venta.pk %}" class="btn btn-danger" target="_blank" rel="noopener">
             <i class="fa-solid fa-file-pdf me-1"></i>Ticket PDF</a>
-        {% if user.es_admin and not venta.esta_anulada %}
+        {% if user.es_admin and not venta.esta_anulada and not venta.es_de_liquidacion %}
         <a href="{% url 'ventas:anular' venta.pk %}" class="btn btn-outline-danger"><i class="fa-solid fa-ban me-1"></i>Anular</a>
+        {% elif user.es_admin and not venta.esta_anulada and venta.es_de_liquidacion %}
+        <span class="text-muted small align-self-center">
+            <i class="fa-solid fa-circle-info me-1"></i>Venta de liquidación de apartado: no se anula desde acá.</span>
         {% endif %}
     </div>
 </div>

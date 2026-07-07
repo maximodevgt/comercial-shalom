@@ -50,6 +50,14 @@ def anular_venta(usuario, venta_id, motivo):
         raise ErrorAnulacion('La venta no existe.')
     if venta.estado == Venta.Estado.ANULADA:
         raise ErrorAnulacion('La venta ya está anulada.')
+    # Una venta de liquidación de apartado no se anula por acá: hacerlo dejaría
+    # stock fantasma (el ítem ya salió al liquidar) y el apartado en estado
+    # inconsistente. Se corrige desde el propio flujo del apartado. Se valida
+    # ANTES de tocar stock o saldo (nada modificado todavía).
+    if venta.apartado_origen.exists():
+        raise ErrorAnulacion(
+            'Esta venta proviene de la liquidación de un apartado y no puede '
+            'anularse. Corregí el apartado desde su propio flujo.')
 
     # Restaurar stock con lock sobre cada producto.
     for detalle in venta.detalles.select_related('producto'):

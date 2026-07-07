@@ -75,6 +75,15 @@ class Venta(models.Model):
     def esta_anulada(self):
         return self.estado == self.Estado.ANULADA
 
+    @property
+    def es_de_liquidacion(self):
+        """True si esta venta se generó al liquidar un apartado.
+
+        El reverse `apartado_origen` es un queryset (FK con related_name);
+        una venta normal no tiene apartado de origen → exists() es False.
+        Estas ventas no se anulan (se corrigen desde el apartado)."""
+        return self.apartado_origen.exists()
+
 
 class DetalleVenta(models.Model):
     """Línea de una venta. Guarda el precio original (de BD al momento) y el
