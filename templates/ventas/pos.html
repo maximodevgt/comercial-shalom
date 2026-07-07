@@ -501,9 +501,32 @@ document.getElementById('btnRegistrar').addEventListener('click', async () => {
             body: JSON.stringify(payload),
         });
         const data = await r.json();
-        if (data.ok) { window.location = '/ventas/' + data.venta_id + '/'; }
-        else { alerta(data.error || 'No se pudo registrar la venta.', true); btn.disabled = false; }
-    } catch (_) { alerta('Error de conexión.', true); btn.disabled = false; }
+        if (data.ok) {
+            // Toast diferido: base.html lo muestra al cargar el detalle de la
+            // venta (sobrevive a la redirección vía sessionStorage).
+            try {
+                sessionStorage.setItem('toastPendiente', JSON.stringify(
+                    {icon: 'success', titleText: 'Venta registrada correctamente.'}));
+            } catch (e) { /* sin sessionStorage solo se pierde el toast */ }
+            window.location = '/ventas/' + data.venta_id + '/';
+        } else {
+            const msg = data.error || 'No se pudo registrar la venta.';
+            // Toast rojo consistente con el resto del sistema + alerta inline
+            // persistente para corregir el ticket con el mensaje a la vista.
+            if (typeof ToastShalom !== 'undefined' && ToastShalom) {
+                ToastShalom.fire({icon: 'error', titleText: msg});
+            }
+            alerta(msg, true);
+            btn.disabled = false;
+        }
+    } catch (_) {
+        const msg = 'Error de conexión.';
+        if (typeof ToastShalom !== 'undefined' && ToastShalom) {
+            ToastShalom.fire({icon: 'error', titleText: msg});
+        }
+        alerta(msg, true);
+        btn.disabled = false;
+    }
 });
 
 pintarGrid();

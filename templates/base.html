@@ -287,26 +287,45 @@
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
 <script>
+// Toast único del sistema. También lo usan flujos JS (p. ej. el POS) directo
+// o en diferido vía sessionStorage (para que sobreviva a una redirección).
+const ToastShalom = (typeof Swal !== 'undefined') ? Swal.mixin({
+    toast: true, position: 'top-end', showConfirmButton: false,
+    timer: 3500, timerProgressBar: true,
+}) : null;
+
 // Mensajes de Django como toasts (se desvanecen solos).
 (function () {
-    const lista = document.getElementById('djangoMensajes');
-    if (!lista || typeof Swal === 'undefined') return;
-    const Toast = Swal.mixin({
-        toast: true, position: 'top-end', showConfirmButton: false,
-        timer: 3500, timerProgressBar: true,
-    });
+    if (!ToastShalom) return;
     const icono = n =>
         n.includes('success') ? 'success'
         : (n.includes('danger') || n.includes('error')) ? 'error'
         : n.includes('warning') ? 'warning' : 'info';
+    const pendientes = [];
+
+    // Toast diferido de la página anterior (el POS lo guarda antes de
+    // redirigir al detalle de la venta).
+    try {
+        const crudo = sessionStorage.getItem('toastPendiente');
+        if (crudo) {
+            sessionStorage.removeItem('toastPendiente');
+            const t = JSON.parse(crudo);
+            if (t && t.titleText) {
+                pendientes.push({icon: t.icon || 'success', titleText: String(t.titleText)});
+            }
+        }
+    } catch (e) { /* sessionStorage bloqueado: se pierde solo el diferido */ }
+
     // titleText (no title): el texto puede incluir nombres escritos por
     // usuarios y no debe interpretarse como HTML.
-    [...lista.querySelectorAll('li')].forEach((li, i) => {
-        setTimeout(() => Toast.fire({
+    const lista = document.getElementById('djangoMensajes');
+    if (lista) {
+        lista.querySelectorAll('li').forEach(li => pendientes.push({
             icon: icono(li.dataset.nivel || ''),
             titleText: li.textContent.trim(),
-        }), i * 900);
-    });
+        }));
+    }
+    pendientes.forEach((t, i) => setTimeout(() => ToastShalom.fire(t), i * 900));
 })();
 
 // Confirmaciones bonitas para acciones destructivas: cualquier elemento con
