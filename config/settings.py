@@ -56,6 +56,8 @@ INSTALLED_APPS = [
     'apartados',
     'reportes',
     'proveedores',
+    # Protección contra fuerza bruta en el login.
+    'axes',
 ]
 
 # Modelo de usuario personalizado (roles: admin, cajero, supervisor).
@@ -69,9 +71,11 @@ LOGOUT_REDIRECT_URL = 'usuarios:login'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    # AxesMiddleware va después de SessionMiddleware y AuthenticationMiddleware.
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'axes.middleware.AxesMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -156,7 +160,12 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Backends de autenticación: permite login por username o por correo.
+# AxesStandaloneBackend DEBE ir primero: en un intento bloqueado lanza
+# PermissionDenied y corta la cadena antes de que los backends reales validen
+# la contraseña (si fuera el último, un usuario bloqueado con contraseña
+# correcta entraría igual, porque el backend real cortocircuita antes).
 AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
     'usuarios.backends.UsernameOrEmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
@@ -165,6 +174,20 @@ AUTHENTICATION_BACKENDS = [
 from django.contrib.messages import constants as messages_constants  # noqa: E402
 
 MESSAGE_TAGS = {messages_constants.ERROR: 'danger'}
+
+
+# django-axes: bloqueo por fuerza bruta en el login.
+AXES_FAILURE_LIMIT = 5           # intentos fallidos antes de bloquear
+AXES_COOLOFF_TIME = 1            # horas que dura el bloqueo
+AXES_LOCKOUT_TEMPLATE = None     # sin template propio: responde 429 (Too Many Requests) al bloquear
+# Cuenta los fallos por combinación de usuario + IP (no bloquea toda la IP
+# por el error de un solo usuario, ni deja pasar cambiando de IP).
+AXES_LOCKOUT_PARAMETERS = [['username', 'ip_address']]
+# En los tests, client.login() llama a authenticate() sin request y el backend
+# de axes lo rechaza; se desactiva axes al correr la suite (patrón oficial).
+import sys  # noqa: E402
+if 'test' in sys.argv:
+    AXES_ENABLED = False
 
 
 # Endurecimiento para producción.
