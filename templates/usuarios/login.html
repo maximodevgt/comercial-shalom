@@ -5,91 +5,43 @@
 
 {% block extra_css %}
 <style>
-    /* Fondo azul→verde vivo con la identidad de la marca: diagonal de azul
-       profundo a verde, con dos resplandores (azul arriba-derecha, verde
-       abajo-izquierda) que le dan profundidad. */
-    body {
-        background:
-            radial-gradient(1000px 520px at 88% -8%, rgba(59, 130, 246, .45), transparent 55%),
-            radial-gradient(900px 560px at 8% 115%, rgba(22, 163, 74, .45), transparent 55%),
-            linear-gradient(135deg, var(--primario-oscuro) 0%, var(--primario) 42%, var(--primario-claro) 70%, var(--exito) 125%);
-    }
-    main { min-height: 100vh; display: flex; align-items: center; justify-content: center;
-        position: relative; }
+    /* Fondo de página sobrio: degradado muy suave, nada recargado. */
+    body { background: linear-gradient(135deg, #eaf1fb 0%, #eef6f0 100%); }
+    main { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
 
-    /* Capa de figuras geométricas decorativas, detrás de la tarjeta. Cubre
-       el viewport, no recibe eventos y recorta lo que se sale (sin scroll). */
-    .login-figuras { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-    .fig { position: absolute; }
-    /* Triángulos con bordes CSS. */
-    .tri { width: 0; height: 0; border-style: solid; }
-    .tri-tl-verde { top: -50px; left: -45px;
-        border-width: 300px 300px 0 0; border-color: var(--exito) transparent transparent transparent; opacity: .16; }
-    .tri-br-azul { bottom: -60px; right: -55px;
-        border-width: 0 0 320px 320px; border-color: transparent transparent var(--primario-claro) transparent; opacity: .20; }
-    .tri-mini-verde { top: 22%; right: 6%;
-        border-width: 0 0 120px 120px; border-color: transparent transparent var(--exito) transparent; opacity: .18; }
-    .tri-mini-azul { bottom: 16%; left: 7%;
-        border-width: 90px 90px 0 0; border-color: var(--primario-claro) transparent transparent transparent; opacity: .16; }
-    /* Polígono (pentágono) blanco muy tenue. */
-    .poligono { top: 8%; right: 14%; width: 190px; height: 190px; opacity: .07;
-        background: #ffffff; clip-path: polygon(50% 0, 100% 38%, 82% 100%, 18% 100%, 0 38%); }
-    /* Líneas finas blancas cruzando las esquinas. */
-    .linea { height: 2px; width: 360px; background: rgba(255, 255, 255, .30); }
-    .linea-1 { top: 15%; right: -70px; transform: rotate(-28deg); }
-    .linea-2 { bottom: 20%; left: -80px; transform: rotate(-28deg); width: 300px; }
+    /* Tarjeta de DOS COLUMNAS de igual altura, centrada y flotando. */
+    .login-wrap { width: 100%; max-width: 900px; background: #ffffff; color: #1e293b;
+        border-radius: 1.25rem; overflow: hidden; display: flex; min-height: 520px;
+        box-shadow: 0 1.5rem 3rem rgba(15, 23, 42, .18); }
 
-    @media (prefers-reduced-motion: no-preference) {
-        .flotar { animation: figFlotar 9s ease-in-out infinite; }
-        .flotar-lento { animation: figFlotar 13s ease-in-out infinite; }
-        @keyframes figFlotar { 0%,100% { translate: 0 0; } 50% { translate: 0 -16px; } }
-    }
+    /* ── Columna izquierda: panel de marca (azul → verde) ── */
+    .login-panel { position: relative; flex: 0 0 44%; overflow: hidden; color: #fff;
+        background: linear-gradient(150deg, var(--primario-oscuro) 0%, var(--primario) 55%, var(--exito) 120%);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; padding: 2.75rem 2rem; gap: 1.1rem; }
+    /* Círculos decorativos translúcidos, muy sutiles. */
+    .login-panel .deco { position: absolute; border-radius: 50%; pointer-events: none;
+        background: rgba(255, 255, 255, .10); }
+    .login-panel .deco-1 { width: 230px; height: 230px; top: -75px; left: -70px; }
+    .login-panel .deco-2 { width: 160px; height: 160px; bottom: -55px; right: -45px;
+        background: rgba(255, 255, 255, .08); }
+    .login-panel .deco-3 { width: 90px; height: 90px; top: 28%; right: -32px;
+        background: rgba(255, 255, 255, .07); }
+    /* El logo (fondo blanco propio) en un recuadro blanco prolijo. */
+    .login-logo-box { position: relative; z-index: 1; background: #fff; border-radius: 1rem;
+        padding: 1rem 1.2rem; box-shadow: 0 .6rem 1.4rem rgba(0, 0, 0, .20); }
+    .login-logo-box img { width: 172px; max-width: 46vw; height: auto; display: block; }
+    .login-panel h2 { position: relative; z-index: 1; margin: 0; font-weight: 700; font-size: 1.95rem; }
+    .login-panel .bienvenida { position: relative; z-index: 1; margin: 0; max-width: 300px;
+        font-size: .98rem; color: rgba(255, 255, 255, .9); }
 
-    /* En pantallas chicas se achican/ocultan las figuras que estorban al
-       formulario; las de esquina se reducen. */
-    @media (max-width: 640px) {
-        .tri-mini-verde, .tri-mini-azul, .poligono { display: none; }
-        .tri-tl-verde { border-width: 180px 180px 0 0; }
-        .tri-br-azul { border-width: 0 0 190px 190px; }
-        .linea { width: 220px; }
-    }
+    /* ── Columna derecha: formulario ── */
+    .login-form-col { flex: 1 1 auto; background: #ffffff; color: #1e293b;
+        display: flex; flex-direction: column; justify-content: center; padding: 2.9rem 2.6rem; }
+    .login-form-col h1 { margin: 0 0 1.4rem; font-size: 1.5rem; font-weight: 700; color: #1e293b; }
+    .login-form-col .text-muted { color: #64748b !important; }
 
-    /* Silueta COMPLETA de casa en UNA sola pieza (clip-path): PICO arriba,
-       paredes rectas y esquinas inferiores levemente redondeadas (bisel suave).
-       El logo grande vive DENTRO del techo; el clip recorta sus márgenes blancos
-       formando los aleros del tejado. La sombra (drop-shadow) sigue el clip y
-       hace flotar toda la casa. Fondo blanco forzado (legible en modo oscuro). */
-    .casa { position: relative; z-index: 2; width: 100%; max-width: 420px;
-        background: #ffffff; color: #1e293b;
-        clip-path: polygon(50% 0, 100% 34%, 100% calc(100% - 16px),
-            calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px), 0 34%);
-        filter: drop-shadow(0 22px 40px rgba(15, 23, 42, .45)); }
-
-    /* Techo: zona del LOGO grande, protagonista (su casita corona el pico). */
-    .casa-techo { padding: 1rem 1.25rem 0; text-align: center; }
-    .login-logo { width: 88%; max-width: 340px; height: auto; display: block; margin: 0 auto; }
-
-    /* Alero: filete verde de la marca marcando la transición techo→cuerpo. */
-    .casa-eave { height: 4px; margin-top: .35rem;
-        background: linear-gradient(90deg, var(--primario) 0%, var(--primario-claro) 45%, var(--exito) 100%); }
-
-    /* Cuerpo (paredes rectas): el form a ancho completo. Bg transparente para
-       que se vea el blanco de .casa; texto forzado claro. */
-    .login-card { position: relative; margin: 0; border: none; border-radius: 0;
-        --bs-card-bg: transparent; background-color: transparent; color: #1e293b; box-shadow: none; }
-    .login-card .text-muted { color: #64748b !important; }
-    .casa-cuerpo { padding: 1.4rem 1.75rem 1.9rem; }
-    @media (min-width: 576px) { .casa-cuerpo { padding: 1.5rem 2.5rem 2.1rem; } }
-
-    /* Responsive: la media query va DESPUÉS de las reglas base (misma
-       especificidad) para que sí sobrescriba. El logo-techo se reduce. */
-    @media (max-width: 640px) {
-        .casa { clip-path: polygon(50% 0, 100% 30%, 100% calc(100% - 14px),
-            calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 30%); }
-        .login-logo { width: 82%; max-width: 260px; }
-        .casa-techo { padding-top: .8rem; }
-    }
-
+    /* Inputs con ícono adentro y focus azul de la marca (reutilizados). */
     .campo { position: relative; margin-bottom: 1rem; }
     .campo > .ico { position: absolute; left: .95rem; top: 50%; transform: translateY(-50%);
         color: #94a3b8; pointer-events: none; }
@@ -109,33 +61,37 @@
         font-weight: 600; letter-spacing: .2px; transition: background .15s, transform .05s; }
     .btn-ingresar:hover { background: var(--primario-oscuro); }
     .btn-ingresar:active { transform: translateY(1px); }
+
+    /* Responsive: en móvil las columnas se APILAN (panel arriba, form abajo). */
+    @media (max-width: 768px) {
+        .login-wrap { flex-direction: column; min-height: 0; max-width: 460px; }
+        .login-panel { flex: none; padding: 1.9rem 1.5rem; gap: .7rem; }
+        .login-logo-box img { width: 150px; }
+        .login-panel h2 { font-size: 1.55rem; }
+        .login-panel .deco-3 { display: none; }
+        .login-form-col { padding: 1.9rem 1.6rem; }
+    }
 </style>
 {% endblock %}
 
 {% block contenido %}
-{# Figuras geométricas decorativas (solo estética), detrás de la tarjeta. #}
-<div class="login-figuras" aria-hidden="true">
-    <span class="fig tri tri-tl-verde flotar-lento"></span>
-    <span class="fig tri tri-br-azul flotar"></span>
-    <span class="fig tri tri-mini-verde flotar"></span>
-    <span class="fig tri tri-mini-azul flotar-lento"></span>
-    <span class="fig poligono flotar"></span>
-    <span class="fig linea linea-1"></span>
-    <span class="fig linea linea-2"></span>
-</div>
-
-{# Silueta de casa: techo triangular en pico + cuerpo recto, todo blanco. #}
-<div class="casa">
-    {# Techo: el logo grande vive acá, su casita corona el pico. #}
-    <div class="casa-techo">
-        <img src="{% static 'img/logo.png' %}" alt="Comercial Shalom" class="login-logo">
+<div class="login-wrap" data-bs-theme="light">
+    {# ── Panel de marca ── #}
+    <div class="login-panel">
+        <span class="deco deco-1" aria-hidden="true"></span>
+        <span class="deco deco-2" aria-hidden="true"></span>
+        <span class="deco deco-3" aria-hidden="true"></span>
+        <div class="login-logo-box">
+            <img src="{% static 'img/logo.png' %}" alt="Comercial Shalom">
+        </div>
+        <h2>Bienvenido</h2>
+        <p class="bienvenida">Iniciá sesión para acceder al sistema de punto de venta.</p>
     </div>
-    {# Alero: filete verde de la marca en la transición techo→cuerpo. #}
-    <div class="casa-eave" aria-hidden="true"></div>
 
-    {# Cuerpo (paredes rectas): contiene el formulario. #}
-    <div class="card login-card" data-bs-theme="light">
-    <div class="card-body casa-cuerpo">
+    {# ── Formulario ── #}
+    <div class="login-form-col">
+        <h1>Iniciar sesión</h1>
+
         {% if form.errors %}
         <div class="alert alert-danger d-flex align-items-center py-2" role="alert">
             <i class="fa-solid fa-circle-exclamation me-2"></i>
@@ -176,7 +132,6 @@
             <i class="fa-solid fa-circle-info me-1"></i>
             ¿Olvidaste tu contraseña? Contactá al administrador.
         </p>
-    </div>
     </div>
 </div>
 {% endblock %}
