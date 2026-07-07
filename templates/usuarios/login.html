@@ -5,27 +5,55 @@
 
 {% block extra_css %}
 <style>
-    body { background: linear-gradient(135deg, #172554 0%, #1e40af 55%, #2563eb 100%); }
+    /* Fondo con la identidad del logo: diagonal azul + un resplandor verde
+       sutil en la esquina inferior izquierda (elegante, no chillón). */
+    body {
+        background:
+            radial-gradient(900px 500px at 12% 115%, rgba(22, 163, 74, .38), transparent 60%),
+            linear-gradient(135deg, var(--primario-oscuro) 0%, var(--primario) 58%, var(--primario-claro) 100%);
+    }
     main { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .login-card { width: 100%; max-width: 420px; border-radius: 1rem; box-shadow: 0 1.5rem 3rem rgba(0,0,0,.35); }
+
+    /* La card es SIEMPRE clara (el logo tiene fondo blanco). Se fuerzan el
+       fondo y el color aunque el sistema esté en modo oscuro: data-bs-theme
+       no resetea nuestra variable custom --superficie, que cascada del
+       <html data-theme="dark">. */
+    .login-card { width: 100%; max-width: 420px; border-radius: 1.1rem; overflow: hidden;
+        border: none; box-shadow: 0 1.5rem 3rem rgba(15, 23, 42, .38);
+        --bs-card-bg: #ffffff; background-color: #ffffff; color: #1e293b; }
+    .login-card .text-muted { color: #64748b !important; }
+    /* Filete superior azul→verde de la marca, como acento de la tarjeta. */
+    .login-card .brand-bar { height: 5px;
+        background: linear-gradient(90deg, var(--primario) 0%, var(--primario-claro) 50%, var(--exito) 100%); }
     /* El logo tiene fondo blanco: se funde con la card sin marco visible. */
-    .login-logo { width: 140px; max-width: 60%; height: auto; }
+    .login-logo { width: 140px; max-width: 55%; height: auto; }
+
     .campo { position: relative; margin-bottom: 1rem; }
-    .campo > .ico { position: absolute; left: .95rem; top: 50%; transform: translateY(-50%); color: #94a3b8; }
-    .campo input { width: 100%; padding: .7rem .9rem .7rem 2.5rem; border: 1px solid #cbd5e1;
-        border-radius: .65rem; font-size: 1rem; }
-    .campo.con-toggle input { padding-right: 2.8rem; }
-    .campo input:focus { outline: none; border-color: var(--primario); box-shadow: 0 0 0 .2rem rgba(30,64,175,.18); }
-    .toggle-pass { position: absolute; right: .6rem; top: 50%; transform: translateY(-50%);
-        background: none; border: none; color: #94a3b8; cursor: pointer; padding: .25rem .4rem; }
-    .btn-ingresar { background: var(--primario); border: none; }
+    .campo > .ico { position: absolute; left: .95rem; top: 50%; transform: translateY(-50%);
+        color: #94a3b8; pointer-events: none; }
+    .campo input { width: 100%; padding: .72rem .9rem .72rem 2.6rem; border: 1.5px solid #cbd5e1;
+        border-radius: .7rem; font-size: 1rem; background-color: #fff; color: #1e293b;
+        transition: border-color .15s, box-shadow .15s; }
+    .campo.con-toggle input { padding-right: 2.9rem; }
+    .campo input:focus { outline: none; border-color: var(--primario);
+        box-shadow: 0 0 0 .2rem rgba(30, 64, 175, .18); }
+    .campo input:focus + .ico, .campo input:focus ~ .ico { color: var(--primario); }
+    .toggle-pass { position: absolute; right: .55rem; top: 50%; transform: translateY(-50%);
+        background: none; border: none; color: #94a3b8; cursor: pointer; padding: .3rem .45rem;
+        border-radius: .4rem; }
+    .toggle-pass:hover { color: var(--primario); }
+
+    .btn-ingresar { background: var(--primario); border: none; border-radius: .7rem;
+        font-weight: 600; letter-spacing: .2px; transition: background .15s, transform .05s; }
     .btn-ingresar:hover { background: var(--primario-oscuro); }
+    .btn-ingresar:active { transform: translateY(1px); }
 </style>
 {% endblock %}
 
 {% block contenido %}
 {# Siempre clara (aún en modo oscuro): el logo tiene fondo blanco y debe fundirse con la card. #}
 <div class="card login-card" data-bs-theme="light">
+    <div class="brand-bar"></div>
     <div class="card-body p-4 p-sm-5">
         <div class="text-center mb-4">
             <img src="{% static 'img/logo.png' %}" alt="Comercial Shalom" class="login-logo mb-2">
@@ -40,32 +68,38 @@
         </div>
         {% endif %}
 
-        <form method="post" action="{% url 'usuarios:login' %}">
+        <form method="post" action="{% url 'usuarios:login' %}" id="loginForm">
             {% csrf_token %}
-            <label class="form-label small fw-semibold">Usuario o correo</label>
+            <label class="form-label small fw-semibold" for="id_username">Usuario o correo</label>
             <div class="campo">
-                <span class="ico"><i class="fa-solid fa-user"></i></span>
                 {{ form.username }}
+                <span class="ico"><i class="fa-solid fa-user"></i></span>
             </div>
 
-            <label class="form-label small fw-semibold">Contraseña</label>
+            <label class="form-label small fw-semibold" for="id_password">Contraseña</label>
             <div class="campo con-toggle">
-                <span class="ico"><i class="fa-solid fa-lock"></i></span>
                 {{ form.password }}
-                <button type="button" class="toggle-pass" id="toggleLoginPass" tabindex="-1">
+                <span class="ico"><i class="fa-solid fa-lock"></i></span>
+                <button type="button" class="toggle-pass" id="toggleLoginPass" tabindex="-1"
+                        aria-label="Mostrar u ocultar la contraseña">
                     <i class="fa-solid fa-eye" id="loginEyeIcon"></i>
                 </button>
             </div>
 
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="recordarUsuario">
+                <label class="form-check-label small" for="recordarUsuario">Recordar mi usuario</label>
+            </div>
+
             {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-            <button type="submit" class="btn btn-ingresar text-white w-100 mt-2 py-2">
+            <button type="submit" class="btn btn-ingresar text-white w-100 py-2">
                 <i class="fa-solid fa-right-to-bracket me-1"></i> Ingresar
             </button>
         </form>
 
         <p class="text-center text-muted small mt-3 mb-0">
             <i class="fa-solid fa-circle-info me-1"></i>
-            ¿Olvidaste tu contraseña? Contactá al administrador del sistema.
+            ¿Olvidaste tu contraseña? Contactá al administrador.
         </p>
     </div>
 </div>
@@ -73,11 +107,45 @@
 
 {% block extra_js %}
 <script>
-document.getElementById('toggleLoginPass').addEventListener('click', function () {
-    var inp = document.getElementById('id_password');
-    var icon = document.getElementById('loginEyeIcon');
-    if (inp.type === 'password') { inp.type = 'text'; icon.className = 'fa-solid fa-eye-slash'; }
-    else { inp.type = 'password'; icon.className = 'fa-solid fa-eye'; }
-});
+(function () {
+    var CLAVE = 'shalom_usuario_recordado';
+    var inpUsuario = document.getElementById('id_username');
+    var inpPass = document.getElementById('id_password');
+    var chkRecordar = document.getElementById('recordarUsuario');
+    var form = document.getElementById('loginForm');
+
+    // Ver/ocultar contraseña (mismo comportamiento de siempre).
+    document.getElementById('toggleLoginPass').addEventListener('click', function () {
+        var icon = document.getElementById('loginEyeIcon');
+        if (inpPass.type === 'password') { inpPass.type = 'text'; icon.className = 'fa-solid fa-eye-slash'; }
+        else { inpPass.type = 'password'; icon.className = 'fa-solid fa-eye'; }
+    });
+
+    // Precargar el usuario recordado (SOLO el usuario, nunca la contraseña).
+    try {
+        var guardado = localStorage.getItem(CLAVE);
+        if (guardado && inpUsuario && !inpUsuario.value) {
+            inpUsuario.value = guardado;
+            if (chkRecordar) chkRecordar.checked = true;
+            // Si ya hay usuario, el foco va directo a la contraseña.
+            if (inpPass) inpPass.focus();
+        } else if (inpUsuario) {
+            inpUsuario.focus();
+        }
+    } catch (e) { /* localStorage no disponible: se ignora el recordatorio */ }
+
+    // Al enviar: guardar o borrar el usuario según el checkbox.
+    if (form) {
+        form.addEventListener('submit', function () {
+            try {
+                if (chkRecordar && chkRecordar.checked) {
+                    localStorage.setItem(CLAVE, (inpUsuario.value || '').trim());
+                } else {
+                    localStorage.removeItem(CLAVE);
+                }
+            } catch (e) { /* sin localStorage: el login sigue funcionando igual */ }
+        });
+    }
+})();
 </script>
 {% endblock %}
