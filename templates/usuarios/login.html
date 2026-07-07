@@ -52,22 +52,40 @@
         .tri-tl-verde { border-width: 180px 180px 0 0; }
         .tri-br-azul { border-width: 0 0 190px 190px; }
         .linea { width: 220px; }
+        /* La casa se reduce proporcionalmente; el logo sigue protagonista. */
+        .casa-techo { height: 132px; }
+        .casa-logo { width: 118px; height: 118px; border-radius: 20px; bottom: -20px; }
+        .login-logo { width: 94px; }
+        .casa-cuerpo { padding-top: 2.1rem; }
     }
 
-    /* La card es SIEMPRE clara (el logo tiene fondo blanco). Se fuerzan el
-       fondo y el color aunque el sistema esté en modo oscuro: data-bs-theme
-       no resetea nuestra variable custom --superficie, que cascada del
-       <html data-theme="dark">. Va por encima de las figuras (z-index). */
-    .login-card { position: relative; z-index: 2; width: 100%; max-width: 420px;
-        border-radius: 1.2rem; overflow: hidden; border: none;
-        box-shadow: 0 24px 60px rgba(15, 23, 42, .45), 0 8px 22px rgba(15, 23, 42, .28);
-        --bs-card-bg: #ffffff; background-color: #ffffff; color: #1e293b; }
+    /* La tarjeta tiene forma de CASA: techo triangular verde arriba + cuerpo
+       blanco recto abajo, como una sola pieza. La sombra va sobre toda la
+       silueta (drop-shadow respeta el clip del techo) para que "flote". */
+    .casa { position: relative; z-index: 2; width: 100%; max-width: 420px;
+        filter: drop-shadow(0 24px 42px rgba(15, 23, 42, .45)); }
+
+    /* Techo: triángulo verde de la marca, con altura suficiente para el logo. */
+    .casa-techo { position: relative; height: 168px; }
+    .casa-techo::before { content: ''; position: absolute; inset: 0;
+        background: var(--exito); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+    /* Logo GRANDE integrado en el techo: cuadro blanco redondeado y generoso,
+       centrado sobre la parte ancha del tejado, fundido con el cuerpo blanco. */
+    .casa-logo { position: absolute; left: 50%; bottom: -24px; transform: translateX(-50%);
+        width: 150px; height: 150px; background: #fff; border-radius: 26px;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, .18); }
+    .login-logo { width: 122px; max-width: 84%; height: auto; }
+
+    /* Cuerpo de la casa: SIEMPRE claro (aunque el sistema esté en modo oscuro;
+       data-bs-theme no resetea --superficie, que cascada del <html dark>).
+       Esquinas superiores rectas para pegar sin costura con la base del techo. */
+    .login-card { position: relative; margin: 0; border: none; border-radius: 0 0 1.3rem 1.3rem;
+        --bs-card-bg: #ffffff; background-color: #ffffff; color: #1e293b; box-shadow: none; }
     .login-card .text-muted { color: #64748b !important; }
-    /* Filete superior azul→verde de la marca, como acento de la tarjeta. */
-    .login-card .brand-bar { height: 5px;
-        background: linear-gradient(90deg, var(--primario) 0%, var(--primario-claro) 50%, var(--exito) 100%); }
-    /* El logo tiene fondo blanco: se funde con la card sin marco visible. */
-    .login-logo { width: 140px; max-width: 55%; height: auto; }
+    /* Padding propio (no p-4/p-sm-5): el tope deja aire bajo el logo del techo. */
+    .casa-cuerpo { padding: 2.4rem 1.5rem 1.75rem; }
+    @media (min-width: 576px) { .casa-cuerpo { padding: 2.7rem 2.5rem 2.25rem; } }
 
     .campo { position: relative; margin-bottom: 1rem; }
     .campo > .ico { position: absolute; left: .95rem; top: 50%; transform: translateY(-50%);
@@ -103,12 +121,19 @@
     <span class="fig linea linea-2"></span>
 </div>
 
-{# Siempre clara (aún en modo oscuro): el logo tiene fondo blanco y debe fundirse con la card. #}
-<div class="card login-card" data-bs-theme="light">
-    <div class="brand-bar"></div>
-    <div class="card-body p-4 p-sm-5">
+{# Tarjeta con forma de casa: techo verde con el logo grande + cuerpo blanco. #}
+<div class="casa">
+    {# Techo (tejado verde) con el logo real integrado y protagonista. #}
+    <div class="casa-techo" aria-hidden="true">
+        <div class="casa-logo">
+            <img src="{% static 'img/logo.png' %}" alt="Comercial Shalom" class="login-logo">
+        </div>
+    </div>
+
+    {# Cuerpo de la casa: SIEMPRE claro; el logo tiene fondo blanco y se funde. #}
+    <div class="card login-card" data-bs-theme="light">
+    <div class="card-body casa-cuerpo">
         <div class="text-center mb-4">
-            <img src="{% static 'img/logo.png' %}" alt="Comercial Shalom" class="login-logo mb-2">
             <h1 class="h4 fw-bold mb-0">Comercial Shalom</h1>
             <p class="text-muted small mb-0">Sistema de punto de venta</p>
         </div>
@@ -153,6 +178,7 @@
             <i class="fa-solid fa-circle-info me-1"></i>
             ¿Olvidaste tu contraseña? Contactá al administrador.
         </p>
+    </div>
     </div>
 </div>
 {% endblock %}
