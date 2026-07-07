@@ -165,3 +165,21 @@ AUTHENTICATION_BACKENDS = [
 from django.contrib.messages import constants as messages_constants  # noqa: E402
 
 MESSAGE_TAGS = {messages_constants.ERROR: 'danger'}
+
+
+# Endurecimiento para producción.
+# Se activa cuando DEBUG=False (el default seguro); en desarrollo (DEBUG=True,
+# sobre HTTP) queda inactivo para no romper el login local por falta de HTTPS.
+if not DEBUG:
+    # Redirige todo el tráfico HTTP a HTTPS.
+    SECURE_SSL_REDIRECT = True
+    # La cookie de sesión solo viaja por HTTPS (evita robo por sniffing).
+    SESSION_COOKIE_SECURE = True
+    # Ídem para la cookie del token CSRF.
+    CSRF_COOKIE_SECURE = True
+    # HSTS: el navegador recuerda usar solo HTTPS por un año.
+    SECURE_HSTS_SECONDS = 31536000
+    # Aplica HSTS también a todos los subdominios.
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    # Habilita la inclusión del dominio en la lista de precarga HSTS de los navegadores.
+    SECURE_HSTS_PRELOAD = True
