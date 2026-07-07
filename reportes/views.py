@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from django.contrib import messages
@@ -16,6 +17,8 @@ from ventas.models import Venta
 
 from .consultas import resumen_dia
 from .pdf import ErrorPDF, render_pdf
+
+logger = logging.getLogger(__name__)
 
 NEGOCIO = {
     'nombre': 'Comercial Shalom',
@@ -63,10 +66,16 @@ class ReporteFechaView(RolRequeridoMixin, TemplateView):
 # ─────────────────────────── PDFs ───────────────────────────
 
 def _pdf_o_redirect(request, template, contexto, nombre, destino):
-    """Genera un PDF; si falla, muestra mensaje amigable y redirige."""
+    """Genera un PDF; si falla, muestra mensaje amigable y redirige (nunca un
+    500 en estas vistas). Un error inesperado se LOGUEA (antes se tragaba en
+    silencio, ocultando bugs — B-3)."""
     try:
         return render_pdf(template, contexto, nombre)
-    except (ErrorPDF, Exception):
+    except ErrorPDF:
+        messages.error(request, 'No se pudo generar el PDF. Intentá de nuevo.')
+        return redirect(destino)
+    except Exception:
+        logger.exception('Error inesperado al generar el PDF «%s»', nombre)
         messages.error(request, 'No se pudo generar el PDF. Intentá de nuevo.')
         return redirect(destino)
 

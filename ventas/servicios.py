@@ -121,7 +121,9 @@ def crear_venta(usuario, *, cliente_id=None, nombre_cliente_libre='', telefono='
         ids.append(_a_entero(ln.get('producto_id'), 'producto'))
     productos = {
         p.id: p
-        for p in Producto.objects.select_for_update().filter(id__in=ids)
+        # order_by('id'): dos ventas concurrentes toman los locks en el mismo
+        # orden y no se produce deadlock (B-2).
+        for p in Producto.objects.select_for_update().filter(id__in=ids).order_by('id')
     }
 
     detalles = []

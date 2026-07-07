@@ -38,6 +38,10 @@ class Apartado(models.Model):
         verbose_name = 'apartado'
         verbose_name_plural = 'apartados'
         ordering = ('-creado',)
+        indexes = [
+            models.Index(fields=['estado']),
+            models.Index(fields=['-creado']),
+        ]
 
     def __str__(self):
         return f'Apartado #{self.pk}'
