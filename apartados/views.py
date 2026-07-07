@@ -1,6 +1,10 @@
+from decimal import Decimal
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
+from django.db.models import Sum
+from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
@@ -28,8 +32,10 @@ class ApartadoListView(LoginRequiredMixin, ListView):
     paginate_by = 50
 
     def get_queryset(self):
+        # Anotación en vez de prefetch_related('abonos'): total_abonado/pendiente
+        # la usan directo y se evita el N+1 (un aggregate por fila) del listado.
         qs = (Apartado.objects.select_related('producto', 'cliente', 'usuario')
-              .prefetch_related('abonos'))
+              .annotate(_total_abonado=Coalesce(Sum('abonos__monto'), Decimal('0'))))
         u = self.request.user
         if u.es_cajero and not u.es_admin:
             qs = qs.filter(usuario=u)

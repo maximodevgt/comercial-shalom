@@ -50,11 +50,18 @@ class Apartado(models.Model):
 
     @property
     def total_abonado(self):
-        total = self.abonos.aggregate(s=models.Sum('monto'))['s'] or Decimal('0.00')
+        # Si el queryset trae la anotación `_total_abonado` (lista de apartados),
+        # se usa directo para evitar el N+1; en el detalle y demás vistas cae al
+        # aggregate normal.
+        if hasattr(self, '_total_abonado'):
+            total = self._total_abonado or Decimal('0.00')
+        else:
+            total = self.abonos.aggregate(s=models.Sum('monto'))['s'] or Decimal('0.00')
         return total.quantize(Decimal('0.01'))
 
     @property
     def pendiente(self):
+        # Delega en total_abonado, así hereda la optimización de la anotación.
         return (self.precio_total - self.total_abonado).quantize(Decimal('0.01'))
 
     @property
