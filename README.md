@@ -1,29 +1,30 @@
 # Comercial Shalom — Sistema web POS
 
-**Versión actual: v1.1-beta**
+**Versión actual: v2.0**
 
 Punto de venta (POS) web para **Comercial Shalom**, desarrollado con **Python + Django**. Gestiona productos e inventario, proveedores, ventas, apartados (layaway), clientes con saldo a favor, cierres diarios, reportes y una bitácora de actividad, con control de acceso por rol.
 
 ## Funcionalidades
 
-- **Autenticación por roles**: administrador, cajero y supervisor. Login por usuario o correo.
+- **Autenticación por roles**: administrador, cajero y supervisor. Login por usuario o correo, con protección contra fuerza bruta (django-axes) y opción de recordar el usuario.
 - **Productos y categorías**: CRUD, fotos, búsqueda y filtros, estados de stock (agotado / bajo / ok).
 - **Proveedores** (admin): directorio con contacto y teléfono, vinculado a los productos que surte cada uno.
 - **Clientes**: perfil con historial y saldo a favor.
 - **Ventas (POS)**: interfaz de dos columnas (catálogo + ticket), descuentos por línea, pago en efectivo/tarjeta, aplicación de saldo. Los totales se recalculan y validan en el backend; el stock se descuenta de forma atómica con bloqueo de filas.
-- **Anulaciones** (admin): restauran stock y restituyen el saldo aplicado.
+- **Historial de ventas**: muestra el día en curso por defecto, con opción de ver todas las ventas o filtrar por rango de fechas; el total siempre indica el período consultado.
+- **Anulaciones** (admin): restauran stock y restituyen el saldo aplicado. Las ventas originadas por una liquidación de apartado no pueden anularse.
 - **Apartados**: abonos parciales, liquidación (genera la venta) y cancelación (solo admin; restaura stock y acredita lo abonado como saldo).
 - **PDFs**: ticket de venta, comprobante de abono, liquidación, cierre diario y reporte por fecha.
-- **Cierre diario y reportes**: totales solo de ventas completadas, con corte de día en hora local de Guatemala.
+- **Cierre diario y reportes**: totales solo de ventas completadas, con corte de día en hora local de Guatemala. El cierre incluye los abonos de apartados recibidos en el día, por separado del total de ventas.
 - **Dashboard**: tarjetas del día, stock bajo y gráficas (Chart.js).
 - **Gestión de usuarios y bitácora** (admin).
-- **Interfaz**: navegación en sidebar vertical (responsive con off-canvas) y modo claro/oscuro con toggle.
+- **Interfaz**: login rediseñado de dos columnas, navegación en sidebar vertical (responsive con off-canvas) y modo claro/oscuro con toggle.
 
 ## Stack
 
 - Python 3.14, Django 6.0
 - PostgreSQL 15 (driver `psycopg2-binary`)
-- `django-environ` (configuración vía `.env`), Pillow (fotos), xhtml2pdf (PDFs)
+- `django-environ` (configuración vía `.env`), Pillow (fotos), xhtml2pdf (PDFs), django-axes (protección de login)
 - Bootstrap 5, Font Awesome 6 y Chart.js por CDN
 
 ## Cómo levantarlo
