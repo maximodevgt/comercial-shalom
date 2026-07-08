@@ -9,10 +9,17 @@
 
 {% block cuerpo %}
     <div class="bloque-titulo">Datos del apartado</div>
-    <div class="dato"><strong>Producto:</strong> {{ apartado.producto.nombre_completo }}</div>
-    <div class="dato"><strong>Cliente:</strong> {{ apartado.nombre_cliente }}</div>
-    {% if apartado.telefono %}<div class="dato"><strong>Teléfono:</strong> {{ apartado.telefono }}</div>{% endif %}
-    <div class="dato"><strong>Atendido por:</strong> {{ abono.usuario.get_full_name|default:abono.usuario.username }}</div>
+    <table class="datos"><tr>
+        <td>
+            <div class="dato"><strong>Cliente:</strong> {{ apartado.nombre_cliente }}</div>
+            {% if apartado.telefono %}<div class="dato"><strong>Teléfono:</strong> {{ apartado.telefono }}</div>{% endif %}
+            {% if apartado.direccion %}<div class="dato"><strong>Dirección:</strong> {{ apartado.direccion }}</div>{% endif %}
+        </td>
+        <td class="der">
+            <div class="dato"><strong>Producto:</strong> {{ apartado.producto.nombre_completo }}</div>
+            <div class="dato"><strong>Atendido por:</strong> {{ abono.usuario.get_full_name|default:abono.usuario.username }}</div>
+        </td>
+    </tr></table>
 
     <div class="bloque-titulo">Abono registrado</div>
     <table class="items">
@@ -20,7 +27,7 @@
             <tr>
                 <th>Fecha y hora</th>
                 <th>Método de pago</th>
-                <th class="r">Monto</th>
+                <th class="r">Monto (Q)</th>
             </tr>
         </thead>
         <tbody>
@@ -47,11 +54,6 @@
     </tr></table>
 {% endblock %}
 
-{% block pie %}
-    Conserve este comprobante. ¡Gracias por su preferencia! — {{ negocio.nombre }}
-    <table class="aviso-zona"><tr>
-        <td style="width: 25%;"></td>
-        <td class="aviso-caja">No se devuelve efectivo.</td>
-        <td style="width: 25%;"></td>
-    </tr></table>
+{% block aviso %}
+    <table class="aviso-zona"><tr><td class="aviso-caja">No se devuelve efectivo</td></tr></table>
 {% endblock %}

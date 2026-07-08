@@ -1,98 +1,110 @@
 {% comment %}
-Base compartida de todos los PDF (xhtml2pdf): carta, encabezado con logo,
-identidad VERDE de Shalom (#15803d / #166534 — Ayutla usa azul; el verde
-distingue a los dos comercios). Los hijos definen tipo_doc, meta_doc,
-cuerpo y pie.
+Base compartida de todos los PDF (xhtml2pdf): carta, encabezado con logo e
+identidad AZUL del sistema (color primario #1e40af). Los hijos definen
+tipo_doc, meta_doc, cuerpo, aviso y pie.
+
+Nota xhtml2pdf 0.2.17: soporte CSS acotado (sin variables CSS: se usan hex
+literales). VERIFICADO: 'dashed'/'dotted' se pintan SÓLIDOS (el recuadro/línea
+sólida del mismo color es el fallback, fiel al diseño). Un <div> vacío no pinta
+su borde y el <hr> ignora el color: por eso las líneas divisorias se hacen con
+el borde inferior de una CELDA (table.regla).
 {% endcomment %}<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <style>
     @page { size: letter; margin: 15mm; }
     body { font-family: Helvetica, sans-serif; font-size: 10.5px; color: #1e293b; }
 
-    /* Encabezado */
+    /* Encabezado: negocio a la izquierda, tipo de documento a la derecha. */
     table.enc { width: 100%; border-collapse: collapse; }
     table.enc td { vertical-align: middle; padding: 0; }
     .logo { width: 62px; height: 62px; }
-    .marca { font-size: 20px; font-weight: bold; color: #166534; }
-    .pais { color: #555; font-size: 11px; }
-    .doc-tipo { font-size: 14px; font-weight: bold; color: #15803d; text-transform: uppercase; text-align: right; }
-    .doc-meta { color: #555; text-align: right; font-size: 10px; }
-    .sep-enc { border-bottom: 2px solid #166534; margin: 6px 0 10px 0; }
+    .marca { font-size: 20px; font-weight: bold; color: #1e40af; }
+    .dir { color: #64748b; font-size: 10px; }
+    .doc-tipo { font-size: 15px; font-weight: bold; color: #1e40af;
+        text-transform: uppercase; text-align: right; }
+    .doc-meta { color: #64748b; text-align: right; font-size: 10px; }
+    /* Reglas horizontales fiables: xhtml2pdf pinta el borde inferior de una
+       CELDA (no el de un <div> vacío, ni respeta el color de un <hr>). */
+    table.regla { width: 100%; border-collapse: collapse; }
+    table.regla td { font-size: 1px; line-height: 1px; }
+    .regla-enc td { border-bottom: 2px solid #1e40af; }
+    .regla-pie td { border-bottom: 1px dashed #1e40af; }
+
+    /* Banner de venta anulada: ancho completo, borde rojo SÓLIDO. */
+    table.anulada-zona { width: 100%; border-collapse: collapse; margin: 2px 0 10px 0; }
+    td.anulada-caja { border: 2px solid #dc2626; color: #dc2626; font-weight: bold;
+        text-align: center; padding: 6px 10px; font-size: 12.5px; }
 
     /* Bloques de datos */
-    .bloque-titulo { font-weight: bold; color: #166534; text-transform: uppercase;
-        font-size: 9.5px; border-bottom: 1px solid #cbe3d2; padding-bottom: 2px;
+    .bloque-titulo { font-weight: bold; color: #1e40af; text-transform: uppercase;
+        font-size: 9.5px; border-bottom: 1px solid #c7d2fe; padding-bottom: 2px;
         margin: 10px 0 4px 0; }
     .dato { padding: 1px 0; }
+    /* Datos en dos columnas: cliente a la izq., atendido/producto a la der. */
+    table.datos { width: 100%; border-collapse: collapse; }
+    table.datos td { vertical-align: top; padding: 0; }
+    table.datos td.der { text-align: right; }
 
-    /* Tabla de ítems */
+    /* Tabla de ítems: encabezado azul oscuro, filas alternadas suaves. */
     table.items { width: 100%; border-collapse: collapse; margin-top: 6px; }
-    table.items th { background-color: #15803d; color: #ffffff; padding: 5px 6px;
+    table.items th { background-color: #1e40af; color: #ffffff; padding: 5px 6px;
         text-align: left; font-size: 9.5px; }
-    table.items td { padding: 5px 6px; border-bottom: 1px solid #d7e8dc; vertical-align: top; }
-    table.items tr.alt td { background-color: #f0f7f1; }
-    /* Ventas anuladas: fila distinguida, solo para control (no suman). */
+    table.items td { padding: 5px 6px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+    table.items tr.alt td { background-color: #eef2fb; }
+    /* Ventas anuladas dentro del cierre: fila distinguida (no suman). */
     table.items tr.anulada td { background-color: #fdecea; }
 
     .r { text-align: right; } .c { text-align: center; }
-    .muted { color: #555; }
-    .verde { color: #15803d; } .rojo { color: #b91c1c; }
+    .muted { color: #64748b; }
+    .azul { color: #1e40af; } .verde { color: #16a34a; } .rojo { color: #dc2626; }
     .negrita { font-weight: bold; }
 
-    /* Zona inferior en dos columnas: pago a la izquierda, totales a la
-       derecha. Ambas celdas ancladas ARRIBA para que arranquen parejas. */
+    /* Zona inferior en dos columnas: pago/confirmación izq., totales der. */
     table.zona-tot { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    table.zona-tot td.col-pago { width: 52%; vertical-align: top; padding-right: 16px; }
-    table.zona-tot td.col-tot { width: 48%; vertical-align: top; }
-    /* El primer título de cada columna no arrastra margen superior y, dentro
-       de la zona de totales, va SIN línea propia: la única línea divisoria de
-       esa zona es la del TOTAL, para que nada quede casi-alineado. */
+    table.zona-tot td.col-pago { width: 50%; vertical-align: top; padding-right: 16px; }
+    table.zona-tot td.col-tot { width: 50%; vertical-align: top; }
     .bloque-titulo.mt0 { margin-top: 0; border-bottom: 0; padding-bottom: 0; }
 
-    /* Cuadrícula de totales: etiquetas a la izquierda y montos en una
-       columna de ancho FIJO alineada a la derecha; la línea del TOTAL
-       abarca exactamente el ancho del bloque (border de sus dos celdas). */
+    /* Cuadrícula de totales: etiqueta izq., monto en columna fija a la der. */
     table.tot { width: 100%; border-collapse: collapse; }
-    table.tot td { padding: 4px 6px; border-bottom: 1px solid #e2efe6; }
-    table.tot td.tot-val { width: 100px; text-align: right; }
-    /* Fila destacada (TOTAL / SALDO PENDIENTE / TOTAL PAGADO): fondo verde
-       sólido con texto blanco, estilo Ayutla pero en la identidad Shalom. */
-    table.tot tr.total td { background-color: #15803d; color: #ffffff;
-        border-bottom: 0; font-weight: bold; font-size: 12.5px;
-        padding: 6px 8px; }
+    table.tot td { padding: 4px 6px; border-bottom: 1px solid #e5e9f2; }
+    table.tot td.tot-val { width: 105px; text-align: right; }
+    /* Fila destacada (TOTAL / SALDO PENDIENTE / TOTAL PAGADO): azul oscuro,
+       texto blanco. */
+    table.tot tr.total td { background-color: #1e40af; color: #ffffff;
+        border-bottom: 0; font-weight: bold; font-size: 12.5px; padding: 6px 8px; }
 
-    .banda-anulada { color: #b91c1c; font-weight: bold; font-size: 13px;
-        text-align: center; margin: 8px 0; border: 1px solid #b91c1c; padding: 4px; }
+    /* Aviso "No se devuelve efectivo": recuadro de ancho COMPLETO, borde
+       punteado rojo, fondo blanco, texto rojo bold centrado. */
+    table.aviso-zona { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    td.aviso-caja { border: 1px dashed #dc2626; background-color: #ffffff;
+        color: #dc2626; font-weight: bold; text-align: center; padding: 8px 12px;
+        font-size: 11px; }
 
-    /* El borde va en un div interno (pie-linea): si estuviera en .pie,
-       xhtml2pdf lo repite al fragmentar el div (texto + tabla del aviso). */
-    .pie { margin-top: 20px; text-align: center; color: #555; font-size: 10px; }
-    .pie-linea { border-top: 1px dashed #15803d; margin-bottom: 8px; }
-    /* Leyenda de no devolución: recuadro punteado rojo, como Ayutla.
-       Nota: xhtml2pdf pinta dashed/dotted como línea sólida (limitación
-       verificada del motor); se declara dashed igual por fidelidad al CSS. */
-    table.aviso-zona { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    td.aviso-caja { border: 1px dashed #c0392b; border-radius: 4px;
-        color: #c0392b; font-weight: bold; text-align: center;
-        padding: 6px 12px; }
+    /* Pie: leyenda gris centrada (la línea divisoria es una table.regla-pie). */
+    .pie { text-align: center; color: #64748b; font-size: 9.5px; }
 </style></head>
 <body>
     <table class="enc"><tr>
         <td style="width: 70px;">{% if negocio.logo %}<img src="{{ negocio.logo }}" class="logo">{% endif %}</td>
         <td>
             <div class="marca">{{ negocio.nombre }}</div>
-            <div class="pais">{{ negocio.direccion }}</div>
-            {# Dirección solicitada por el cliente (revisar: es la ubicación de Ayutla). #}
-            <div class="pais">Ciudad Tecún Umán, Ayutla, San Marcos</div>
+            <div class="dir">{{ negocio.direccion }}</div>
         </td>
-        <td style="width: 40%;">
+        <td style="width: 42%;">
             <div class="doc-tipo">{% block tipo_doc %}{% endblock %}</div>
             <div class="doc-meta">{% block meta_doc %}{% endblock %}</div>
         </td>
     </tr></table>
-    <div class="sep-enc"></div>
+    <table class="regla regla-enc" style="margin: 6px 0 10px 0;"><tr><td>&nbsp;</td></tr></table>
 
     {% block cuerpo %}{% endblock %}
 
-    <div class="pie"><div class="pie-linea"></div>{% block pie %}{% endblock %}</div>
+    {# Aviso "No se devuelve efectivo": después del total, antes del pie. #}
+    {% block aviso %}{% endblock %}
+
+    <table class="regla regla-pie" style="margin: 16px 0 8px 0;"><tr><td>&nbsp;</td></tr></table>
+    <div class="pie">{% block pie %}
+        Gracias por su compra — {{ negocio.nombre }} — {{ negocio.direccion }}
+    {% endblock %}</div>
 </body></html>

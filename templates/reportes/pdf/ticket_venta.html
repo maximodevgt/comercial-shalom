@@ -1,7 +1,7 @@
 {% extends 'reportes/pdf/_base.html' %}
 {% load moneda %}
 
-{% block tipo_doc %}Comprobante de Venta{% endblock %}
+{% block tipo_doc %}Factura{% endblock %}
 {% block meta_doc %}
     No. {{ venta.pk }}<br>
     Fecha: {{ venta.creado|date:'d/m/Y' }} · Hora: {{ venta.creado|date:'h:i A' }}
@@ -9,13 +9,21 @@
 
 {% block cuerpo %}
     {% if venta.esta_anulada %}
-    <div class="banda-anulada">*** VENTA ANULADA *** {% if venta.motivo_anulacion %}Motivo: {{ venta.motivo_anulacion }}{% endif %}</div>
+    <table class="anulada-zona"><tr>
+        <td class="anulada-caja">X VENTA ANULADA{% if venta.motivo_anulacion %} — Motivo: {{ venta.motivo_anulacion }}{% endif %}</td>
+    </tr></table>
     {% endif %}
 
     <div class="bloque-titulo">Datos del cliente</div>
-    <div class="dato"><strong>Cliente:</strong> {{ venta.nombre_cliente }}</div>
-    {% if venta.telefono %}<div class="dato"><strong>Teléfono:</strong> {{ venta.telefono }}</div>{% endif %}
-    <div class="dato"><strong>Atendido por:</strong> {{ venta.usuario.get_full_name|default:venta.usuario.username }}</div>
+    <table class="datos"><tr>
+        <td>
+            <div class="dato"><strong>Cliente:</strong> {{ venta.nombre_cliente }}</div>
+            {% if venta.telefono %}<div class="dato"><strong>Teléfono:</strong> {{ venta.telefono }}</div>{% endif %}
+        </td>
+        <td class="der">
+            <div class="dato"><strong>Atendido por:</strong> {{ venta.usuario.get_full_name|default:venta.usuario.username }}</div>
+        </td>
+    </tr></table>
 
     <div class="bloque-titulo">Detalle de la venta</div>
     <table class="items">
@@ -24,9 +32,9 @@
                 <th style="width: 24px;">#</th>
                 <th>Descripción</th>
                 <th class="c" style="width: 45px;">Cant.</th>
-                <th class="r" style="width: 80px;">P. unitario</th>
-                <th class="r" style="width: 80px;">Descuento</th>
-                <th class="r" style="width: 85px;">Total</th>
+                <th class="r" style="width: 85px;">P. Unitario (Q)</th>
+                <th class="r" style="width: 85px;">Descuento (Q)</th>
+                <th class="r" style="width: 90px;">Total (Q)</th>
             </tr>
         </thead>
         <tbody>
@@ -68,11 +76,6 @@
     </tr></table>
 {% endblock %}
 
-{% block pie %}
-    ¡Gracias por su compra! — {{ negocio.nombre }}
-    <table class="aviso-zona"><tr>
-        <td style="width: 25%;"></td>
-        <td class="aviso-caja">No se devuelve efectivo.</td>
-        <td style="width: 25%;"></td>
-    </tr></table>
+{% block aviso %}
+    <table class="aviso-zona"><tr><td class="aviso-caja">No se devuelve efectivo</td></tr></table>
 {% endblock %}

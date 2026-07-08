@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.staticfiles import finders
@@ -21,8 +22,9 @@ from .pdf import ErrorPDF, render_pdf
 logger = logging.getLogger(__name__)
 
 NEGOCIO = {
-    'nombre': 'Comercial Shalom',
-    'direccion': 'Guatemala',
+    # Configurables por entorno (.env) para adaptar los comprobantes al comercio.
+    'nombre': settings.NEGOCIO_NOMBRE,
+    'direccion': settings.NEGOCIO_DIRECCION,
     # xhtml2pdf necesita la ruta ABSOLUTA del archivo (no la URL estática).
     'logo': finders.find('img/logo.png'),
 }

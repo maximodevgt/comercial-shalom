@@ -11,19 +11,19 @@
 {% block cuerpo %}
     <table class="items" style="margin-top: 2px;">
         <tr>
-            <td class="c" style="width: 25%; border: 1px solid #cbe3d2;">
+            <td class="c" style="width: 25%; border: 1px solid #c7d2fe;">
                 <span class="muted">Total vendido</span><br>
-                <span class="negrita verde" style="font-size: 15px;">{{ total_vendido|quetzal }}</span>
+                <span class="negrita azul" style="font-size: 15px;">{{ total_vendido|quetzal }}</span>
             </td>
-            <td class="c" style="width: 25%; border: 1px solid #cbe3d2;">
+            <td class="c" style="width: 25%; border: 1px solid #c7d2fe;">
                 <span class="muted">Ventas</span><br>
-                <span class="negrita verde" style="font-size: 15px;">{{ num_ventas }}</span>
+                <span class="negrita azul" style="font-size: 15px;">{{ num_ventas }}</span>
             </td>
-            <td class="c" style="width: 25%; border: 1px solid #cbe3d2;">
+            <td class="c" style="width: 25%; border: 1px solid #c7d2fe;">
                 <span class="muted">Productos vendidos</span><br>
-                <span class="negrita verde" style="font-size: 15px;">{{ productos_vendidos }}</span>
+                <span class="negrita azul" style="font-size: 15px;">{{ productos_vendidos }}</span>
             </td>
-            <td class="c" style="border: 1px solid #cbe3d2;">
+            <td class="c" style="border: 1px solid #c7d2fe;">
                 <span class="muted">Anuladas</span><br>
                 <span class="negrita rojo" style="font-size: 15px;">{{ num_anuladas }}</span>
             </td>
@@ -66,9 +66,9 @@
         </tbody>
     </table>
 
-    {# Abonos de apartados: dinero de caja que NO es venta; aparte del total.
-       Solo en el cierre (mostrar_abonos), no en el reporte por fecha, aunque
-       compartan este template. #}
+    {% comment %}Abonos de apartados: dinero de caja que NO es venta; aparte del
+    total. Solo en el cierre (mostrar_abonos), no en el reporte por fecha, aunque
+    compartan este template.{% endcomment %}
     {% if mostrar_abonos %}
     <div class="bloque-titulo">Abonos de apartados recibidos ({{ total_abonos|quetzal }})</div>
     {% if num_abonos %}
@@ -93,5 +93,5 @@
 {% endblock %}
 
 {% block pie %}
-    Documento generado el {% now 'd/m/Y · h:i A' %} — {{ negocio.nombre }}.
+    Documento generado el {% now 'd/m/Y · h:i A' %} — {{ negocio.nombre }} — {{ negocio.direccion }}
 {% endblock %}
