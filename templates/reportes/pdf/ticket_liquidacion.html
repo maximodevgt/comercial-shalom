@@ -35,32 +35,18 @@
             {% empty %}
             <tr><td colspan="4" class="c muted">Sin abonos registrados.</td></tr>
             {% endfor %}
+            {# Resumen y TOTAL PAGADO integrados: ancho completo, alineados a la tabla. #}
+            {% if apartado.descuento > 0 %}
+            <tr><td colspan="3" class="r">Precio de lista</td><td class="r">{{ apartado.precio_original|quetzal }}</td></tr>
+            <tr><td colspan="3" class="r rojo">Descuento</td><td class="r rojo">-{{ apartado.descuento|quetzal }}</td></tr>
+            {% endif %}
+            <tr class="total"><td colspan="3" class="r">TOTAL PAGADO:</td><td class="r">{{ apartado.precio_total|quetzal }}</td></tr>
         </tbody>
     </table>
 
-    <table class="zona-tot"><tr>
-        <td class="col-pago">
-            <div class="bloque-titulo mt0">Confirmación</div>
-            <div class="dato">El apartado fue <strong class="verde">liquidado en su totalidad</strong>{% if apartado.venta %}
-                y generó la venta <strong>No. {{ apartado.venta.pk }}</strong>{% endif %}.</div>
-        </td>
-        <td class="col-tot">
-            <table class="tot">
-                {% if apartado.descuento > 0 %}
-                <tr><td>Precio de lista</td><td class="tot-val">{{ apartado.precio_original|quetzal }}</td></tr>
-                <tr><td class="rojo">Descuento</td><td class="tot-val rojo">-{{ apartado.descuento|quetzal }}</td></tr>
-                {% endif %}
-                <tr class="total"><td>TOTAL PAGADO</td><td class="tot-val">{{ apartado.precio_total|quetzal }}</td></tr>
-            </table>
-        </td>
-    </tr></table>
+    <div class="nota-tabla">El apartado fue liquidado en su totalidad{% if apartado.venta %} y generó la venta No. {{ apartado.venta.pk }}{% endif %}.</div>
 {% endblock %}
 
-{% block pie %}
-    ¡Gracias por su compra! — {{ negocio.nombre }}
-    <table class="aviso-zona"><tr>
-        <td style="width: 25%;"></td>
-        <td class="aviso-caja">Apartado liquidado — No se devuelve efectivo.</td>
-        <td style="width: 25%;"></td>
-    </tr></table>
+{% block aviso %}
+    <div class="aviso">Apartado liquidado — No se devuelve efectivo</div>
 {% endblock %}

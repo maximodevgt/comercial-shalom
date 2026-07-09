@@ -59,8 +59,9 @@ def anular_venta(usuario, venta_id, motivo):
             'Esta venta proviene de la liquidación de un apartado y no puede '
             'anularse. Corregí el apartado desde su propio flujo.')
 
-    # Restaurar stock con lock sobre cada producto.
-    for detalle in venta.detalles.select_related('producto'):
+    # Restaurar stock con lock sobre cada producto, adquirido en orden estable
+    # por producto_id — mismo criterio anti-deadlock que crear_venta (B-1).
+    for detalle in venta.detalles.select_related('producto').order_by('producto_id'):
         producto = Producto.objects.select_for_update().get(pk=detalle.producto_id)
         producto.stock += detalle.cantidad
         producto.save(update_fields=['stock'])
@@ -195,13 +196,37 @@ def crear_venta(usuario, *, cliente_id=None, nombre_cliente_libre='', telefono='
     # 3. Total final (recalculado en backend).
     total = (subtotal_cobrado - saldo_aplicado).quantize(CENTAVO)
 
+    # Con TARJETA, el monto que marca el POS del banco ES el total real de la
+    # venta: el cajero ingresa lo que la terminal cobró y ese es el monto
+    # final. La diferencia contra los precios de lista queda como ajuste
+    # (positivo = se cobró de más, p. ej. recargo por tarjeta; negativo =
+    # rebaja) y es derivable: total − (subtotal − saldo_aplicado). Así los
+    # historiales, el cierre y los reportes suman lo que DE VERDAD entró.
     monto_tarjeta_val = None
+    ajuste_tarjeta = Decimal('0.00')
     if metodo_pago == Venta.MetodoPago.TARJETA:
-        # Informativo: monto que indica la terminal. Si no viene, usa el total.
-        monto_tarjeta_val = (
-            _a_decimal(monto_tarjeta, 'monto de tarjeta')
-            if monto_tarjeta not in (None, '') else total
-        )
+        if monto_tarjeta in (None, ''):
+            # Sin dato del POS: se asume que la terminal cobró el total exacto.
+            monto_tarjeta_val = total
+        else:
+            monto_tarjeta_val = _a_decimal(monto_tarjeta, 'monto de tarjeta')
+            # Validación server-side (no se confía en el frontend).
+            if monto_tarjeta_val <= 0:
+                raise ErrorVenta('El monto cobrado con tarjeta debe ser mayor que cero.')
+            # Total esperado en 0 (p. ej. saldo a favor cubrió el 100%): un
+            # monto de tarjeta acá inflaría el total registrado (M-6).
+            if total <= 0:
+                raise ErrorVenta(
+                    'El total ya quedó cubierto: no hay nada que cobrar con tarjeta.')
+            # Sanidad: un monto muy alejado del total calculado es casi seguro
+            # un error de digitación del cajero.
+            if not (total / 2 <= monto_tarjeta_val <= total * 2):
+                raise ErrorVenta(
+                    f'El monto de tarjeta (Q {monto_tarjeta_val}) está demasiado '
+                    f'lejos del total calculado (Q {total}). Verificá lo que '
+                    f'marcó el POS.')
+            ajuste_tarjeta = (monto_tarjeta_val - total).quantize(CENTAVO)
+            total = monto_tarjeta_val
 
     # 4. Persistir venta + detalles y descontar stock.
     venta = Venta.objects.create(
@@ -222,12 +247,17 @@ def crear_venta(usuario, *, cliente_id=None, nombre_cliente_libre='', telefono='
         producto.stock -= d['cantidad']
         producto.save(update_fields=['stock'])
 
-    # 5. Registrar actividad si hubo descuento o saldo aplicado.
+    # 5. Registrar actividad si hubo descuento, ajuste de tarjeta o saldo.
     if descuento_total > 0:
         registrar_actividad(
             usuario, RegistroActividad.Tipo.DESCUENTO,
             f'Descuento de Q {descuento_total} en la venta #{venta.pk}',
             venta_id=venta.pk, descuento=descuento_total)
+    if ajuste_tarjeta != 0:
+        registrar_actividad(
+            usuario, RegistroActividad.Tipo.DESCUENTO,
+            f'Ajuste por cobro con tarjeta de Q {ajuste_tarjeta} en la venta #{venta.pk}',
+            venta_id=venta.pk, ajuste_tarjeta=ajuste_tarjeta)
     if saldo_aplicado > 0:
         registrar_actividad(
             usuario, RegistroActividad.Tipo.SALDO,

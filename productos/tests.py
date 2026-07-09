@@ -98,3 +98,13 @@ class ProductosTest(TestCase):
             reverse('productos:categoria_eliminar', args=[self.categoria.pk]))
         self.assertRedirects(respuesta, reverse('productos:categorias'))
         self.assertTrue(Categoria.objects.filter(pk=self.categoria.pk).exists())
+
+
+class ProductosFiltroBasuraTest(TestCase):
+    """M-4: un filtro de categoría no numérico se ignora en vez de dar 500."""
+
+    def test_categoria_no_numerica_no_revienta(self):
+        u = Usuario.objects.create_user(username='u_filtro', password='x')
+        self.client.force_login(u)
+        r = self.client.get(reverse('productos:lista'), {'categoria': 'abc'})
+        self.assertEqual(r.status_code, 200)

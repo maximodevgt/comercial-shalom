@@ -57,6 +57,7 @@ class RegistroActividad(models.Model):
     class Tipo(models.TextChoices):
         ANULACION = 'anulacion', 'Anulación'
         PRODUCTO = 'producto', 'Producto'
+        CLIENTE = 'cliente', 'Cliente'
         DESCUENTO = 'descuento', 'Descuento'
         SALDO = 'saldo', 'Saldo'
         APARTADO = 'apartado', 'Apartado'

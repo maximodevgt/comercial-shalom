@@ -29,29 +29,16 @@
                 <td>{{ abono.get_metodo_display }}</td>
                 <td class="r negrita">{{ abono.monto|quetzal }}</td>
             </tr>
+            {# Resumen y SALDO PENDIENTE integrados: ancho completo, alineados a la tabla. #}
+            <tr><td colspan="2" class="r">Precio del apartado</td><td class="r">{{ apartado.precio_total|quetzal }}</td></tr>
+            <tr><td colspan="2" class="r verde">Total abonado</td><td class="r verde">{{ apartado.total_abonado|quetzal }}</td></tr>
+            <tr class="total"><td colspan="2" class="r">SALDO PENDIENTE:</td><td class="r">{{ apartado.pendiente|quetzal }}</td></tr>
         </tbody>
     </table>
 
-    <table class="zona-tot"><tr>
-        <td class="col-pago">
-            <div class="bloque-titulo mt0">Forma de pago</div>
-            <div class="dato"><strong>Método:</strong> {{ abono.get_metodo_display }}</div>
-        </td>
-        <td class="col-tot">
-            <table class="tot">
-                <tr><td>Precio del apartado</td><td class="tot-val">{{ apartado.precio_total|quetzal }}</td></tr>
-                <tr><td class="verde">Total abonado</td><td class="tot-val verde">{{ apartado.total_abonado|quetzal }}</td></tr>
-                <tr class="total"><td>SALDO PENDIENTE</td><td class="tot-val">{{ apartado.pendiente|quetzal }}</td></tr>
-            </table>
-        </td>
-    </tr></table>
+    <div class="nota-tabla">Método de pago: {{ abono.get_metodo_display }}</div>
 {% endblock %}
 
-{% block pie %}
-    Conserve este comprobante. ¡Gracias por su preferencia! — {{ negocio.nombre }}
-    <table class="aviso-zona"><tr>
-        <td style="width: 25%;"></td>
-        <td class="aviso-caja">No se devuelve efectivo.</td>
-        <td style="width: 25%;"></td>
-    </tr></table>
+{% block aviso %}
+    <div class="aviso">No se devuelve efectivo</div>
 {% endblock %}

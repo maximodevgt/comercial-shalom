@@ -42,6 +42,19 @@ class Apartado(models.Model):
             models.Index(fields=['estado']),
             models.Index(fields=['-creado']),
         ]
+        # Defensa en profundidad (B-10): precios no negativos y el precio
+        # apartado nunca por encima del de lista (solo se descuenta).
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(precio_original__gte=0),
+                name='apartado_precio_original_no_negativo'),
+            models.CheckConstraint(
+                condition=models.Q(precio_total__gte=0),
+                name='apartado_precio_total_no_negativo'),
+            models.CheckConstraint(
+                condition=models.Q(precio_total__lte=models.F('precio_original')),
+                name='apartado_precio_total_lte_original'),
+        ]
 
     def __str__(self):
         return f'Apartado #{self.pk}'
@@ -92,6 +105,12 @@ class Abono(models.Model):
         verbose_name = 'abono'
         verbose_name_plural = 'abonos'
         ordering = ('creado',)
+        # Defensa en profundidad (B-10): un abono nunca es negativo.
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(monto__gte=0),
+                name='abono_monto_no_negativo'),
+        ]
 
     def __str__(self):
         return f'Abono Q {self.monto} ({self.get_metodo_display()})'

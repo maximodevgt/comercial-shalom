@@ -1,11 +1,13 @@
 import logging
 from datetime import datetime
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.staticfiles import finders
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import TemplateView
 
@@ -21,8 +23,9 @@ from .pdf import ErrorPDF, render_pdf
 logger = logging.getLogger(__name__)
 
 NEGOCIO = {
-    'nombre': 'Comercial Shalom',
-    'direccion': 'Guatemala',
+    # Configurables por entorno (.env) para adaptar los comprobantes al comercio.
+    'nombre': settings.NEGOCIO_NOMBRE,
+    'direccion': settings.NEGOCIO_DIRECCION,
     # xhtml2pdf necesita la ruta ABSOLUTA del archivo (no la URL estática).
     'logo': finders.find('img/logo.png'),
 }
@@ -68,7 +71,11 @@ class ReporteFechaView(RolRequeridoMixin, TemplateView):
 def _pdf_o_redirect(request, template, contexto, nombre, destino):
     """Genera un PDF; si falla, muestra mensaje amigable y redirige (nunca un
     500 en estas vistas). Un error inesperado se LOGUEA (antes se tragaba en
-    silencio, ocultando bugs — B-3)."""
+    silencio, ocultando bugs — B-3).
+
+    `destino` debe venir RESUELTO cuando la ruta lleva argumentos (usar
+    reverse(..., args=[pk]) en el caller): un nombre de vista con pk pendiente
+    lanzaba NoReverseMatch justo en el camino de error (M-1)."""
     try:
         return render_pdf(template, contexto, nombre)
     except ErrorPDF:
@@ -91,7 +98,7 @@ def ticket_venta_pdf(request, pk):
     return _pdf_o_redirect(
         request, 'reportes/pdf/ticket_venta.html',
         {'venta': venta, 'negocio': NEGOCIO}, f'ticket_venta_{pk}.pdf',
-        'ventas:detalle')
+        reverse('ventas:detalle', args=[pk]))
 
 
 def comprobante_abono_pdf(request, pk):
@@ -119,7 +126,7 @@ def ticket_liquidacion_pdf(request, pk):
     return _pdf_o_redirect(
         request, 'reportes/pdf/ticket_liquidacion.html',
         {'apartado': apartado, 'negocio': NEGOCIO}, f'liquidacion_{pk}.pdf',
-        'apartados:detalle')
+        reverse('apartados:detalle', args=[pk]))
 
 
 def cierre_pdf(request):

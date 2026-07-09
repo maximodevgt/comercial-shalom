@@ -37,6 +37,10 @@ def crear_apartado(usuario, *, producto_id, precio_total, cliente_id=None,
     producto = Producto.objects.select_for_update().filter(id=producto_id).first()
     if producto is None:
         raise ErrorApartado('El producto no existe.')
+    # Espejo de crear_venta (B-2): la vista solo ofrece activos, pero un POST
+    # directo no debe poder apartar un producto inactivo.
+    if not producto.activo:
+        raise ErrorApartado(f'El producto «{producto.nombre_completo}» está inactivo.')
     if producto.stock < 1:
         raise ErrorApartado(f'No hay stock de «{producto.nombre_completo}».')
 
@@ -86,6 +90,12 @@ def _registrar_abono(usuario, apartado, monto, metodo, cliente):
     (descuadre de caja); se rechaza para que el cajero corrija y dé el
     cambio. Con saldo sí se capea a min(saldo, pendiente): no hay efectivo
     físico de por medio. Asume apartado ya bloqueado."""
+    # Método validado contra los choices (mismo patrón que crear_venta): un
+    # método basura se persistía como si fuera efectivo y luego desaparecía
+    # del desglose por método del cierre, descuadrándolo (M-3).
+    if metodo not in dict(Abono.Metodo.choices):
+        raise ErrorApartado('Método de pago inválido.')
+
     pendiente = apartado.pendiente
     if pendiente <= 0:
         raise ErrorApartado('El apartado ya está totalmente pagado.')

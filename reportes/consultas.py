@@ -2,11 +2,17 @@
 
 Regla de oro #7: los totales se calculan con agregados sobre el queryset
 completo. TODAS las consultas de dinero filtran estado='completada' para que
-los números cuadren exactos con el dashboard."""
+los números cuadren exactos con el dashboard.
+
+TODO (B-7, solo a gran escala): los filtros `creado__date=fecha` castean a
+date y no aprovechan el índice de `-creado`. Si el volumen lo amerita,
+migrar a un rango timezone-aware [00:00, 24:00) local o a un índice funcional
+sobre el cast — con MUCHO cuidado: el corte de día en America/Guatemala ya
+tuvo historia (ver CorteDeDiaTest) y un rango mal armado repite ese bug."""
 from datetime import timedelta
 from decimal import Decimal
 
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
@@ -74,6 +80,16 @@ def resumen_dia(fecha, usuario=None):
 
     total_vendido = ventas.aggregate(
         t=Coalesce(Sum('total'), Decimal('0.00')))['t']
+    # Desglose por método de pago (solo completadas): útil para cuadrar el
+    # efectivo de caja y lo cobrado contra el POS del banco.
+    desglose = ventas.aggregate(
+        efectivo=Coalesce(
+            Sum('total', filter=Q(metodo_pago=Venta.MetodoPago.EFECTIVO)),
+            Decimal('0.00')),
+        tarjeta=Coalesce(
+            Sum('total', filter=Q(metodo_pago=Venta.MetodoPago.TARJETA)),
+            Decimal('0.00')),
+    )
     productos_vendidos = (
         DetalleVenta.objects
         .filter(venta__in=ventas)
@@ -93,6 +109,8 @@ def resumen_dia(fecha, usuario=None):
         'ventas_anuladas': anuladas,
         'ventas_dia': ventas_dia,
         'total_vendido': total_vendido,
+        'total_efectivo': desglose['efectivo'],
+        'total_tarjeta': desglose['tarjeta'],
         'num_ventas': ventas.count(),
         'num_anuladas': anuladas.count(),
         'productos_vendidos': productos_vendidos,

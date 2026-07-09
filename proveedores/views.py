@@ -8,16 +8,10 @@ from django.views.generic import (
 )
 
 from usuarios.models import RegistroActividad, registrar_actividad
-from usuarios.permisos import RolRequeridoMixin
+from usuarios.permisos import SoloAdminMixin
 
 from .forms import ProveedorForm
 from .models import Proveedor
-
-
-class SoloAdminMixin(RolRequeridoMixin):
-    """Proveedores: gestión completa solo para administradores."""
-
-    roles_permitidos = ()  # solo admin (permitir_admin=True por defecto)
 
 
 class ProveedorListView(SoloAdminMixin, ListView):

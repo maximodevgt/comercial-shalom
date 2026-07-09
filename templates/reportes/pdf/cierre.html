@@ -13,7 +13,9 @@
         <tr>
             <td class="c" style="width: 25%; border: 1px solid #cbe3d2;">
                 <span class="muted">Total vendido</span><br>
-                <span class="negrita verde" style="font-size: 15px;">{{ total_vendido|quetzal }}</span>
+                <span class="negrita verde" style="font-size: 15px;">{{ total_vendido|quetzal }}</span><br>
+                {# Desglose por método: cuadre de caja y del POS del banco. #}
+                <span class="muted" style="font-size: 8.5px;">Efectivo: {{ total_efectivo|quetzal }} · Tarjeta: {{ total_tarjeta|quetzal }}</span>
             </td>
             <td class="c" style="width: 25%; border: 1px solid #cbe3d2;">
                 <span class="muted">Ventas</span><br>
@@ -66,9 +68,9 @@
         </tbody>
     </table>
 
-    {# Abonos de apartados: dinero de caja que NO es venta; aparte del total.
-       Solo en el cierre (mostrar_abonos), no en el reporte por fecha, aunque
-       compartan este template. #}
+    {% comment %}Abonos de apartados: dinero de caja que NO es venta; aparte del
+    total. Solo en el cierre (mostrar_abonos), no en el reporte por fecha, aunque
+    compartan este template.{% endcomment %}
     {% if mostrar_abonos %}
     <div class="bloque-titulo">Abonos de apartados recibidos ({{ total_abonos|quetzal }})</div>
     {% if num_abonos %}
@@ -92,6 +94,7 @@
     {% endif %}
 {% endblock %}
 
+{# Documento administrativo: sin banner ni agradecimiento; pie propio. #}
 {% block pie %}
-    Documento generado el {% now 'd/m/Y · h:i A' %} — {{ negocio.nombre }}.
+    <div class="pie-gracias">Documento interno — {{ negocio.nombre }}</div>
 {% endblock %}

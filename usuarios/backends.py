@@ -1,12 +1,14 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
-from django.db.models import Q
 
 
 class UsernameOrEmailBackend(ModelBackend):
     """Permite iniciar sesión con el username o con el correo electrónico.
 
     Mantiene todas las validaciones de ModelBackend (contraseña, is_active).
+    El match exacto de username tiene PRIORIDAD sobre el correo: si el
+    username de una cuenta coincidiera con el email de otra, gana el
+    username (B-3/B-1: sin ambigüedad).
     """
 
     def authenticate(self, request, username=None, password=None, **kwargs):
@@ -15,16 +17,11 @@ class UsernameOrEmailBackend(ModelBackend):
             username = kwargs.get(Usuario.USERNAME_FIELD)
         if username is None or password is None:
             return None
-        try:
-            # Case-insensitive por username o email. first() evita error si
-            # (por datos inconsistentes) hubiera más de una coincidencia.
-            usuario = (
-                Usuario.objects.filter(Q(username__iexact=username) | Q(email__iexact=username))
-                .order_by('id')
-                .first()
-            )
-        except Usuario.DoesNotExist:
-            return None
+        # Case-insensitive; first() cubre datos inconsistentes (duplicados).
+        usuario = (
+            Usuario.objects.filter(username__iexact=username).order_by('id').first()
+            or Usuario.objects.filter(email__iexact=username).order_by('id').first()
+        )
         if usuario is None:
             # Ejecuta el hasher igual para mitigar timing attacks.
             Usuario().set_password(password)

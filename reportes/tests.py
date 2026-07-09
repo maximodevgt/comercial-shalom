@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone as dt_timezone
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
@@ -13,6 +14,7 @@ from ventas.models import Venta
 from ventas.servicios import anular_venta, crear_venta
 
 from .consultas import datos_dashboard, resumen_dia
+from .pdf import ErrorPDF
 
 Usuario = get_user_model()
 
@@ -292,3 +294,35 @@ class AbonosEnCierreTest(TestCase):
         r_reporte = self.client.get(reverse('reportes:reporte_pdf'), {'fecha': hoy})
         self.assertEqual(r_reporte.status_code, 200)
         self.assertNotIn('Abonos de apartados recibidos', texto_pdf(r_reporte))
+
+
+class PdfFallbackTest(TestCase):
+    """M-1: si la generación del PDF falla, la vista redirige al detalle con
+    mensaje amigable (antes: NoReverseMatch → el 500 que quería evitar)."""
+
+    def setUp(self):
+        self.admin = Usuario.objects.create_user(
+            username='adm_pdf', password='x', rol=Usuario.Rol.ADMIN)
+        self.cajero = Usuario.objects.create_user(
+            username='caja_pdf', password='x', rol=Usuario.Rol.CAJERO)
+        cat = Categoria.objects.create(nombre='G')
+        self.p = Producto.objects.create(
+            categoria=cat, nombre='P', precio=Decimal('100'), stock=10)
+        self.venta = crear_venta(self.cajero, lineas=[
+            {'producto_id': self.p.id, 'cantidad': 1, 'precio_unitario': '100.00'}])
+        self.apartado = crear_apartado(
+            self.cajero, producto_id=self.p.id, precio_total='100.00',
+            abono_inicial='100.00')
+
+    @patch('reportes.views.render_pdf', side_effect=ErrorPDF('falló'))
+    def test_fallo_en_ticket_venta_redirige_al_detalle(self, _mock):
+        self.client.force_login(self.admin)
+        r = self.client.get(reverse('reportes:ticket_venta_pdf', args=[self.venta.pk]))
+        self.assertRedirects(r, reverse('ventas:detalle', args=[self.venta.pk]))
+
+    @patch('reportes.views.render_pdf', side_effect=ErrorPDF('falló'))
+    def test_fallo_en_liquidacion_redirige_al_detalle(self, _mock):
+        self.client.force_login(self.admin)
+        r = self.client.get(
+            reverse('reportes:ticket_liquidacion_pdf', args=[self.apartado.pk]))
+        self.assertRedirects(r, reverse('apartados:detalle', args=[self.apartado.pk]))

@@ -4,21 +4,22 @@ Uso:  python manage.py seed_demo
 
 Crea categorías, productos (con stock bajo y uno agotado), clientes (uno con
 saldo a favor) y usuarios de prueba (cajero y supervisor). Se puede correr
-varias veces sin duplicar. Las contraseñas se muestran al final del output
-(no se documentan en el código ni en el repo)."""
+varias veces sin duplicar.
+
+Seguridad (M-2): las contraseñas de los usuarios de demo se GENERAN al azar
+en cada corrida y se imprimen una sola vez en la consola (no existen
+hardcodeadas en el código ni en el repo). Además, el comando se rehúsa a
+correr con DEBUG=False: es solo para entornos de desarrollo."""
 from decimal import Decimal
 
-from django.core.management.base import BaseCommand
+from django.conf import settings
+from django.core.management.base import BaseCommand, CommandError
+from django.core.management.utils import get_random_secret_key
 from django.db import transaction
 
 from clientes.models import Cliente
 from productos.models import Categoria, Producto
 from usuarios.models import Usuario
-
-# Contraseñas de los usuarios de demo. Se imprimen al final; NO se documentan
-# fuera de este comando.
-PW_CAJERO = 'Cajero2026'
-PW_SUPERVISOR = 'Supervisor2026'
 
 CATEGORIAS = ['Zapatos', 'Ropa', 'Accesorios', 'Electrónica']
 
@@ -47,7 +48,18 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
+        # Doble candado (M-2): datos ficticios y usuarios de prueba no tienen
+        # lugar en producción.
+        if not settings.DEBUG:
+            raise CommandError(
+                'seed_demo es solo para entornos de desarrollo (DEBUG=True): '
+                'crea usuarios de prueba y datos ficticios.')
+
         self.stdout.write('Sembrando datos de demostración...')
+
+        # Contraseñas aleatorias por corrida (nunca hardcodeadas).
+        pw_cajero = get_random_secret_key()[:12]
+        pw_supervisor = get_random_secret_key()[:12]
 
         categorias = {}
         for nombre in CATEGORIAS:
@@ -77,7 +89,7 @@ class Command(BaseCommand):
                       'email': 'cajero@comercialshalom.com',
                       'rol': Usuario.Rol.CAJERO})
         if creado_c:
-            cajero.set_password(PW_CAJERO)
+            cajero.set_password(pw_cajero)
             cajero.save()
 
         supervisor, creado_s = Usuario.objects.get_or_create(
@@ -86,7 +98,7 @@ class Command(BaseCommand):
                       'email': 'supervisor@comercialshalom.com',
                       'rol': Usuario.Rol.SUPERVISOR})
         if creado_s:
-            supervisor.set_password(PW_SUPERVISOR)
+            supervisor.set_password(pw_supervisor)
             supervisor.save()
 
         self.stdout.write(self.style.SUCCESS('¡Datos de demostración listos!'))
@@ -97,9 +109,13 @@ class Command(BaseCommand):
         self.stdout.write(f'  Clientes:   {Cliente.objects.count()} '
                           f'(uno con Q 200 de saldo a favor)')
         self.stdout.write('')
-        self.stdout.write(self.style.WARNING('Usuarios de prueba (guardá estas credenciales):'))
-        self.stdout.write(f'  cajero      / {PW_CAJERO}    (rol: cajero)')
-        self.stdout.write(f'  supervisor  / {PW_SUPERVISOR} (rol: supervisor)')
-        if not (creado_c or creado_s):
-            self.stdout.write(self.style.NOTICE(
-                '  (los usuarios ya existían; sus contraseñas no se modificaron)'))
+        self.stdout.write(self.style.WARNING(
+            'Usuarios de prueba (guardá estas credenciales: se muestran SOLO acá y una vez):'))
+        if creado_c:
+            self.stdout.write(f'  cajero      / {pw_cajero}  (rol: cajero)')
+        else:
+            self.stdout.write('  cajero      → ya existía; su contraseña no se modificó')
+        if creado_s:
+            self.stdout.write(f'  supervisor  / {pw_supervisor}  (rol: supervisor)')
+        else:
+            self.stdout.write('  supervisor  → ya existía; su contraseña no se modificó')

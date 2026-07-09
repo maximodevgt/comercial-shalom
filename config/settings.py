@@ -146,6 +146,12 @@ USE_I18N = True
 USE_TZ = True
 
 
+# Datos del negocio para el encabezado y el pie de los comprobantes PDF.
+# Configurables por entorno para adaptar los comprobantes a cada comercio.
+NEGOCIO_NOMBRE = env('NEGOCIO_NOMBRE', default='Comercial Shalom')
+NEGOCIO_DIRECCION = env('NEGOCIO_DIRECCION', default='Ciudad Tecún Umán, Ayutla, San Marcos')
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
@@ -169,6 +175,12 @@ AUTHENTICATION_BACKENDS = [
     'usuarios.backends.UsernameOrEmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+# Sesiones de POS de mostrador (B-9): expiran al cerrar el navegador y, como
+# tope, duran una jornada laboral (8 horas). Sin esto, una sesión olvidada en
+# la terminal compartida quedaba viva 14 días (default de Django).
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 28800  # 8 horas, en segundos
 
 # Mapea el nivel ERROR de messages a la clase 'danger' de Bootstrap.
 from django.contrib.messages import constants as messages_constants  # noqa: E402

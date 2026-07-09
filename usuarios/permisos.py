@@ -76,3 +76,13 @@ class RolRequeridoMixin:
                 'No tenés permiso para acceder a esta sección.'
             )
         return super().dispatch(request, *args, **kwargs)
+
+
+class SoloAdminMixin(RolRequeridoMixin):
+    """Restringe la vista a administradores (o superusuarios).
+
+    Definido UNA sola vez acá (B-5): antes estaba copiado idéntico en
+    usuarios, productos, clientes y proveedores.
+    """
+
+    roles_permitidos = ()  # solo admin (permitir_admin=True por defecto)

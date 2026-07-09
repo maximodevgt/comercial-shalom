@@ -151,3 +151,94 @@ class GestionUsuariosTest(TestCase):
         cajero = Usuario.objects.create_user(username='c', password='x', rol=Usuario.Rol.CAJERO)
         self.client.force_login(cajero)
         self.assertEqual(self.client.get(reverse('usuarios:logs')).status_code, 403)
+
+
+class ProteccionSuperusuarioTest(TestCase):
+    """A-1: un admin de rol NO puede editar, resetear la contraseña ni
+    desactivar a un superusuario (escalada de privilegios); un superuser sí."""
+
+    def setUp(self):
+        self.admin_rol = Usuario.objects.create_user(
+            username='admin_rol', password='x', rol=Usuario.Rol.ADMIN)
+        self.superuser = Usuario.objects.create_superuser(
+            username='root', email='root@comercialshalom.com',
+            password='super-secreta-123')
+
+    def test_admin_de_rol_no_puede_abrir_edicion_de_superusuario(self):
+        self.client.force_login(self.admin_rol)
+        r = self.client.get(reverse('usuarios:editar', args=[self.superuser.pk]))
+        self.assertEqual(r.status_code, 404)
+
+    def test_admin_de_rol_no_puede_resetear_password_de_superusuario(self):
+        self.client.force_login(self.admin_rol)
+        r = self.client.post(
+            reverse('usuarios:editar', args=[self.superuser.pk]),
+            {'first_name': 'X', 'last_name': 'Y', 'rol': Usuario.Rol.ADMIN,
+             'password': 'NuevaClave123'})
+        self.assertEqual(r.status_code, 404)
+        self.superuser.refresh_from_db()
+        self.assertTrue(self.superuser.check_password('super-secreta-123'))
+        # El intento bloqueado queda en la bitácora.
+        self.assertTrue(RegistroActividad.objects.filter(
+            usuario=self.admin_rol, tipo=RegistroActividad.Tipo.USUARIO,
+            descripcion__icontains='BLOQUEADO').exists())
+
+    def test_admin_de_rol_no_puede_desactivar_superusuario(self):
+        self.client.force_login(self.admin_rol)
+        r = self.client.post(reverse('usuarios:toggle_activo', args=[self.superuser.pk]))
+        self.assertEqual(r.status_code, 404)
+        self.superuser.refresh_from_db()
+        self.assertTrue(self.superuser.is_active)
+        self.assertTrue(RegistroActividad.objects.filter(
+            descripcion__icontains='desactivar al superusuario').exists())
+
+    def test_superusuario_si_puede_editar_a_otro_superusuario(self):
+        otro = Usuario.objects.create_superuser(
+            username='root2', email='root2@comercialshalom.com', password='x')
+        self.client.force_login(self.superuser)
+        r = self.client.get(reverse('usuarios:editar', args=[otro.pk]))
+        self.assertEqual(r.status_code, 200)
+
+
+class LogsFiltroBasuraTest(TestCase):
+    """M-4: un filtro no numérico en la bitácora se ignora en vez de dar 500."""
+
+    def test_usuario_no_numerico_no_revienta(self):
+        admin = Usuario.objects.create_user(
+            username='adm_filtro', password='x', rol=Usuario.Rol.ADMIN)
+        self.client.force_login(admin)
+        r = self.client.get(reverse('usuarios:logs'), {'usuario': 'abc'})
+        self.assertEqual(r.status_code, 200)
+
+
+class SeedDemoCandadoTest(TestCase):
+    """M-2: seed_demo se rehúsa a correr fuera de desarrollo (DEBUG=False)."""
+
+    def test_rehusa_con_debug_false(self):
+        from django.core.management import call_command
+        from django.core.management.base import CommandError
+        from django.test import override_settings
+
+        with override_settings(DEBUG=False):
+            with self.assertRaises(CommandError):
+                call_command('seed_demo')
+
+
+class AxesLockoutTest(TestCase):
+    """La protección contra fuerza bruta (django-axes) bloquea la combinación
+    usuario+IP tras AXES_FAILURE_LIMIT intentos fallidos (en la suite axes
+    está desactivado; acá se enciende explícitamente)."""
+
+    def test_bloqueo_tras_intentos_fallidos(self):
+        from django.conf import settings as dj_settings
+        from django.test import override_settings
+
+        Usuario.objects.create_user(
+            username='victima', password='correcta-123', rol=Usuario.Rol.CAJERO)
+        url = reverse('usuarios:login')
+        with override_settings(AXES_ENABLED=True):
+            for _ in range(dj_settings.AXES_FAILURE_LIMIT):
+                self.client.post(url, {'username': 'victima', 'password': 'mala'})
+            # Bloqueado: ni siquiera con la contraseña CORRECTA entra (429).
+            r = self.client.post(url, {'username': 'victima', 'password': 'correcta-123'})
+            self.assertEqual(r.status_code, 429)

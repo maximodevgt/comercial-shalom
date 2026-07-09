@@ -8,17 +8,11 @@ from django.views.generic import (
 )
 
 from usuarios.models import RegistroActividad, registrar_actividad
-from usuarios.permisos import RolRequeridoMixin
+from usuarios.permisos import SoloAdminMixin
+from usuarios.utils import _entero_o_none
 
 from .forms import CategoriaForm, ProductoForm
 from .models import Categoria, Producto
-
-
-class SoloAdminMixin(RolRequeridoMixin):
-    """Restringe la vista a administradores (o superusuarios)."""
-
-    roles_permitidos = ()  # solo admin (permitir_admin=True por defecto)
-
 
 # ─────────────────────────── Productos ───────────────────────────
 
@@ -30,8 +24,13 @@ class ProductoListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = Producto.objects.select_related('categoria')
+        # TODO (B-8, solo a gran escala): las búsquedas icontains de acá (y de
+        # clientes/proveedores) escanean la tabla; con decenas de miles de
+        # filas conviene GinIndex + pg_trgm (requiere CREATE EXTENSION en la
+        # BD, coordinar con el despliegue).
         q = self.request.GET.get('q', '').strip()
-        categoria = self.request.GET.get('categoria', '').strip()
+        # Un valor no numérico se ignora en vez de romper con 500 (M-4).
+        categoria = _entero_o_none(self.request.GET.get('categoria'))
         if q:
             qs = qs.filter(
                 Q(nombre__icontains=q)
