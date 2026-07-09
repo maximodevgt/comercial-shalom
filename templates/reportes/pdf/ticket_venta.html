@@ -1,29 +1,22 @@
 {% extends 'reportes/pdf/_base.html' %}
 {% load moneda %}
 
-{% block tipo_doc %}Factura{% endblock %}
+{% block tipo_doc %}Comprobante de Venta{% endblock %}
 {% block meta_doc %}
     No. {{ venta.pk }}<br>
-    Fecha: {{ venta.creado|date:'d/m/Y' }} · Hora: {{ venta.creado|date:'h:i A' }}
+    Fecha: {{ venta.creado|date:'d/m/Y' }} · Hora: {{ venta.creado|date:'h:i A' }}<br>
+    Método de pago: {{ venta.get_metodo_pago_display }}
 {% endblock %}
 
 {% block cuerpo %}
     {% if venta.esta_anulada %}
-    <table class="anulada-zona"><tr>
-        <td class="anulada-caja">X VENTA ANULADA{% if venta.motivo_anulacion %} — Motivo: {{ venta.motivo_anulacion }}{% endif %}</td>
-    </tr></table>
+    <div class="banda-anulada">*** VENTA ANULADA *** {% if venta.motivo_anulacion %}Motivo: {{ venta.motivo_anulacion }}{% endif %}</div>
     {% endif %}
 
     <div class="bloque-titulo">Datos del cliente</div>
-    <table class="datos"><tr>
-        <td>
-            <div class="dato"><strong>Cliente:</strong> {{ venta.nombre_cliente }}</div>
-            {% if venta.telefono %}<div class="dato"><strong>Teléfono:</strong> {{ venta.telefono }}</div>{% endif %}
-        </td>
-        <td class="der">
-            <div class="dato"><strong>Atendido por:</strong> {{ venta.usuario.get_full_name|default:venta.usuario.username }}</div>
-        </td>
-    </tr></table>
+    <div class="dato"><strong>Cliente:</strong> {{ venta.nombre_cliente }}</div>
+    {% if venta.telefono %}<div class="dato"><strong>Teléfono:</strong> {{ venta.telefono }}</div>{% endif %}
+    <div class="dato"><strong>Atendido por:</strong> {{ venta.usuario.get_full_name|default:venta.usuario.username }}</div>
 
     <div class="bloque-titulo">Detalle de la venta</div>
     <table class="items">
@@ -32,9 +25,9 @@
                 <th style="width: 24px;">#</th>
                 <th>Descripción</th>
                 <th class="c" style="width: 45px;">Cant.</th>
-                <th class="r" style="width: 85px;">P. Unitario (Q)</th>
-                <th class="r" style="width: 85px;">Descuento (Q)</th>
-                <th class="r" style="width: 90px;">Total (Q)</th>
+                <th class="r" style="width: 80px;">P. unitario</th>
+                <th class="r" style="width: 80px;">Descuento</th>
+                <th class="r" style="width: 85px;">Total</th>
             </tr>
         </thead>
         <tbody>
@@ -43,39 +36,28 @@
                 <td>{{ forloop.counter }}</td>
                 <td>{{ d.producto.nombre_completo }}</td>
                 <td class="c">{{ d.cantidad }}</td>
-                <td class="r">{{ d.precio_unitario|quetzal }}</td>
+                {# Precio ORIGINAL persistido; tachado solo con descuento (Precio − Descuento = Total). #}
+                <td class="r">{% if d.descuento > 0 %}<s class="muted">{{ d.precio_original|quetzal }}</s>{% else %}{{ d.precio_original|quetzal }}{% endif %}</td>
                 <td class="r">{% if d.descuento > 0 %}<span class="rojo">-{{ d.descuento|quetzal }}</span>{% else %}—{% endif %}</td>
                 <td class="r">{{ d.subtotal|quetzal }}</td>
             </tr>
             {% endfor %}
+            {% comment %}Sin cocina interna para el cliente: nada de subtotal,
+            descuento global ni ajuste de tarjeta (el descuento ya se ve por
+            línea). Tras las líneas va DIRECTO la fila verde con el TOTAL
+            realmente cobrado (con tarjeta, lo que marcó el POS). El saldo
+            aplicado SÍ se muestra: es plata del cliente y sin esa fila el
+            total no le cuadraría contra las líneas.{% endcomment %}
+            {% if venta.saldo_aplicado > 0 %}
+            <tr><td colspan="5" class="r verde">Saldo aplicado:</td><td class="r verde">-{{ venta.saldo_aplicado|quetzal }}</td></tr>
+            {% endif %}
+            {# El monto abarca 2 columnas para que no se parta en dos líneas. #}
+            <tr class="total"><td colspan="4" class="r">TOTAL:</td><td colspan="2" class="r">{{ venta.total|quetzal }}</td></tr>
         </tbody>
     </table>
 
-    <table class="zona-tot"><tr>
-        <td class="col-pago">
-            <div class="bloque-titulo mt0">Forma de pago</div>
-            <div class="dato"><strong>Método:</strong> {{ venta.get_metodo_pago_display }}</div>
-            {% if venta.metodo_pago == 'tarjeta' and venta.monto_tarjeta %}
-            <div class="dato muted">Monto indicado por la terminal: {{ venta.monto_tarjeta|quetzal }}</div>
-            {% endif %}
-        </td>
-        <td class="col-tot">
-            <table class="tot">
-                {% if venta.descuento_total > 0 or venta.saldo_aplicado > 0 %}
-                <tr><td>Subtotal</td><td class="tot-val">{{ venta.subtotal|quetzal }}</td></tr>
-                {% endif %}
-                {% if venta.descuento_total > 0 %}
-                <tr><td class="rojo">Descuento</td><td class="tot-val rojo">-{{ venta.descuento_total|quetzal }}</td></tr>
-                {% endif %}
-                {% if venta.saldo_aplicado > 0 %}
-                <tr><td class="verde">Saldo aplicado</td><td class="tot-val verde">-{{ venta.saldo_aplicado|quetzal }}</td></tr>
-                {% endif %}
-                <tr class="total"><td>TOTAL</td><td class="tot-val">{{ venta.total|quetzal }}</td></tr>
-            </table>
-        </td>
-    </tr></table>
 {% endblock %}
 
 {% block aviso %}
-    <table class="aviso-zona"><tr><td class="aviso-caja">No se devuelve efectivo</td></tr></table>
+    <div class="aviso">No se devuelve efectivo</div>
 {% endblock %}

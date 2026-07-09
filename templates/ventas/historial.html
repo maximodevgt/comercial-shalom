@@ -94,7 +94,9 @@
                         {% else %}<span class="placeholder-foto mini"><i class="fa-solid fa-image"></i></span>{% endif %}
                         <div class="small">
                             <div>{{ d.producto.nombre_completo }}</div>
-                            <div class="text-muted">×{{ d.cantidad }} · {{ d.precio_unitario|quetzal }} c/u</div>
+                            {# Con descuento: precio original tachado + precio final (campos persistidos). #}
+                            <div class="text-muted">×{{ d.cantidad }} ·
+                                {% if d.descuento > 0 %}<span class="text-decoration-line-through text-muted small">{{ d.precio_original|quetzal }}</span> {% endif %}{{ d.precio_unitario|quetzal }} c/u</div>
                         </div>
                     </div>
                     {% endfor %}

@@ -9,17 +9,10 @@
 
 {% block cuerpo %}
     <div class="bloque-titulo">Datos del apartado</div>
-    <table class="datos"><tr>
-        <td>
-            <div class="dato"><strong>Cliente:</strong> {{ apartado.nombre_cliente }}</div>
-            {% if apartado.telefono %}<div class="dato"><strong>Teléfono:</strong> {{ apartado.telefono }}</div>{% endif %}
-            {% if apartado.direccion %}<div class="dato"><strong>Dirección:</strong> {{ apartado.direccion }}</div>{% endif %}
-        </td>
-        <td class="der">
-            <div class="dato"><strong>Producto:</strong> {{ apartado.producto.nombre_completo }}</div>
-            <div class="dato"><strong>Atendido por:</strong> {{ abono.usuario.get_full_name|default:abono.usuario.username }}</div>
-        </td>
-    </tr></table>
+    <div class="dato"><strong>Producto:</strong> {{ apartado.producto.nombre_completo }}</div>
+    <div class="dato"><strong>Cliente:</strong> {{ apartado.nombre_cliente }}</div>
+    {% if apartado.telefono %}<div class="dato"><strong>Teléfono:</strong> {{ apartado.telefono }}</div>{% endif %}
+    <div class="dato"><strong>Atendido por:</strong> {{ abono.usuario.get_full_name|default:abono.usuario.username }}</div>
 
     <div class="bloque-titulo">Abono registrado</div>
     <table class="items">
@@ -27,7 +20,7 @@
             <tr>
                 <th>Fecha y hora</th>
                 <th>Método de pago</th>
-                <th class="r">Monto (Q)</th>
+                <th class="r">Monto</th>
             </tr>
         </thead>
         <tbody>
@@ -36,24 +29,16 @@
                 <td>{{ abono.get_metodo_display }}</td>
                 <td class="r negrita">{{ abono.monto|quetzal }}</td>
             </tr>
+            {# Resumen y SALDO PENDIENTE integrados: ancho completo, alineados a la tabla. #}
+            <tr><td colspan="2" class="r">Precio del apartado</td><td class="r">{{ apartado.precio_total|quetzal }}</td></tr>
+            <tr><td colspan="2" class="r verde">Total abonado</td><td class="r verde">{{ apartado.total_abonado|quetzal }}</td></tr>
+            <tr class="total"><td colspan="2" class="r">SALDO PENDIENTE:</td><td class="r">{{ apartado.pendiente|quetzal }}</td></tr>
         </tbody>
     </table>
 
-    <table class="zona-tot"><tr>
-        <td class="col-pago">
-            <div class="bloque-titulo mt0">Forma de pago</div>
-            <div class="dato"><strong>Método:</strong> {{ abono.get_metodo_display }}</div>
-        </td>
-        <td class="col-tot">
-            <table class="tot">
-                <tr><td>Precio del apartado</td><td class="tot-val">{{ apartado.precio_total|quetzal }}</td></tr>
-                <tr><td class="verde">Total abonado</td><td class="tot-val verde">{{ apartado.total_abonado|quetzal }}</td></tr>
-                <tr class="total"><td>SALDO PENDIENTE</td><td class="tot-val">{{ apartado.pendiente|quetzal }}</td></tr>
-            </table>
-        </td>
-    </tr></table>
+    <div class="nota-tabla">Método de pago: {{ abono.get_metodo_display }}</div>
 {% endblock %}
 
 {% block aviso %}
-    <table class="aviso-zona"><tr><td class="aviso-caja">No se devuelve efectivo</td></tr></table>
+    <div class="aviso">No se devuelve efectivo</div>
 {% endblock %}

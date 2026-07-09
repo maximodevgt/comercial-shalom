@@ -11,19 +11,21 @@
 {% block cuerpo %}
     <table class="items" style="margin-top: 2px;">
         <tr>
-            <td class="c" style="width: 25%; border: 1px solid #c7d2fe;">
+            <td class="c" style="width: 25%; border: 1px solid #cbe3d2;">
                 <span class="muted">Total vendido</span><br>
-                <span class="negrita azul" style="font-size: 15px;">{{ total_vendido|quetzal }}</span>
+                <span class="negrita verde" style="font-size: 15px;">{{ total_vendido|quetzal }}</span><br>
+                {# Desglose por método: cuadre de caja y del POS del banco. #}
+                <span class="muted" style="font-size: 8.5px;">Efectivo: {{ total_efectivo|quetzal }} · Tarjeta: {{ total_tarjeta|quetzal }}</span>
             </td>
-            <td class="c" style="width: 25%; border: 1px solid #c7d2fe;">
+            <td class="c" style="width: 25%; border: 1px solid #cbe3d2;">
                 <span class="muted">Ventas</span><br>
-                <span class="negrita azul" style="font-size: 15px;">{{ num_ventas }}</span>
+                <span class="negrita verde" style="font-size: 15px;">{{ num_ventas }}</span>
             </td>
-            <td class="c" style="width: 25%; border: 1px solid #c7d2fe;">
+            <td class="c" style="width: 25%; border: 1px solid #cbe3d2;">
                 <span class="muted">Productos vendidos</span><br>
-                <span class="negrita azul" style="font-size: 15px;">{{ productos_vendidos }}</span>
+                <span class="negrita verde" style="font-size: 15px;">{{ productos_vendidos }}</span>
             </td>
-            <td class="c" style="border: 1px solid #c7d2fe;">
+            <td class="c" style="border: 1px solid #cbe3d2;">
                 <span class="muted">Anuladas</span><br>
                 <span class="negrita rojo" style="font-size: 15px;">{{ num_anuladas }}</span>
             </td>
@@ -92,6 +94,7 @@
     {% endif %}
 {% endblock %}
 
+{# Documento administrativo: sin banner ni agradecimiento; pie propio. #}
 {% block pie %}
-    Documento generado el {% now 'd/m/Y · h:i A' %} — {{ negocio.nombre }} — {{ negocio.direccion }}
+    <div class="pie-gracias">Documento interno — {{ negocio.nombre }}</div>
 {% endblock %}

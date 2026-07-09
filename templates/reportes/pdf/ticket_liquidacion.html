@@ -1,7 +1,7 @@
 {% extends 'reportes/pdf/_base.html' %}
 {% load moneda %}
 
-{% block tipo_doc %}Ticket de Liquidación{% endblock %}
+{% block tipo_doc %}Liquidación de Apartado{% endblock %}
 {% block meta_doc %}
     Apartado No. {{ apartado.pk }}{% if apartado.venta %} · Venta No. {{ apartado.venta.pk }}{% endif %}<br>
     Fecha: {{ apartado.actualizado|date:'d/m/Y' }} · Hora: {{ apartado.actualizado|date:'h:i A' }}
@@ -9,17 +9,10 @@
 
 {% block cuerpo %}
     <div class="bloque-titulo">Datos del apartado</div>
-    <table class="datos"><tr>
-        <td>
-            <div class="dato"><strong>Cliente:</strong> {{ apartado.nombre_cliente }}</div>
-            {% if apartado.telefono %}<div class="dato"><strong>Teléfono:</strong> {{ apartado.telefono }}</div>{% endif %}
-            {% if apartado.direccion %}<div class="dato"><strong>Dirección:</strong> {{ apartado.direccion }}</div>{% endif %}
-        </td>
-        <td class="der">
-            <div class="dato"><strong>Producto:</strong> {{ apartado.producto.nombre_completo }}</div>
-            <div class="dato"><strong>Atendido por:</strong> {{ apartado.usuario.get_full_name|default:apartado.usuario.username }}</div>
-        </td>
-    </tr></table>
+    <div class="dato"><strong>Producto:</strong> {{ apartado.producto.nombre_completo }}</div>
+    <div class="dato"><strong>Cliente:</strong> {{ apartado.nombre_cliente }}</div>
+    {% if apartado.telefono %}<div class="dato"><strong>Teléfono:</strong> {{ apartado.telefono }}</div>{% endif %}
+    <div class="dato"><strong>Registrado por:</strong> {{ apartado.usuario.get_full_name|default:apartado.usuario.username }}</div>
 
     <div class="bloque-titulo">Historial de abonos</div>
     <table class="items">
@@ -28,7 +21,7 @@
                 <th style="width: 30px;">#</th>
                 <th>Fecha</th>
                 <th>Método de pago</th>
-                <th class="r">Monto (Q)</th>
+                <th class="r">Monto</th>
             </tr>
         </thead>
         <tbody>
@@ -42,32 +35,18 @@
             {% empty %}
             <tr><td colspan="4" class="c muted">Sin abonos registrados.</td></tr>
             {% endfor %}
+            {# Resumen y TOTAL PAGADO integrados: ancho completo, alineados a la tabla. #}
+            {% if apartado.descuento > 0 %}
+            <tr><td colspan="3" class="r">Precio de lista</td><td class="r">{{ apartado.precio_original|quetzal }}</td></tr>
+            <tr><td colspan="3" class="r rojo">Descuento</td><td class="r rojo">-{{ apartado.descuento|quetzal }}</td></tr>
+            {% endif %}
+            <tr class="total"><td colspan="3" class="r">TOTAL PAGADO:</td><td class="r">{{ apartado.precio_total|quetzal }}</td></tr>
         </tbody>
     </table>
 
-    <table class="zona-tot"><tr>
-        <td class="col-pago">
-            <div class="bloque-titulo mt0">Confirmación</div>
-            <div class="dato">El apartado fue <strong class="verde">liquidado en su totalidad</strong>{% if apartado.venta %}
-                y generó la venta <strong>No. {{ apartado.venta.pk }}</strong>{% endif %}.</div>
-        </td>
-        <td class="col-tot">
-            <table class="tot">
-                <tr><td>Precio original</td><td class="tot-val">{{ apartado.precio_original|quetzal }}</td></tr>
-                {% if apartado.descuento > 0 %}
-                <tr><td class="rojo">Descuento aplicado</td><td class="tot-val rojo">-{{ apartado.descuento|quetzal }}</td></tr>
-                {% endif %}
-                <tr><td>Precio total</td><td class="tot-val">{{ apartado.precio_total|quetzal }}</td></tr>
-                <tr><td class="verde">Total abonado</td><td class="tot-val verde">{{ apartado.total_abonado|quetzal }}</td></tr>
-                {% with ultimo=apartado.abonos.last %}
-                <tr><td>Método del último pago</td><td class="tot-val">{% if ultimo %}{{ ultimo.get_metodo_display }}{% else %}—{% endif %}</td></tr>
-                {% endwith %}
-                <tr class="total"><td>SALDO PENDIENTE</td><td class="tot-val">{{ apartado.pendiente|quetzal }}</td></tr>
-            </table>
-        </td>
-    </tr></table>
+    <div class="nota-tabla">El apartado fue liquidado en su totalidad{% if apartado.venta %} y generó la venta No. {{ apartado.venta.pk }}{% endif %}.</div>
 {% endblock %}
 
 {% block aviso %}
-    <table class="aviso-zona"><tr><td class="aviso-caja">Apartado liquidado — No se devuelve efectivo</td></tr></table>
+    <div class="aviso">Apartado liquidado — No se devuelve efectivo</div>
 {% endblock %}
