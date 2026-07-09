@@ -267,6 +267,93 @@ class VentaConcurrenciaTest(TransactionTestCase):
         self.assertEqual(Venta.objects.count(), 1)
 
 
+class VentaTarjetaTest(TestCase):
+    """Con tarjeta, el monto que marca el POS del banco ES el total real de la
+    venta; la diferencia contra los precios de lista queda como ajuste."""
+
+    def setUp(self):
+        self.admin = Usuario.objects.create_user(
+            username='adm_tj', password='x', rol=Usuario.Rol.ADMIN)
+        self.cajero = Usuario.objects.create_user(
+            username='caja_tj', password='x', rol=Usuario.Rol.CAJERO)
+        self.cat = Categoria.objects.create(nombre='G')
+        self.p235 = Producto.objects.create(
+            categoria=self.cat, nombre='P235', precio=Decimal('235.00'), stock=10)
+        self.p100 = Producto.objects.create(
+            categoria=self.cat, nombre='P100', precio=Decimal('100.00'), stock=10)
+
+    def _venta_tarjeta(self, monto):
+        return crear_venta(self.cajero, metodo_pago='tarjeta', monto_tarjeta=monto,
+                           lineas=[{'producto_id': self.p235.id, 'cantidad': 1,
+                                    'precio_unitario': '235.00'}])
+
+    def test_total_es_lo_que_cobro_el_pos(self):
+        # Productos por Q235, el POS cobró Q250 → el total registrado es Q250.
+        venta = self._venta_tarjeta('250.00')
+        self.assertEqual(venta.total, Decimal('250.00'))
+        self.assertEqual(venta.monto_tarjeta, Decimal('250.00'))
+        self.assertEqual(venta.subtotal, Decimal('235.00'))
+        self.assertEqual(venta.ajuste_tarjeta, Decimal('15.00'))  # recargo
+
+    def test_cierre_suma_lo_cobrado_y_desglosa_por_metodo(self):
+        from reportes.consultas import resumen_dia
+        self._venta_tarjeta('250.00')
+        crear_venta(self.cajero, metodo_pago='efectivo', lineas=[
+            {'producto_id': self.p100.id, 'cantidad': 1, 'precio_unitario': '100.00'}])
+        r = resumen_dia(timezone.localdate())
+        self.assertEqual(r['total_vendido'], Decimal('350.00'))  # 250 + 100
+        self.assertEqual(r['total_tarjeta'], Decimal('250.00'))
+        self.assertEqual(r['total_efectivo'], Decimal('100.00'))
+
+    def test_ajuste_negativo_si_el_pos_cobro_menos(self):
+        venta = self._venta_tarjeta('220.00')
+        self.assertEqual(venta.total, Decimal('220.00'))
+        self.assertEqual(venta.ajuste_tarjeta, Decimal('-15.00'))
+
+    def test_monto_cero_o_negativo_rechazado(self):
+        for monto in ('0', '-10.00'):
+            with self.assertRaises(ErrorVenta):
+                self._venta_tarjeta(monto)
+        self.p235.refresh_from_db()
+        self.assertEqual(self.p235.stock, 10)  # rollback
+        self.assertEqual(Venta.objects.count(), 0)
+
+    def test_monto_desproporcionado_rechazado(self):
+        # Más del doble (o menos de la mitad) del total calculado: error de
+        # digitación casi seguro. No se registra nada.
+        for monto in ('600.00', '100.00'):
+            with self.assertRaises(ErrorVenta):
+                self._venta_tarjeta(monto)
+        self.assertEqual(Venta.objects.count(), 0)
+
+    def test_sin_monto_asume_el_total_calculado(self):
+        venta = crear_venta(self.cajero, metodo_pago='tarjeta', lineas=[
+            {'producto_id': self.p235.id, 'cantidad': 1, 'precio_unitario': '235.00'}])
+        self.assertEqual(venta.total, Decimal('235.00'))
+        self.assertEqual(venta.monto_tarjeta, Decimal('235.00'))
+        self.assertEqual(venta.ajuste_tarjeta, Decimal('0.00'))
+
+    def test_venta_efectivo_intacta(self):
+        venta = crear_venta(self.cajero, metodo_pago='efectivo', lineas=[
+            {'producto_id': self.p235.id, 'cantidad': 1, 'precio_unitario': '235.00'}])
+        self.assertEqual(venta.total, Decimal('235.00'))
+        self.assertIsNone(venta.monto_tarjeta)
+        self.assertEqual(venta.ajuste_tarjeta, Decimal('0.00'))
+
+    def test_anular_venta_tarjeta_restituye_todo(self):
+        from reportes.consultas import resumen_dia
+        venta = self._venta_tarjeta('250.00')
+        self.p235.refresh_from_db()
+        self.assertEqual(self.p235.stock, 9)
+        anular_venta(self.admin, venta.id, 'devolución')
+        venta.refresh_from_db(); self.p235.refresh_from_db()
+        self.assertEqual(venta.estado, Venta.Estado.ANULADA)
+        self.assertEqual(self.p235.stock, 10)  # stock restaurado
+        r = resumen_dia(timezone.localdate())
+        self.assertEqual(r['total_vendido'], Decimal('0.00'))  # no suma
+        self.assertEqual(r['total_tarjeta'], Decimal('0.00'))
+
+
 class HistorialFiltroFechaTest(TestCase):
     """El historial muestra SOLO hoy por defecto; ?todas=1 abre el histórico."""
 

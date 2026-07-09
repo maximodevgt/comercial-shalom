@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.db import models
 
@@ -74,6 +76,22 @@ class Venta(models.Model):
     @property
     def esta_anulada(self):
         return self.estado == self.Estado.ANULADA
+
+    @property
+    def ajuste_tarjeta(self):
+        """Diferencia entre lo que cobró el POS del banco y el total calculado
+        de las líneas (solo ventas con tarjeta, donde el monto de la terminal
+        ES el total). Positivo = se cobró de más (p. ej. recargo por tarjeta);
+        negativo = rebaja. Derivado: total − (subtotal − saldo_aplicado)."""
+        if self.metodo_pago != self.MetodoPago.TARJETA:
+            return Decimal('0.00')
+        esperado = self.subtotal - self.saldo_aplicado
+        return (self.total - esperado).quantize(Decimal('0.01'))
+
+    @property
+    def ajuste_tarjeta_abs(self):
+        """Valor absoluto del ajuste (los templates lo muestran con su signo)."""
+        return abs(self.ajuste_tarjeta)
 
     @property
     def es_de_liquidacion(self):

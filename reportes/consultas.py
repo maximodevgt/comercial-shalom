@@ -6,7 +6,7 @@ los números cuadren exactos con el dashboard."""
 from datetime import timedelta
 from decimal import Decimal
 
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
@@ -74,6 +74,16 @@ def resumen_dia(fecha, usuario=None):
 
     total_vendido = ventas.aggregate(
         t=Coalesce(Sum('total'), Decimal('0.00')))['t']
+    # Desglose por método de pago (solo completadas): útil para cuadrar el
+    # efectivo de caja y lo cobrado contra el POS del banco.
+    desglose = ventas.aggregate(
+        efectivo=Coalesce(
+            Sum('total', filter=Q(metodo_pago=Venta.MetodoPago.EFECTIVO)),
+            Decimal('0.00')),
+        tarjeta=Coalesce(
+            Sum('total', filter=Q(metodo_pago=Venta.MetodoPago.TARJETA)),
+            Decimal('0.00')),
+    )
     productos_vendidos = (
         DetalleVenta.objects
         .filter(venta__in=ventas)
@@ -93,6 +103,8 @@ def resumen_dia(fecha, usuario=None):
         'ventas_anuladas': anuladas,
         'ventas_dia': ventas_dia,
         'total_vendido': total_vendido,
+        'total_efectivo': desglose['efectivo'],
+        'total_tarjeta': desglose['tarjeta'],
         'num_ventas': ventas.count(),
         'num_anuladas': anuladas.count(),
         'productos_vendidos': productos_vendidos,
