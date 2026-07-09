@@ -222,3 +222,23 @@ class SeedDemoCandadoTest(TestCase):
         with override_settings(DEBUG=False):
             with self.assertRaises(CommandError):
                 call_command('seed_demo')
+
+
+class AxesLockoutTest(TestCase):
+    """La protección contra fuerza bruta (django-axes) bloquea la combinación
+    usuario+IP tras AXES_FAILURE_LIMIT intentos fallidos (en la suite axes
+    está desactivado; acá se enciende explícitamente)."""
+
+    def test_bloqueo_tras_intentos_fallidos(self):
+        from django.conf import settings as dj_settings
+        from django.test import override_settings
+
+        Usuario.objects.create_user(
+            username='victima', password='correcta-123', rol=Usuario.Rol.CAJERO)
+        url = reverse('usuarios:login')
+        with override_settings(AXES_ENABLED=True):
+            for _ in range(dj_settings.AXES_FAILURE_LIMIT):
+                self.client.post(url, {'username': 'victima', 'password': 'mala'})
+            # Bloqueado: ni siquiera con la contraseña CORRECTA entra (429).
+            r = self.client.post(url, {'username': 'victima', 'password': 'correcta-123'})
+            self.assertEqual(r.status_code, 429)

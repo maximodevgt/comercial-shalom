@@ -2,7 +2,13 @@
 
 Regla de oro #7: los totales se calculan con agregados sobre el queryset
 completo. TODAS las consultas de dinero filtran estado='completada' para que
-los números cuadren exactos con el dashboard."""
+los números cuadren exactos con el dashboard.
+
+TODO (B-7, solo a gran escala): los filtros `creado__date=fecha` castean a
+date y no aprovechan el índice de `-creado`. Si el volumen lo amerita,
+migrar a un rango timezone-aware [00:00, 24:00) local o a un índice funcional
+sobre el cast — con MUCHO cuidado: el corte de día en America/Guatemala ya
+tuvo historia (ver CorteDeDiaTest) y un rango mal armado repite ese bug."""
 from datetime import timedelta
 from decimal import Decimal
 

@@ -9,7 +9,7 @@ from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 
 from .forms import DOMINIO_CORREO, UsuarioCrearForm, UsuarioEditarForm
 from .models import RegistroActividad, Usuario, registrar_actividad
-from .permisos import RolRequeridoMixin, rol_requerido
+from .permisos import SoloAdminMixin, rol_requerido
 from .utils import _entero_o_none
 
 
@@ -40,10 +40,6 @@ class InicioView(LoginRequiredMixin, TemplateView):
         usuario = u if (u.es_cajero and not u.es_admin) else None
         ctx.update(datos_dashboard(usuario=usuario))
         return ctx
-
-
-class SoloAdminMixin(RolRequeridoMixin):
-    roles_permitidos = ()  # solo admin
 
 
 class UsuarioListView(SoloAdminMixin, ListView):

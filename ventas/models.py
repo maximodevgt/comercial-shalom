@@ -59,6 +59,25 @@ class Venta(models.Model):
             models.Index(fields=['-creado']),
             models.Index(fields=['estado']),
         ]
+        # Defensa en profundidad (B-10): los invariantes de dinero quedan
+        # garantizados también a nivel de BD (la capa de servicio ya valida).
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(total__gte=0),
+                name='venta_total_no_negativo'),
+            models.CheckConstraint(
+                condition=models.Q(subtotal__gte=0),
+                name='venta_subtotal_no_negativo'),
+            models.CheckConstraint(
+                condition=models.Q(saldo_aplicado__gte=0),
+                name='venta_saldo_aplicado_no_negativo'),
+            models.CheckConstraint(
+                condition=models.Q(descuento_total__gte=0),
+                name='venta_descuento_no_negativo'),
+            models.CheckConstraint(
+                condition=models.Q(monto_tarjeta__isnull=True) | models.Q(monto_tarjeta__gte=0),
+                name='venta_monto_tarjeta_no_negativo'),
+        ]
 
     def __str__(self):
         return f'Venta #{self.pk}'
@@ -118,6 +137,22 @@ class DetalleVenta(models.Model):
     class Meta:
         verbose_name = 'detalle de venta'
         verbose_name_plural = 'detalles de venta'
+        # Defensa en profundidad (B-10): precios no negativos y el precio
+        # cobrado nunca por encima del original (solo se descuenta).
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(precio_original__gte=0),
+                name='detalle_precio_original_no_negativo'),
+            models.CheckConstraint(
+                condition=models.Q(precio_unitario__gte=0),
+                name='detalle_precio_unitario_no_negativo'),
+            models.CheckConstraint(
+                condition=models.Q(subtotal__gte=0),
+                name='detalle_subtotal_no_negativo'),
+            models.CheckConstraint(
+                condition=models.Q(precio_unitario__lte=models.F('precio_original')),
+                name='detalle_precio_descuento_lte_original'),
+        ]
 
     def __str__(self):
         return f'{self.cantidad}x {self.producto.nombre_completo}'

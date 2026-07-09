@@ -8,7 +8,7 @@ from django.views.generic import (
 )
 
 from usuarios.models import RegistroActividad, Usuario, registrar_actividad
-from usuarios.permisos import RolRequeridoMixin
+from usuarios.permisos import RolRequeridoMixin, SoloAdminMixin
 
 from .forms import ClienteForm
 from .models import Cliente
@@ -18,10 +18,6 @@ class AdminOCajeroMixin(RolRequeridoMixin):
     """Crear/editar clientes: admin y cajero (supervisor no)."""
 
     roles_permitidos = (Usuario.Rol.CAJERO,)
-
-
-class SoloAdminMixin(RolRequeridoMixin):
-    roles_permitidos = ()
 
 
 class ClienteListView(LoginRequiredMixin, ListView):
@@ -50,11 +46,10 @@ class ClienteDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        # El historial de ventas y apartados se completa en fases posteriores.
-        # Se accede de forma tolerante para no romper antes de esas fases.
-        cliente = self.object
-        ctx['ventas'] = getattr(cliente, 'ventas', None)
-        ctx['apartados'] = getattr(cliente, 'apartados', None)
+        # Related managers directos (B-6): las fases que los poblaban ya
+        # están completas, el acceso "tolerante" con getattr era código muerto.
+        ctx['ventas'] = self.object.ventas
+        ctx['apartados'] = self.object.apartados
         return ctx
 
 

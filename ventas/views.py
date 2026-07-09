@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -167,9 +167,11 @@ class HistorialVentasView(LoginRequiredMixin, ListView):
         if not valor:
             return None
         try:
-            return Decimal(valor)
-        except Exception:
+            d = Decimal(valor)
+        except (InvalidOperation, TypeError, ValueError):
             return None
+        # 'NaN'/'Infinity' son Decimal válidos pero no son montos: se ignoran.
+        return d if d.is_finite() else None
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
