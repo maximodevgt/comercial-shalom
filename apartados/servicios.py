@@ -37,6 +37,10 @@ def crear_apartado(usuario, *, producto_id, precio_total, cliente_id=None,
     producto = Producto.objects.select_for_update().filter(id=producto_id).first()
     if producto is None:
         raise ErrorApartado('El producto no existe.')
+    # Espejo de crear_venta (B-2): la vista solo ofrece activos, pero un POST
+    # directo no debe poder apartar un producto inactivo.
+    if not producto.activo:
+        raise ErrorApartado(f'El producto «{producto.nombre_completo}» está inactivo.')
     if producto.stock < 1:
         raise ErrorApartado(f'No hay stock de «{producto.nombre_completo}».')
 

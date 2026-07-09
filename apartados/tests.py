@@ -221,3 +221,21 @@ class MetodoAbonoInvalidoTest(TestCase):
         self.assertEqual(self.p.stock, 5)  # rollback: stock intacto
         self.assertEqual(Apartado.objects.count(), 0)
         self.assertEqual(Abono.objects.count(), 0)
+
+
+class ProductoInactivoApartadoTest(TestCase):
+    """B-2: un POST directo no puede apartar un producto inactivo (espejo de
+    la validación de crear_venta; la vista solo ofrece activos)."""
+
+    def test_apartar_producto_inactivo_es_rechazado(self):
+        cajero = Usuario.objects.create_user(
+            username='caja_inactivo', password='x', rol=Usuario.Rol.CAJERO)
+        cat = Categoria.objects.create(nombre='G')
+        p = Producto.objects.create(
+            categoria=cat, nombre='Descontinuado', precio=Decimal('100'),
+            stock=5, activo=False)
+        with self.assertRaises(ErrorApartado):
+            crear_apartado(cajero, producto_id=p.id, precio_total='100.00')
+        p.refresh_from_db()
+        self.assertEqual(p.stock, 5)  # nada descontado
+        self.assertEqual(Apartado.objects.count(), 0)

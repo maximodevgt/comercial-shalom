@@ -54,3 +54,30 @@ class ClientesTest(TestCase):
         respuesta = self.client.get(reverse('clientes:lista'), {'q': 'Ana'})
         self.assertContains(respuesta, 'Ana')
         self.assertNotContains(respuesta, '>Beto<')
+
+
+class EliminarClienteTest(TestCase):
+    """M-5: no se borra un cliente con saldo a favor (dinero que el negocio
+    le debe); el borrado exitoso queda en la bitácora."""
+
+    def setUp(self):
+        from usuarios.models import RegistroActividad
+        self.RegistroActividad = RegistroActividad
+        self.admin = Usuario.objects.create_user(
+            username='adm_del', password='x', rol=Usuario.Rol.ADMIN)
+        self.client.force_login(self.admin)
+
+    def test_no_se_borra_cliente_con_saldo_a_favor(self):
+        c = Cliente.objects.create(nombre='Con Saldo', saldo_favor=Decimal('50.00'))
+        r = self.client.post(reverse('clientes:eliminar', args=[c.pk]))
+        self.assertRedirects(r, reverse('clientes:detalle', args=[c.pk]))
+        self.assertTrue(Cliente.objects.filter(pk=c.pk).exists())  # sigue vivo
+
+    def test_borrar_cliente_sin_saldo_deja_bitacora(self):
+        c = Cliente.objects.create(nombre='Sin Saldo')
+        r = self.client.post(reverse('clientes:eliminar', args=[c.pk]))
+        self.assertRedirects(r, reverse('clientes:lista'))
+        self.assertFalse(Cliente.objects.filter(pk=c.pk).exists())
+        self.assertTrue(self.RegistroActividad.objects.filter(
+            tipo=self.RegistroActividad.Tipo.CLIENTE,
+            descripcion__icontains='Sin Saldo').exists())

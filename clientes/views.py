@@ -7,7 +7,7 @@ from django.views.generic import (
     CreateView, DeleteView, DetailView, ListView, UpdateView,
 )
 
-from usuarios.models import Usuario
+from usuarios.models import RegistroActividad, Usuario, registrar_actividad
 from usuarios.permisos import RolRequeridoMixin
 
 from .forms import ClienteForm
@@ -92,6 +92,15 @@ class ClienteDeleteView(SoloAdminMixin, DeleteView):
 
     def form_valid(self, form):
         cliente = self.get_object()
+        # Saldo a favor = dinero que el negocio le debe al cliente: no puede
+        # desaparecer con el borrado (M-5).
+        if cliente.saldo_favor > 0:
+            messages.error(
+                self.request,
+                'El cliente tiene saldo a favor; acredítalo o liquídalo '
+                'antes de eliminar.',
+            )
+            return redirect('clientes:detalle', pk=cliente.pk)
         try:
             respuesta = super().form_valid(form)
         except ProtectedError:
@@ -101,5 +110,10 @@ class ClienteDeleteView(SoloAdminMixin, DeleteView):
                 'ventas o apartados asociados.',
             )
             return redirect('clientes:detalle', pk=cliente.pk)
+        # Bitácora de la eliminación (regla de oro #8).
+        registrar_actividad(
+            self.request.user, RegistroActividad.Tipo.CLIENTE,
+            f'Eliminó al cliente «{cliente.nombre}»',
+            cliente_id=cliente.pk, telefono=cliente.telefono)
         messages.success(self.request, 'Cliente eliminado.')
         return respuesta

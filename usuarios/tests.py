@@ -209,3 +209,16 @@ class LogsFiltroBasuraTest(TestCase):
         self.client.force_login(admin)
         r = self.client.get(reverse('usuarios:logs'), {'usuario': 'abc'})
         self.assertEqual(r.status_code, 200)
+
+
+class SeedDemoCandadoTest(TestCase):
+    """M-2: seed_demo se rehúsa a correr fuera de desarrollo (DEBUG=False)."""
+
+    def test_rehusa_con_debug_false(self):
+        from django.core.management import call_command
+        from django.core.management.base import CommandError
+        from django.test import override_settings
+
+        with override_settings(DEBUG=False):
+            with self.assertRaises(CommandError):
+                call_command('seed_demo')

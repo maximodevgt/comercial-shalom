@@ -59,8 +59,9 @@ def anular_venta(usuario, venta_id, motivo):
             'Esta venta proviene de la liquidación de un apartado y no puede '
             'anularse. Corregí el apartado desde su propio flujo.')
 
-    # Restaurar stock con lock sobre cada producto.
-    for detalle in venta.detalles.select_related('producto'):
+    # Restaurar stock con lock sobre cada producto, adquirido en orden estable
+    # por producto_id — mismo criterio anti-deadlock que crear_venta (B-1).
+    for detalle in venta.detalles.select_related('producto').order_by('producto_id'):
         producto = Producto.objects.select_for_update().get(pk=detalle.producto_id)
         producto.stock += detalle.cantidad
         producto.save(update_fields=['stock'])
