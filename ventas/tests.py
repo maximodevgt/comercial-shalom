@@ -326,6 +326,21 @@ class VentaTarjetaTest(TestCase):
                 self._venta_tarjeta(monto)
         self.assertEqual(Venta.objects.count(), 0)
 
+    def test_total_cero_por_saldo_rechaza_cobro_con_tarjeta(self):
+        # M-6: el saldo a favor cubre el 100% → cualquier monto de tarjeta
+        # inflaría el total registrado. Se rechaza y nada se persiste.
+        cliente = Cliente.objects.create(nombre='C', saldo_favor=Decimal('500.00'))
+        with self.assertRaises(ErrorVenta) as ctx:
+            crear_venta(self.cajero, cliente_id=cliente.id, aplicar_saldo=True,
+                        metodo_pago='tarjeta', monto_tarjeta='50.00',
+                        lineas=[{'producto_id': self.p235.id, 'cantidad': 1,
+                                 'precio_unitario': '235.00'}])
+        self.assertIn('no hay nada que cobrar con tarjeta', str(ctx.exception))
+        self.p235.refresh_from_db(); cliente.refresh_from_db()
+        self.assertEqual(self.p235.stock, 10)                      # rollback stock
+        self.assertEqual(cliente.saldo_favor, Decimal('500.00'))   # rollback saldo
+        self.assertEqual(Venta.objects.count(), 0)
+
     def test_sin_monto_asume_el_total_calculado(self):
         venta = crear_venta(self.cajero, metodo_pago='tarjeta', lineas=[
             {'producto_id': self.p235.id, 'cantidad': 1, 'precio_unitario': '235.00'}])
@@ -405,6 +420,11 @@ class HistorialFiltroFechaTest(TestCase):
         self.assertIn(self.venta_pasada.pk, ids)
         self.assertNotIn(self.venta_hoy.pk, ids)
         self.assertEqual(r.context['total_vendido'], Decimal('200.00'))
+
+    def test_filtro_cajero_no_numerico_no_revienta(self):
+        # M-4: basura en ?cajero se ignora en vez de romper con 500.
+        r = self.client.get(reverse('ventas:historial'), {'cajero': 'abc'})
+        self.assertEqual(r.status_code, 200)
 
     def test_periodo_label_por_caso(self):
         # (d) El texto del período es correcto en cada caso.

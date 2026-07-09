@@ -17,6 +17,7 @@ from clientes.models import Cliente
 from productos.models import Categoria, Producto
 from usuarios.models import Usuario
 from usuarios.permisos import RolRequeridoMixin, rol_requerido
+from usuarios.utils import _entero_o_none
 
 from .models import Venta
 from .servicios import ErrorAnulacion, ErrorVenta, anular_venta, crear_venta
@@ -98,8 +99,9 @@ class HistorialVentasView(LoginRequiredMixin, ListView):
         if u.es_cajero and not u.es_admin:
             qs = qs.filter(usuario=u)
 
-        # Filtro por cajero (solo lo aplican admin/supervisor).
-        cajero = self.request.GET.get('cajero', '').strip()
+        # Filtro por cajero (solo lo aplican admin/supervisor). Un valor no
+        # numérico se ignora en vez de romper con 500 (M-4).
+        cajero = _entero_o_none(self.request.GET.get('cajero'))
         if cajero and (u.es_admin or u.es_supervisor):
             qs = qs.filter(usuario_id=cajero)
 

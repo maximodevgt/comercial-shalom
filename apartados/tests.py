@@ -192,3 +192,32 @@ class CancelarSoloAdminTest(TestCase):
         self.assertEqual(self.apartado.estado, Apartado.Estado.CANCELADO)
         self.assertEqual(self.cliente.saldo_favor, Decimal('150.00'))  # abonado acreditado
         self.assertEqual(self.producto.stock, 3)  # stock restaurado
+
+
+class MetodoAbonoInvalidoTest(TestCase):
+    """M-3: un método de pago fuera de los choices se rechaza (antes se
+    persistía y desaparecía del desglose por método del cierre)."""
+
+    def setUp(self):
+        self.cajero = Usuario.objects.create_user(
+            username='caja_metodo', password='x', rol=Usuario.Rol.CAJERO)
+        cat = Categoria.objects.create(nombre='G')
+        self.p = Producto.objects.create(
+            categoria=cat, nombre='P', precio=Decimal('100'), stock=5)
+
+    def test_abono_con_metodo_basura_es_rechazado(self):
+        apartado = crear_apartado(
+            self.cajero, producto_id=self.p.id, precio_total='100.00')
+        with self.assertRaises(ErrorApartado):
+            registrar_abono(self.cajero, apartado.id, '50.00', metodo='xyz')
+        self.assertEqual(Abono.objects.count(), 0)
+
+    def test_abono_inicial_con_metodo_basura_revierte_todo(self):
+        with self.assertRaises(ErrorApartado):
+            crear_apartado(self.cajero, producto_id=self.p.id,
+                           precio_total='100.00', abono_inicial='30.00',
+                           metodo_abono='xyz')
+        self.p.refresh_from_db()
+        self.assertEqual(self.p.stock, 5)  # rollback: stock intacto
+        self.assertEqual(Apartado.objects.count(), 0)
+        self.assertEqual(Abono.objects.count(), 0)

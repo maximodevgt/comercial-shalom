@@ -86,6 +86,12 @@ def _registrar_abono(usuario, apartado, monto, metodo, cliente):
     (descuadre de caja); se rechaza para que el cajero corrija y dé el
     cambio. Con saldo sí se capea a min(saldo, pendiente): no hay efectivo
     físico de por medio. Asume apartado ya bloqueado."""
+    # Método validado contra los choices (mismo patrón que crear_venta): un
+    # método basura se persistía como si fuera efectivo y luego desaparecía
+    # del desglose por método del cierre, descuadrándolo (M-3).
+    if metodo not in dict(Abono.Metodo.choices):
+        raise ErrorApartado('Método de pago inválido.')
+
     pendiente = apartado.pendiente
     if pendiente <= 0:
         raise ErrorApartado('El apartado ya está totalmente pagado.')

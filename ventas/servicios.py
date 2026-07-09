@@ -212,9 +212,14 @@ def crear_venta(usuario, *, cliente_id=None, nombre_cliente_libre='', telefono='
             # Validación server-side (no se confía en el frontend).
             if monto_tarjeta_val <= 0:
                 raise ErrorVenta('El monto cobrado con tarjeta debe ser mayor que cero.')
+            # Total esperado en 0 (p. ej. saldo a favor cubrió el 100%): un
+            # monto de tarjeta acá inflaría el total registrado (M-6).
+            if total <= 0:
+                raise ErrorVenta(
+                    'El total ya quedó cubierto: no hay nada que cobrar con tarjeta.')
             # Sanidad: un monto muy alejado del total calculado es casi seguro
             # un error de digitación del cajero.
-            if total > 0 and not (total / 2 <= monto_tarjeta_val <= total * 2):
+            if not (total / 2 <= monto_tarjeta_val <= total * 2):
                 raise ErrorVenta(
                     f'El monto de tarjeta (Q {monto_tarjeta_val}) está demasiado '
                     f'lejos del total calculado (Q {total}). Verificá lo que '

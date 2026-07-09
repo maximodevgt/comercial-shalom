@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
@@ -9,6 +10,7 @@ from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 from .forms import DOMINIO_CORREO, UsuarioCrearForm, UsuarioEditarForm
 from .models import RegistroActividad, Usuario, registrar_actividad
 from .permisos import RolRequeridoMixin, rol_requerido
+from .utils import _entero_o_none
 
 
 class LoginView(auth_views.LoginView):
@@ -80,6 +82,28 @@ class UsuarioUpdateView(SoloAdminMixin, UpdateView):
     template_name = 'usuarios/usuario_form.html'
     success_url = reverse_lazy('usuarios:lista')
 
+    def get_queryset(self):
+        # Un admin de rol NO puede tocar superusuarios: editar o resetear la
+        # contraseña de un superuser sería una escalada de privilegios (A-1).
+        qs = super().get_queryset()
+        if not self.request.user.is_superuser:
+            qs = qs.filter(is_superuser=False)
+        return qs
+
+    def get_object(self, queryset=None):
+        try:
+            return super().get_object(queryset)
+        except Http404:
+            # Si el 404 fue por el filtro anti-escalada, deja rastro del intento.
+            objetivo = Usuario.objects.filter(
+                pk=self.kwargs.get('pk'), is_superuser=True).first()
+            if objetivo and not self.request.user.is_superuser:
+                registrar_actividad(
+                    self.request.user, RegistroActividad.Tipo.USUARIO,
+                    f'Intento BLOQUEADO de editar al superusuario «{objetivo.username}»',
+                    usuario_afectado=objetivo.username)
+            raise
+
     def form_valid(self, form):
         respuesta = super().form_valid(form)
         registrar_actividad(
@@ -101,6 +125,14 @@ class UsuarioUpdateView(SoloAdminMixin, UpdateView):
 def toggle_activo(request, pk):
     """Activa o desactiva un usuario (en vez de eliminarlo)."""
     usuario = get_object_or_404(Usuario, pk=pk)
+    # Un admin de rol NO puede desactivar a un superusuario (A-1): sería
+    # apagar la cuenta más privilegiada del sistema. Se registra el intento.
+    if usuario.is_superuser and not request.user.is_superuser:
+        registrar_actividad(
+            request.user, RegistroActividad.Tipo.USUARIO,
+            f'Intento BLOQUEADO de desactivar al superusuario «{usuario.username}»',
+            usuario_afectado=usuario.username)
+        raise Http404('No existe.')
     if usuario.pk == request.user.pk:
         messages.error(request, 'No podés desactivar tu propia cuenta.')
         return redirect('usuarios:lista')
@@ -124,7 +156,8 @@ class RegistroActividadListView(SoloAdminMixin, ListView):
     def get_queryset(self):
         qs = RegistroActividad.objects.select_related('usuario')
         tipo = self.request.GET.get('tipo', '').strip()
-        usuario = self.request.GET.get('usuario', '').strip()
+        # Un valor no numérico se ignora en vez de romper con 500 (M-4).
+        usuario = _entero_o_none(self.request.GET.get('usuario'))
         if tipo:
             qs = qs.filter(tipo=tipo)
         if usuario:

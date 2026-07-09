@@ -9,6 +9,7 @@ from django.views.generic import (
 
 from usuarios.models import RegistroActividad, registrar_actividad
 from usuarios.permisos import RolRequeridoMixin
+from usuarios.utils import _entero_o_none
 
 from .forms import CategoriaForm, ProductoForm
 from .models import Categoria, Producto
@@ -31,7 +32,8 @@ class ProductoListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         qs = Producto.objects.select_related('categoria')
         q = self.request.GET.get('q', '').strip()
-        categoria = self.request.GET.get('categoria', '').strip()
+        # Un valor no numérico se ignora en vez de romper con 500 (M-4).
+        categoria = _entero_o_none(self.request.GET.get('categoria'))
         if q:
             qs = qs.filter(
                 Q(nombre__icontains=q)

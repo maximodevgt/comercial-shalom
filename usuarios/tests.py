@@ -151,3 +151,61 @@ class GestionUsuariosTest(TestCase):
         cajero = Usuario.objects.create_user(username='c', password='x', rol=Usuario.Rol.CAJERO)
         self.client.force_login(cajero)
         self.assertEqual(self.client.get(reverse('usuarios:logs')).status_code, 403)
+
+
+class ProteccionSuperusuarioTest(TestCase):
+    """A-1: un admin de rol NO puede editar, resetear la contraseña ni
+    desactivar a un superusuario (escalada de privilegios); un superuser sí."""
+
+    def setUp(self):
+        self.admin_rol = Usuario.objects.create_user(
+            username='admin_rol', password='x', rol=Usuario.Rol.ADMIN)
+        self.superuser = Usuario.objects.create_superuser(
+            username='root', email='root@comercialshalom.com',
+            password='super-secreta-123')
+
+    def test_admin_de_rol_no_puede_abrir_edicion_de_superusuario(self):
+        self.client.force_login(self.admin_rol)
+        r = self.client.get(reverse('usuarios:editar', args=[self.superuser.pk]))
+        self.assertEqual(r.status_code, 404)
+
+    def test_admin_de_rol_no_puede_resetear_password_de_superusuario(self):
+        self.client.force_login(self.admin_rol)
+        r = self.client.post(
+            reverse('usuarios:editar', args=[self.superuser.pk]),
+            {'first_name': 'X', 'last_name': 'Y', 'rol': Usuario.Rol.ADMIN,
+             'password': 'NuevaClave123'})
+        self.assertEqual(r.status_code, 404)
+        self.superuser.refresh_from_db()
+        self.assertTrue(self.superuser.check_password('super-secreta-123'))
+        # El intento bloqueado queda en la bitácora.
+        self.assertTrue(RegistroActividad.objects.filter(
+            usuario=self.admin_rol, tipo=RegistroActividad.Tipo.USUARIO,
+            descripcion__icontains='BLOQUEADO').exists())
+
+    def test_admin_de_rol_no_puede_desactivar_superusuario(self):
+        self.client.force_login(self.admin_rol)
+        r = self.client.post(reverse('usuarios:toggle_activo', args=[self.superuser.pk]))
+        self.assertEqual(r.status_code, 404)
+        self.superuser.refresh_from_db()
+        self.assertTrue(self.superuser.is_active)
+        self.assertTrue(RegistroActividad.objects.filter(
+            descripcion__icontains='desactivar al superusuario').exists())
+
+    def test_superusuario_si_puede_editar_a_otro_superusuario(self):
+        otro = Usuario.objects.create_superuser(
+            username='root2', email='root2@comercialshalom.com', password='x')
+        self.client.force_login(self.superuser)
+        r = self.client.get(reverse('usuarios:editar', args=[otro.pk]))
+        self.assertEqual(r.status_code, 200)
+
+
+class LogsFiltroBasuraTest(TestCase):
+    """M-4: un filtro no numérico en la bitácora se ignora en vez de dar 500."""
+
+    def test_usuario_no_numerico_no_revienta(self):
+        admin = Usuario.objects.create_user(
+            username='adm_filtro', password='x', rol=Usuario.Rol.ADMIN)
+        self.client.force_login(admin)
+        r = self.client.get(reverse('usuarios:logs'), {'usuario': 'abc'})
+        self.assertEqual(r.status_code, 200)
